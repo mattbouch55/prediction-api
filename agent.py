@@ -131,3 +131,125 @@ Generate 2-3 predictions. Return ONLY the JSON object.
             sources_searched=data.get("sources_searched", []),
             agent_notes=data.get("agent_notes")
         )
+
+
+class InvestmentAgent:
+    def __init__(self):
+        api_key = os.environ.get("ANTHROPIC_API_KEY")
+        if not api_key:
+            raise ValueError("ANTHROPIC_API_KEY is not set")
+        self.client = anthropic.Anthropic(api_key=api_key)
+        self.model = "claude-sonnet-4-5"
+
+    async def run(self, ticker: str, asset_type: str):
+        loop = asyncio.get_event_loop()
+        result = await loop.run_in_executor(None, self._run_sync, ticker, asset_type)
+        return result
+
+    def _run_sync(self, ticker: str, asset_type: str):
+        from models import InvestmentResponse, InvestmentSignal
+
+        asset_label = "stock" if asset_type == "stock" else "cryptocurrency"
+
+        prompt = f"""
+You are a senior investment analyst. Analyse the {asset_label} with ticker: {ticker}
+
+Search for:
+1. Latest news about {ticker} in the past 1-2 weeks
+2. Recent earnings, product launches, or major announcements
+3. Analyst price targets and ratings
+4. Market sentiment and technical momentum
+5. Key risks and headwinds
+
+Based on your research, return ONLY a valid JSON object (no markdown) in this exact format:
+
+{{
+  "asset_name": "Full company or asset name",
+  "signal": "BUY or WATCH or HOLD",
+  "confidence": "High or Medium or Low",
+  "time_horizon": "1-4 weeks",
+  "summary": "2-3 sentence overview of the investment case",
+  "catalysts": [
+    "Specific positive catalyst that could drive price up",
+    "Another upside catalyst"
+  ],
+  "risks": [
+    "Specific risk that could drive price down",
+    "Another downside risk"
+  ],
+  "supporting_signals": [
+    {{
+      "type": "signal type e.g. Earnings, Analyst Rating, News",
+      "description": "What this signal means for the investment",
+      "source": "Source name e.g. Reuters, Bloomberg",
+      "url": "exact URL from search results or null",
+      "strength": "strong or moderate or weak"
+    }}
+  ]
+}}
+
+Signal definitions:
+- BUY: Strong positive catalysts, good risk/reward, momentum is positive
+- WATCH: Interesting opportunity but wait for better entry or more clarity
+- HOLD: No clear directional catalyst, risks outweigh upside near-term
+
+Return ONLY the JSON object.
+"""
+
+        response = self.client.messages.create(
+            model=self.model,
+            max_tokens=3000,
+            tools=[{"type": "web_search_20250305", "name": "web_search"}],
+            messages=[{"role": "user", "content": prompt}]
+        )
+
+        full_text = ""
+        for block in response.content:
+            if hasattr(block, "text") and block.text:
+                full_text += block.text
+
+        if not full_text:
+            raise ValueError("No response from investment agent")
+
+        # Parse JSON
+        clean = full_text.strip()
+        if "```" in clean:
+            parts = clean.split("```")
+            for part in parts:
+                if part.startswith("json"):
+                    clean = part[4:].strip()
+                    break
+                elif part.strip().startswith("{"):
+                    clean = part.strip()
+                    break
+
+        start = clean.find("{")
+        end = clean.rfind("}") + 1
+        if start != -1 and end > start:
+            clean = clean[start:end]
+
+        data = json.loads(clean)
+
+        signals = [
+            InvestmentSignal(
+                type=s.get("type", "unknown"),
+                description=s.get("description", ""),
+                source=s.get("source"),
+                url=s.get("url"),
+                strength=s.get("strength", "moderate")
+            )
+            for s in data.get("supporting_signals", [])
+        ]
+
+        return InvestmentResponse(
+            ticker=ticker,
+            asset_name=data.get("asset_name"),
+            asset_type=asset_type,
+            signal=data.get("signal", "WATCH"),
+            confidence=data.get("confidence", "Medium"),
+            time_horizon=data.get("time_horizon", "1-4 weeks"),
+            summary=data.get("summary", ""),
+            catalysts=data.get("catalysts", []),
+            risks=data.get("risks", []),
+            supporting_signals=signals
+        )
