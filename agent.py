@@ -84,11 +84,12 @@ Generate 2-4 predictions. Be specific and falsifiable — avoid vague statements
 
 class PredictionAgent:
     def __init__(self):
-        {
-    "detail": "'NoneType' object has no attribute 'strip'"
-}
-        self.model = "claude-sonnet-4-5"
-        self.tools = [{"type": "web_search_20250305", "name": "web_search"}]
+    api_key = os.environ.get("ANTHROPIC_API_KEY")
+    if not api_key:
+        raise ValueError("ANTHROPIC_API_KEY environment variable is not set")
+    self.client = anthropic.Anthropic(api_key=api_key)
+    self.model = "claude-sonnet-4-5"
+    self.tools = [{"type": "web_search_20250305", "name": "web_search"}]
 
     async def run(self, topic: str, domain: str, time_horizon: str) -> PredictionResponse:
         """Run the agentic prediction loop and return a structured PredictionResponse."""
