@@ -1,7 +1,8 @@
 import anthropic
 import json
 import os
-from models import PredictionResponse, Prediction, Signal
+import asyncio
+from models import PredictionResponse, Prediction, Signal, InvestmentResponse, InvestmentSignal
 
 
 DOMAIN_PROMPTS = {
@@ -9,6 +10,7 @@ DOMAIN_PROMPTS = {
     "markets": "You are a quantitative market analyst. Focus on equity markets, interest rates, inflation, earnings, commodities, and crypto.",
     "geopolitics": "You are a geopolitical risk analyst. Focus on diplomacy, elections, military movements, sanctions, and trade negotiations."
 }
+
 
 class PredictionAgent:
     def __init__(self):
@@ -19,7 +21,6 @@ class PredictionAgent:
         self.model = "claude-sonnet-4-5"
 
     async def run(self, topic: str, domain: str, time_horizon: str) -> PredictionResponse:
-        import asyncio
         loop = asyncio.get_event_loop()
         result = await loop.run_in_executor(None, self._run_sync, topic, domain, time_horizon)
         return result
@@ -49,6 +50,7 @@ Then return ONLY a valid JSON object (no markdown, no explanation) in this exact
           "type": "signal type",
           "description": "what this signal means",
           "source": "source name",
+          "url": "exact URL from search results or null",
           "strength": "strong"
         }}
       ],
@@ -67,7 +69,6 @@ Generate 2-3 predictions. Return ONLY the JSON object.
             messages=[{"role": "user", "content": prompt}]
         )
 
-        # Extract text from response
         full_text = ""
         for block in response.content:
             if hasattr(block, "text") and block.text:
@@ -80,8 +81,6 @@ Generate 2-3 predictions. Return ONLY the JSON object.
 
     def _parse_response(self, text: str, topic: str, domain: str) -> PredictionResponse:
         clean = text.strip()
-
-        # Strip markdown code fences if present
         if "```" in clean:
             parts = clean.split("```")
             for part in parts:
@@ -92,7 +91,6 @@ Generate 2-3 predictions. Return ONLY the JSON object.
                     clean = part.strip()
                     break
 
-        # Find JSON object
         start = clean.find("{")
         end = clean.rfind("}") + 1
         if start != -1 and end > start:
@@ -101,7 +99,7 @@ Generate 2-3 predictions. Return ONLY the JSON object.
         try:
             data = json.loads(clean)
         except json.JSONDecodeError as e:
-            raise ValueError(f"Could not parse JSON: {e}. Text was: {clean[:300]}")
+            raise ValueError(f"Could not parse JSON: {e}")
 
         predictions = []
         for p in data.get("predictions", []):
@@ -110,6 +108,7 @@ Generate 2-3 predictions. Return ONLY the JSON object.
                     type=s.get("type", "unknown"),
                     description=s.get("description", ""),
                     source=s.get("source"),
+                    url=s.get("url"),
                     strength=s.get("strength", "moderate")
                 )
                 for s in p.get("supporting_signals", [])
@@ -141,14 +140,12 @@ class InvestmentAgent:
         self.client = anthropic.Anthropic(api_key=api_key)
         self.model = "claude-sonnet-4-5"
 
-    async def run(self, ticker: str, asset_type: str):
+    async def run(self, ticker: str, asset_type: str) -> InvestmentResponse:
         loop = asyncio.get_event_loop()
         result = await loop.run_in_executor(None, self._run_sync, ticker, asset_type)
         return result
 
-    def _run_sync(self, ticker: str, asset_type: str):
-        from models import InvestmentResponse, InvestmentSignal
-
+    def _run_sync(self, ticker: str, asset_type: str) -> InvestmentResponse:
         asset_label = "stock" if asset_type == "stock" else "cryptocurrency"
 
         prompt = f"""
@@ -158,7 +155,7 @@ Search for:
 1. Latest news about {ticker} in the past 1-2 weeks
 2. Recent earnings, product launches, or major announcements
 3. Analyst price targets and ratings
-4. Market sentiment and technical momentum
+4. Market sentiment and momentum
 5. Key risks and headwinds
 
 Based on your research, return ONLY a valid JSON object (no markdown) in this exact format:
@@ -189,8 +186,8 @@ Based on your research, return ONLY a valid JSON object (no markdown) in this ex
 }}
 
 Signal definitions:
-- BUY: Strong positive catalysts, good risk/reward, momentum is positive
-- WATCH: Interesting opportunity but wait for better entry or more clarity
+- BUY: Strong positive catalysts, good risk/reward, positive momentum
+- WATCH: Interesting but wait for better entry or more clarity
 - HOLD: No clear directional catalyst, risks outweigh upside near-term
 
 Return ONLY the JSON object.
@@ -211,7 +208,6 @@ Return ONLY the JSON object.
         if not full_text:
             raise ValueError("No response from investment agent")
 
-        # Parse JSON
         clean = full_text.strip()
         if "```" in clean:
             parts = clean.split("```")
