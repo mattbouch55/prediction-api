@@ -1,7 +1,10 @@
 from fastapi import FastAPI, HTTPException, BackgroundTasks
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.staticfiles import StaticFiles
+from fastapi.responses import FileResponse
 from contextlib import asynccontextmanager
 import uvicorn
+import os
 
 from models import PredictionRequest, PredictionResponse, PredictionsListResponse, DomainSummaryResponse
 from agent import PredictionAgent
@@ -34,6 +37,12 @@ app.add_middleware(
 
 
 # ── Routes ──────────────────────────────────────────────────────────────────
+
+@app.get("/")
+def serve_frontend():
+    """Serve the Onyx AI frontend."""
+    return FileResponse("index.html")
+
 
 @app.get("/health")
 def health_check():
