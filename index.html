@@ -34,6 +34,7 @@
       overflow-x: hidden;
     }
 
+    /* Grain overlay */
     body::before {
       content: '';
       position: fixed;
@@ -55,6 +56,7 @@
       padding: 0 32px;
     }
 
+    /* Header */
     header {
       display: flex;
       align-items: center;
@@ -95,6 +97,7 @@
       text-transform: uppercase;
     }
 
+    /* Hero */
     .hero {
       padding: 80px 0 64px;
       text-align: center;
@@ -134,6 +137,7 @@
       animation: fadeUp 0.8s ease forwards 0.6s;
     }
 
+    /* Search panel */
     .search-panel {
       background: var(--obsidian);
       border: 1px solid #222;
@@ -208,6 +212,7 @@
     .btn-generate:active { transform: scale(0.98); }
     .btn-generate:disabled { background: var(--gold-dim); cursor: not-allowed; }
 
+    /* Loading */
     .loading {
       display: none;
       text-align: center;
@@ -247,6 +252,7 @@
       animation: pulse 1.5s ease-in-out infinite;
     }
 
+    /* Results */
     .results { display: none; }
     .results.active { display: block; }
 
@@ -338,7 +344,9 @@
       color: var(--muted);
     }
 
-    .card-body { padding: 20px 24px; }
+    .card-body {
+      padding: 20px 24px;
+    }
 
     .card-section-label {
       font-size: 10px;
@@ -357,7 +365,9 @@
       color: var(--muted);
     }
 
-    .signals-list { list-style: none; }
+    .signals-list {
+      list-style: none;
+    }
 
     .signal-item {
       display: grid;
@@ -384,7 +394,9 @@
     .signal-source[href] { color: var(--gold-dim); text-decoration: none; transition: color 0.2s; }
     .signal-source[href]:hover { color: var(--gold); }
 
-    .risks-list { list-style: none; }
+    .risks-list {
+      list-style: none;
+    }
 
     .risk-item {
       font-size: 11px;
@@ -402,6 +414,7 @@
       color: var(--low);
     }
 
+    /* Error */
     .error-box {
       display: none;
       background: #1a0e0e;
@@ -414,6 +427,7 @@
 
     .error-box.active { display: block; }
 
+    /* Animations */
     @keyframes fadeUp {
       from { opacity: 0; transform: translateY(16px); }
       to { opacity: 1; transform: translateY(0); }
@@ -455,9 +469,7 @@
       <span class="logo-name">Onyx</span>
       <span class="logo-sub">Intelligence</span>
     </div>
-    <div style="font-size:10px; color: var(--muted); letter-spacing:0.15em; text-transform:uppercase;">
-      Markets · Tech · Geopolitics
-    </div>
+    <nav style="display:flex;gap:24px;"><a href="/" style="font-size:10px;letter-spacing:0.2em;text-transform:uppercase;color:var(--gold);text-decoration:none;">Predictions</a><a href="/invest" style="font-size:10px;letter-spacing:0.2em;text-transform:uppercase;color:var(--muted);text-decoration:none;">Investments</a></nav>
   </header>
 
   <div class="hero">
@@ -539,7 +551,9 @@
 
       const data = await res.json();
 
-      if (!res.ok) throw new Error(data.detail || 'An error occurred');
+      if (!res.ok) {
+        throw new Error(data.detail || 'An error occurred');
+      }
 
       renderResults(data);
 
@@ -594,8 +608,10 @@
         <div class="card-body">
           <div class="card-section-label">Reasoning</div>
           <div class="card-reasoning">${p.reasoning}</div>
+
           <div class="card-section-label">Supporting Signals</div>
           <ul class="signals-list">${signals}</ul>
+
           <div class="card-section-label">Risk Factors</div>
           <ul class="risks-list">${risks}</ul>
         </div>
