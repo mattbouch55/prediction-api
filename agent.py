@@ -84,7 +84,9 @@ Generate 2-4 predictions. Be specific and falsifiable — avoid vague statements
 
 class PredictionAgent:
     def __init__(self):
-        self.client = anthropic.Anthropic(api_key=os.environ.get("ANTHROPIC_API_KEY"))
+        {
+    "detail": "'NoneType' object has no attribute 'strip'"
+}
         self.model = "claude-sonnet-4-5"
         self.tools = [{"type": "web_search_20250305", "name": "web_search"}]
 
