@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Onyx AI — See What's Coming</title>
+  <title>Onyx AI — Investment Signals</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300&family=DM+Mono:wght@300;400&display=swap" rel="stylesheet">
   <style>
@@ -19,9 +19,9 @@
       --white: #f0ece4;
       --muted: #6b6760;
       --text: #ccc5b9;
-      --high: #4caf7a;
-      --medium: #c9a84c;
-      --low: #c0554a;
+      --buy: #4caf7a;
+      --watch: #c9a84c;
+      --hold: #c0554a;
     }
 
     html, body {
@@ -34,7 +34,6 @@
       overflow-x: hidden;
     }
 
-    /* Grain overlay */
     body::before {
       content: '';
       position: fixed;
@@ -56,7 +55,6 @@
       padding: 0 32px;
     }
 
-    /* Header */
     header {
       display: flex;
       align-items: center;
@@ -69,6 +67,7 @@
       display: flex;
       align-items: baseline;
       gap: 10px;
+      text-decoration: none;
     }
 
     .logo-mark {
@@ -97,9 +96,22 @@
       text-transform: uppercase;
     }
 
-    /* Hero */
+    nav { display: flex; gap: 24px; align-items: center; }
+
+    nav a {
+      font-size: 10px;
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
+      color: var(--muted);
+      text-decoration: none;
+      transition: color 0.2s;
+    }
+
+    nav a:hover { color: var(--white); }
+    nav a.active { color: var(--gold); }
+
     .hero {
-      padding: 80px 0 64px;
+      padding: 64px 0 48px;
       text-align: center;
     }
 
@@ -108,36 +120,31 @@
       letter-spacing: 0.3em;
       text-transform: uppercase;
       color: var(--gold);
-      margin-bottom: 24px;
+      margin-bottom: 20px;
       opacity: 0;
       animation: fadeUp 0.8s ease forwards 0.2s;
     }
 
     .hero-title {
       font-family: 'Cormorant Garamond', serif;
-      font-size: clamp(48px, 8vw, 80px);
+      font-size: clamp(40px, 7vw, 68px);
       font-weight: 300;
       color: var(--white);
       line-height: 1.05;
-      margin-bottom: 20px;
+      margin-bottom: 16px;
       opacity: 0;
       animation: fadeUp 0.8s ease forwards 0.4s;
     }
 
-    .hero-title em {
-      font-style: italic;
-      color: var(--gold);
-    }
+    .hero-title em { font-style: italic; color: var(--gold); }
 
     .hero-sub {
       font-size: 12px;
       color: var(--muted);
-      letter-spacing: 0.05em;
       opacity: 0;
       animation: fadeUp 0.8s ease forwards 0.6s;
     }
 
-    /* Search panel */
     .search-panel {
       background: var(--obsidian);
       border: 1px solid #222;
@@ -172,9 +179,10 @@
       outline: none;
       transition: border-color 0.2s;
       width: 100%;
+      text-transform: uppercase;
     }
 
-    input[type="text"]::placeholder { color: var(--muted); }
+    input[type="text"]::placeholder { color: var(--muted); text-transform: none; }
     input[type="text"]:focus { border-color: var(--gold-dim); }
 
     select {
@@ -187,19 +195,15 @@
       outline: none;
       cursor: pointer;
       appearance: none;
-      min-width: 140px;
-      transition: border-color 0.2s;
+      min-width: 120px;
     }
 
-    select:focus { border-color: var(--gold-dim); }
-
-    .btn-generate {
+    .btn-analyse {
       background: var(--gold);
       color: var(--black);
       border: none;
       font-family: 'DM Mono', monospace;
       font-size: 11px;
-      font-weight: 400;
       letter-spacing: 0.2em;
       text-transform: uppercase;
       padding: 14px 28px;
@@ -208,22 +212,16 @@
       white-space: nowrap;
     }
 
-    .btn-generate:hover { background: var(--gold-light); }
-    .btn-generate:active { transform: scale(0.98); }
-    .btn-generate:disabled { background: var(--gold-dim); cursor: not-allowed; }
+    .btn-analyse:hover { background: var(--gold-light); }
+    .btn-analyse:active { transform: scale(0.98); }
+    .btn-analyse:disabled { background: var(--gold-dim); cursor: not-allowed; }
 
     /* Loading */
-    .loading {
-      display: none;
-      text-align: center;
-      padding: 60px 0;
-    }
-
+    .loading { display: none; text-align: center; padding: 60px 0; }
     .loading.active { display: block; }
 
     .loading-orb {
-      width: 48px;
-      height: 48px;
+      width: 48px; height: 48px;
       margin: 0 auto 24px;
       position: relative;
     }
@@ -256,178 +254,173 @@
     .results { display: none; }
     .results.active { display: block; }
 
-    .results-header {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
+    /* Signal card */
+    .signal-hero {
+      background: var(--obsidian);
+      border: 1px solid #222;
+      padding: 36px;
       margin-bottom: 24px;
-      padding-bottom: 16px;
-      border-bottom: 1px solid #1e1e1e;
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: 24px;
+      align-items: center;
     }
 
-    .results-topic {
+    .signal-ticker {
       font-family: 'Cormorant Garamond', serif;
-      font-size: 20px;
+      font-size: 48px;
       font-weight: 300;
       color: var(--white);
+      letter-spacing: 0.08em;
+      line-height: 1;
     }
 
-    .results-meta {
-      font-size: 10px;
-      letter-spacing: 0.15em;
-      text-transform: uppercase;
-      color: var(--muted);
-    }
-
-    .news-summary {
-      background: var(--charcoal);
-      border-left: 2px solid var(--gold-dim);
-      padding: 16px 20px;
-      margin-bottom: 32px;
-      font-size: 12px;
-      line-height: 1.7;
-      color: var(--muted);
-    }
-
-    .predictions-label {
-      font-size: 10px;
-      letter-spacing: 0.25em;
-      text-transform: uppercase;
-      color: var(--gold-dim);
-      margin-bottom: 16px;
-    }
-
-    .prediction-card {
-      background: var(--obsidian);
-      border: 1px solid #1e1e1e;
-      margin-bottom: 16px;
-      overflow: hidden;
-      transition: border-color 0.2s;
-    }
-
-    .prediction-card:hover { border-color: #2e2e2e; }
-
-    .card-top {
-      padding: 24px;
-      border-bottom: 1px solid #1a1a1a;
-    }
-
-    .card-statement {
-      font-family: 'Cormorant Garamond', serif;
-      font-size: 20px;
-      font-weight: 400;
-      color: var(--white);
-      line-height: 1.35;
-      margin-bottom: 12px;
-    }
-
-    .card-meta {
-      display: flex;
-      align-items: center;
-      gap: 12px;
-    }
-
-    .badge {
-      font-size: 10px;
-      letter-spacing: 0.15em;
-      text-transform: uppercase;
-      padding: 3px 10px;
-      border: 1px solid;
-    }
-
-    .badge-high { color: var(--high); border-color: var(--high); }
-    .badge-medium { color: var(--medium); border-color: var(--medium); }
-    .badge-low { color: var(--low); border-color: var(--low); }
-
-    .card-horizon {
+    .signal-name {
       font-size: 11px;
       color: var(--muted);
+      letter-spacing: 0.1em;
+      margin-top: 6px;
     }
 
-    .card-body {
-      padding: 20px 24px;
+    .signal-badge {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 28px;
+      font-weight: 400;
+      letter-spacing: 0.1em;
+      padding: 16px 28px;
+      border: 1px solid;
+      text-align: center;
     }
 
-    .card-section-label {
+    .signal-badge.buy { color: var(--buy); border-color: var(--buy); }
+    .signal-badge.watch { color: var(--watch); border-color: var(--watch); }
+    .signal-badge.hold { color: var(--hold); border-color: var(--hold); }
+
+    .confidence-row {
+      display: flex;
+      gap: 24px;
+      margin-bottom: 24px;
+    }
+
+    .conf-item {
+      background: var(--obsidian);
+      border: 1px solid #1e1e1e;
+      padding: 16px 20px;
+      flex: 1;
+    }
+
+    .conf-label {
       font-size: 10px;
       letter-spacing: 0.2em;
       text-transform: uppercase;
       color: var(--gold-dim);
-      margin-bottom: 8px;
-      margin-top: 16px;
+      margin-bottom: 6px;
     }
 
-    .card-section-label:first-child { margin-top: 0; }
+    .conf-value {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 18px;
+      color: var(--white);
+    }
 
-    .card-reasoning {
+    .summary-box {
+      background: var(--charcoal);
+      border-left: 2px solid var(--gold-dim);
+      padding: 16px 20px;
+      margin-bottom: 24px;
       font-size: 12px;
       line-height: 1.75;
       color: var(--muted);
     }
 
-    .signals-list {
-      list-style: none;
+    .section-label {
+      font-size: 10px;
+      letter-spacing: 0.25em;
+      text-transform: uppercase;
+      color: var(--gold-dim);
+      margin-bottom: 12px;
+      margin-top: 28px;
     }
 
-    .signal-item {
-      display: grid;
-      grid-template-columns: auto 1fr auto;
-      gap: 10px;
-      align-items: start;
-      padding: 8px 0;
-      border-bottom: 1px solid #181818;
-      font-size: 11px;
-    }
+    .section-label:first-of-type { margin-top: 0; }
 
-    .signal-item:last-child { border-bottom: none; }
+    .catalyst-list, .risk-list { list-style: none; margin-bottom: 8px; }
 
-    .signal-dot {
-      width: 5px;
-      height: 5px;
-      background: var(--gold);
-      border-radius: 50%;
-      margin-top: 5px;
-    }
-
-    .signal-desc { color: var(--text); line-height: 1.5; }
-    .signal-source { color: var(--muted); font-size: 10px; white-space: nowrap; }
-    .signal-source[href] { color: var(--gold-dim); text-decoration: none; transition: color 0.2s; }
-    .signal-source[href]:hover { color: var(--gold); }
-
-    .risks-list {
-      list-style: none;
-    }
-
-    .risk-item {
-      font-size: 11px;
-      color: var(--muted);
-      padding: 5px 0;
-      padding-left: 16px;
+    .catalyst-item, .risk-item {
+      font-size: 12px;
+      line-height: 1.6;
+      padding: 10px 0;
+      padding-left: 20px;
       position: relative;
-      line-height: 1.5;
+      border-bottom: 1px solid #181818;
+      color: var(--text);
+    }
+
+    .catalyst-item:last-child, .risk-item:last-child { border-bottom: none; }
+
+    .catalyst-item::before {
+      content: '↑';
+      position: absolute;
+      left: 0;
+      color: var(--buy);
     }
 
     .risk-item::before {
-      content: '—';
+      content: '↓';
       position: absolute;
       left: 0;
-      color: var(--low);
+      color: var(--hold);
     }
 
-    /* Error */
+    .signals-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+      margin-bottom: 24px;
+    }
+
+    .signal-card {
+      background: var(--obsidian);
+      border: 1px solid #1e1e1e;
+      padding: 16px;
+    }
+
+    .signal-card-type {
+      font-size: 10px;
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+      color: var(--gold-dim);
+      margin-bottom: 6px;
+    }
+
+    .signal-card-desc {
+      font-size: 11px;
+      color: var(--text);
+      line-height: 1.5;
+      margin-bottom: 8px;
+    }
+
+    .signal-card-source {
+      font-size: 10px;
+      color: var(--muted);
+      text-decoration: none;
+      transition: color 0.2s;
+    }
+
+    .signal-card-source:hover { color: var(--gold); }
+
     .error-box {
       display: none;
       background: #1a0e0e;
       border: 1px solid #3a1a1a;
       padding: 20px 24px;
-      color: var(--low);
+      color: var(--hold);
       font-size: 12px;
       line-height: 1.6;
     }
 
     .error-box.active { display: block; }
 
-    /* Animations */
     @keyframes fadeUp {
       from { opacity: 0; transform: translateY(16px); }
       to { opacity: 1; transform: translateY(0); }
@@ -456,7 +449,9 @@
 
     @media (max-width: 600px) {
       .input-row { grid-template-columns: 1fr; }
-      .hero-title { font-size: 48px; }
+      .signals-grid { grid-template-columns: 1fr; }
+      .signal-hero { grid-template-columns: 1fr; }
+      .confidence-row { flex-direction: column; }
     }
   </style>
 </head>
@@ -464,54 +459,82 @@
 <div class="container">
 
   <header>
-    <div class="logo">
+    <a class="logo" href="/">
       <div class="logo-mark"></div>
       <span class="logo-name">Onyx</span>
       <span class="logo-sub">Intelligence</span>
-    </div>
-    <nav style="display:flex;gap:24px;"><a href="/" style="font-size:10px;letter-spacing:0.2em;text-transform:uppercase;color:var(--gold);text-decoration:none;">Predictions</a><a href="/invest" style="font-size:10px;letter-spacing:0.2em;text-transform:uppercase;color:var(--muted);text-decoration:none;">Investments</a></nav>
+    </a>
+    <nav>
+      <a href="/">Predictions</a>
+      <a href="/invest" class="active">Investments</a>
+    </nav>
   </header>
 
   <div class="hero">
-    <div class="hero-eyebrow">AI-Powered Signal Intelligence</div>
-    <h1 class="hero-title">See What's<br><em>Coming</em></h1>
-    <p class="hero-sub">Enter a topic. Onyx scans the web and returns structured predictions with confidence levels.</p>
+    <div class="hero-eyebrow">AI Investment Signal Scanner</div>
+    <h1 class="hero-title">Find the<br><em>Opportunity</em></h1>
+    <p class="hero-sub">Enter a stock ticker or crypto symbol. Onyx scans news and returns a Buy / Watch / Hold signal.</p>
   </div>
 
   <div class="search-panel">
-    <div class="panel-label">Intelligence Query</div>
+    <div class="panel-label">Asset Query</div>
     <div class="input-row">
-      <input type="text" id="topicInput" placeholder="e.g. Federal Reserve interest rate decision" />
-      <select id="domainSelect">
-        <option value="markets">Markets</option>
-        <option value="tech">Tech</option>
-        <option value="geopolitics">Geopolitics</option>
+      <input type="text" id="tickerInput" placeholder="e.g. AAPL, NVDA, BTC, ETH" />
+      <select id="assetType">
+        <option value="stock">Stock</option>
+        <option value="crypto">Crypto</option>
       </select>
-      <button class="btn-generate" id="generateBtn" onclick="generatePrediction()">
-        Analyse →
+      <button class="btn-analyse" id="analyseBtn" onclick="analyseAsset()">
+        Scan →
       </button>
     </div>
   </div>
 
   <div class="loading" id="loading">
     <div class="loading-orb"></div>
-    <div class="loading-text">Scanning signals...</div>
+    <div class="loading-text">Scanning investment signals...</div>
   </div>
 
   <div class="error-box" id="errorBox"></div>
 
   <div class="results" id="results">
-    <div class="results-header">
-      <div class="results-topic" id="resultsTopic"></div>
-      <div class="results-meta" id="resultsMeta"></div>
+    <div class="signal-hero">
+      <div>
+        <div class="signal-ticker" id="resTicker"></div>
+        <div class="signal-name" id="resName"></div>
+      </div>
+      <div class="signal-badge" id="resBadge"></div>
     </div>
-    <div class="news-summary" id="newsSummary"></div>
-    <div class="predictions-label">Predictions</div>
-    <div id="predictionsList"></div>
+
+    <div class="confidence-row">
+      <div class="conf-item">
+        <div class="conf-label">Confidence</div>
+        <div class="conf-value" id="resConfidence"></div>
+      </div>
+      <div class="conf-item">
+        <div class="conf-label">Time Horizon</div>
+        <div class="conf-value" id="resHorizon"></div>
+      </div>
+      <div class="conf-item">
+        <div class="conf-label">Asset Type</div>
+        <div class="conf-value" id="resType"></div>
+      </div>
+    </div>
+
+    <div class="summary-box" id="resSummary"></div>
+
+    <div class="section-label">Key Catalysts</div>
+    <ul class="catalyst-list" id="resCatalysts"></ul>
+
+    <div class="section-label">Risk Factors</div>
+    <ul class="risk-list" id="resRisks"></ul>
+
+    <div class="section-label">Supporting Signals</div>
+    <div class="signals-grid" id="resSignals"></div>
   </div>
 
   <footer>
-    <span>Onyx AI · Prediction Intelligence</span>
+    <span>Onyx AI · Investment Intelligence</span>
     <span id="footerTime"></span>
   </footer>
 
@@ -520,22 +543,24 @@
 <script>
   const API = 'https://prediction-api-production-ad66.up.railway.app';
 
-  document.getElementById('footerTime').textContent = new Date().toLocaleDateString('en-US', { weekday:'long', year:'numeric', month:'long', day:'numeric' });
-
-  document.getElementById('topicInput').addEventListener('keydown', e => {
-    if (e.key === 'Enter') generatePrediction();
+  document.getElementById('footerTime').textContent = new Date().toLocaleDateString('en-US', {
+    weekday: 'long', year: 'numeric', month: 'long', day: 'numeric'
   });
 
-  async function generatePrediction() {
-    const topic = document.getElementById('topicInput').value.trim();
-    const domain = document.getElementById('domainSelect').value;
+  document.getElementById('tickerInput').addEventListener('keydown', e => {
+    if (e.key === 'Enter') analyseAsset();
+  });
 
-    if (!topic) {
-      document.getElementById('topicInput').focus();
+  async function analyseAsset() {
+    const ticker = document.getElementById('tickerInput').value.trim().toUpperCase();
+    const assetType = document.getElementById('assetType').value;
+
+    if (!ticker) {
+      document.getElementById('tickerInput').focus();
       return;
     }
 
-    const btn = document.getElementById('generateBtn');
+    const btn = document.getElementById('analyseBtn');
     btn.disabled = true;
 
     document.getElementById('loading').classList.add('active');
@@ -543,19 +568,15 @@
     document.getElementById('errorBox').classList.remove('active');
 
     try {
-      const res = await fetch(`${API}/predict`, {
+      const res = await fetch(`${API}/invest`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ topic, domain, time_horizon: '1-2 weeks' })
+        body: JSON.stringify({ ticker, asset_type: assetType })
       });
 
       const data = await res.json();
-
-      if (!res.ok) {
-        throw new Error(data.detail || 'An error occurred');
-      }
-
-      renderResults(data);
+      if (!res.ok) throw new Error(data.detail || 'An error occurred');
+      renderResults(data, ticker, assetType);
 
     } catch (err) {
       const eb = document.getElementById('errorBox');
@@ -567,57 +588,47 @@
     }
   }
 
-  function renderResults(data) {
-    document.getElementById('resultsTopic').textContent = data.topic;
-    document.getElementById('resultsMeta').textContent =
-      data.domain.toUpperCase() + ' · ' + new Date(data.created_at).toLocaleTimeString();
-    document.getElementById('newsSummary').textContent = data.news_summary;
+  function renderResults(data, ticker, assetType) {
+    const signal = data.signal.toLowerCase();
 
-    const list = document.getElementById('predictionsList');
-    list.innerHTML = '';
+    document.getElementById('resTicker').textContent = ticker;
+    document.getElementById('resName').textContent = data.asset_name || '';
+    document.getElementById('resConfidence').textContent = data.confidence;
+    document.getElementById('resHorizon').textContent = data.time_horizon;
+    document.getElementById('resType').textContent = assetType === 'stock' ? 'Equity' : 'Crypto';
+    document.getElementById('resSummary').textContent = data.summary;
 
-    data.predictions.forEach(p => {
-      const confidenceClass = p.confidence.toLowerCase();
+    const badge = document.getElementById('resBadge');
+    badge.textContent = data.signal;
+    badge.className = `signal-badge ${signal}`;
 
-      const signals = p.supporting_signals.map(s => {
-        const sourceLink = s.source
-          ? `<a class="signal-source" href="https://www.google.com/search?q=${encodeURIComponent(s.source + ' ' + s.description)}" target="_blank" rel="noopener">${s.source} ↗</a>`
-          : '';
-        return `
-        <li class="signal-item">
-          <div class="signal-dot"></div>
-          <div class="signal-desc">${s.description}</div>
-          ${sourceLink}
-        </li>`;
-      }).join('');
+    // Catalysts
+    const catalysts = document.getElementById('resCatalysts');
+    catalysts.innerHTML = (data.catalysts || []).map(c =>
+      `<li class="catalyst-item">${c}</li>`
+    ).join('');
 
-      const risks = p.risk_factors.map(r => `
-        <li class="risk-item">${r}</li>
-      `).join('');
+    // Risks
+    const risks = document.getElementById('resRisks');
+    risks.innerHTML = (data.risks || []).map(r =>
+      `<li class="risk-item">${r}</li>`
+    ).join('');
 
-      const card = document.createElement('div');
-      card.className = 'prediction-card';
-      card.innerHTML = `
-        <div class="card-top">
-          <div class="card-statement">${p.statement}</div>
-          <div class="card-meta">
-            <span class="badge badge-${confidenceClass}">${p.confidence} Confidence</span>
-            <span class="card-horizon">${p.time_horizon}</span>
-          </div>
-        </div>
-        <div class="card-body">
-          <div class="card-section-label">Reasoning</div>
-          <div class="card-reasoning">${p.reasoning}</div>
-
-          <div class="card-section-label">Supporting Signals</div>
-          <ul class="signals-list">${signals}</ul>
-
-          <div class="card-section-label">Risk Factors</div>
-          <ul class="risks-list">${risks}</ul>
-        </div>
-      `;
-      list.appendChild(card);
-    });
+    // Signals
+    const signals = document.getElementById('resSignals');
+    signals.innerHTML = (data.supporting_signals || []).map(s => {
+      const link = s.url
+        ? `<a class="signal-card-source" href="${s.url}" target="_blank" rel="noopener">${s.source} ↗</a>`
+        : s.source
+        ? `<a class="signal-card-source" href="https://news.google.com/search?q=${encodeURIComponent(s.source + ' ' + ticker)}" target="_blank" rel="noopener">${s.source} ↗</a>`
+        : '';
+      return `
+        <div class="signal-card">
+          <div class="signal-card-type">${s.type}</div>
+          <div class="signal-card-desc">${s.description}</div>
+          ${link}
+        </div>`;
+    }).join('');
 
     document.getElementById('results').classList.add('active');
     document.getElementById('results').scrollIntoView({ behavior: 'smooth', block: 'start' });
