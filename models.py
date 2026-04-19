@@ -63,3 +63,41 @@ class DomainSummaryResponse(BaseModel):
     markets: int
     geopolitics: int
     total: int
+
+
+# ── Investment Models ────────────────────────────────────────────────────────
+
+class AssetType(str, Enum):
+    stock = "stock"
+    crypto = "crypto"
+
+
+class InvestmentRequest(BaseModel):
+    ticker: str = Field(..., min_length=1, max_length=20, example="NVDA")
+    asset_type: AssetType = Field(default=AssetType.stock, example="stock")
+
+    class Config:
+        use_enum_values = True
+
+
+class InvestmentSignal(BaseModel):
+    type: str
+    description: str
+    source: Optional[str] = None
+    url: Optional[str] = None
+    strength: str = "moderate"
+
+
+class InvestmentResponse(BaseModel):
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    ticker: str
+    asset_name: Optional[str] = None
+    asset_type: str
+    signal: str                  # "BUY" | "WATCH" | "HOLD"
+    confidence: str              # "High" | "Medium" | "Low"
+    time_horizon: str
+    summary: str
+    catalysts: List[str]
+    risks: List[str]
+    supporting_signals: List[InvestmentSignal]
+    created_at: str = Field(default_factory=lambda: datetime.utcnow().isoformat())
