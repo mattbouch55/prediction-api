@@ -224,8 +224,8 @@
     .panel-scan-btn { background: var(--blue); color: white; border: none; font-family: "Inter", sans-serif; font-size: 12px; font-weight: 500; padding: 7px 18px; border-radius: 6px; cursor: pointer; transition: background 0.12s; white-space: nowrap; flex-shrink: 0; }
     .panel-scan-btn:hover { background: #1a6fff; }
     .panel-scan-btn:disabled { background: var(--border2); color: var(--grey); cursor: not-allowed; }
-    .panel-trade-btn { background: var(--text); color: var(--surface); border: none; font-family: "Inter", sans-serif; font-size: 12px; font-weight: 600; padding: 7px 18px; border-radius: 6px; cursor: pointer; transition: opacity 0.12s; white-space: nowrap; }
-    .panel-trade-btn:hover { opacity: 0.8; }
+    .panel-trade-btn { background: white; color: var(--text); border: 1.5px solid var(--text); font-family: "Inter", sans-serif; font-size: 12px; font-weight: 600; padding: 7px 18px; border-radius: 6px; cursor: pointer; transition: background 0.12s; white-space: nowrap; }
+    .panel-trade-btn:hover { background: var(--surface2); }
 
     @keyframes pulse { 0%,100%{opacity:0.3} 50%{opacity:1} }
     .scanning { animation: pulse 0.9s ease-in-out infinite; color: var(--blue); }
@@ -310,13 +310,14 @@
       <table class="tbl">
         <thead>
           <tr>
-            <th style="width:50%">Ticker</th>
-            <th style="width:25%">Price</th>
+            <th style="width:45%">Ticker</th>
+            <th style="width:22%">Price</th>
             <th style="width:25%">Score</th>
+            <th style="width:8%"></th>
           </tr>
         </thead>
         <tbody id="tableBody">
-          <tr><td class="empty-cell" colspan="3">
+          <tr><td class="empty-cell" colspan="4">
             <div class="empty-icon">📊</div>
             <div class="empty-text">Your watchlist is empty</div>
             <div class="empty-sub">Type a ticker above and click + Add to get started</div>
@@ -492,11 +493,13 @@ function renderPanel(ticker) {
   const hist = scanHistory.filter(h => h.ticker === ticker);
 
   document.getElementById('panelHead').innerHTML = `
-    <div style="display:flex;align-items:center;justify-content:space-between;width:100%;gap:12px">
-      <button class="panel-scan-btn" onclick="scanTicker('${ticker}')" ${w.scanning?'disabled':''}>Scan</button>
-      <div style="flex:1;min-width:0">
-        <div class="panel-ticker">${ticker}</div>
-        <div class="panel-name">${w.assetName || w.type}</div>
+    <div style="display:flex;align-items:center;justify-content:space-between;width:100%">
+      <div style="display:flex;align-items:center;gap:14px">
+        <div>
+          <div class="panel-ticker">${ticker}</div>
+          <div class="panel-name">${w.assetName || w.type}</div>
+        </div>
+        <button class="panel-scan-btn" onclick="scanTicker('${ticker}')" ${w.scanning?'disabled':''}>Scan</button>
       </div>
       <div style="display:flex;gap:6px;flex-shrink:0">
         <button class="panel-trade-btn" onclick="alert('Trading coming soon!')">Buy</button>
@@ -594,7 +597,7 @@ function renderTable() {
   subtitle.textContent = `${watchlist.length} ticker${watchlist.length !== 1 ? 's' : ''}`;
 
   if (!watchlist.length) {
-    body.innerHTML = `<tr><td class="empty-cell" colspan="3"><div class="empty-icon">📊</div><div class="empty-text">Your watchlist is empty</div><div class="empty-sub">Type a ticker above and click + Add to get started</div></td></tr>`;
+    body.innerHTML = `<tr><td class="empty-cell" colspan="4"><div class="empty-icon">📊</div><div class="empty-text">Your watchlist is empty</div><div class="empty-sub">Type a ticker above and click + Add to get started</div></td></tr>`;
     return;
   }
 
@@ -622,13 +625,8 @@ function renderTable() {
         rows += `
       <tr class="main-row${isSel?' selected':''}" id="row-${w.ticker}" onclick="selectStock('${w.ticker}')">
         <td>
-          <div style="display:flex;align-items:center;justify-content:space-between">
-            <div>
-              <div class="ticker-name">${w.ticker}${alertHtml}</div>
-              <div class="ticker-sub">${(w.assetName||w.type).substring(0,28)}${w.scannedAt?' · '+timeAgo(w.scannedAt):''}</div>
-            </div>
-            <button class="del-btn" onclick="event.stopPropagation();removeTicker('${w.ticker}')" title="Remove">&times;</button>
-          </div>
+          <div class="ticker-name">${w.ticker}${alertHtml}</div>
+          <div class="ticker-sub">${(w.assetName||w.type).substring(0,28)}${w.scannedAt?' · '+timeAgo(w.scannedAt):''}</div>
         </td>
         <td class="price-cell${w.scanning?' scanning':''}">${w.scanning?'...':price}</td>
         <td>
@@ -640,6 +638,7 @@ function renderTable() {
             </div>
           </div>
         </td>
+        <td style="text-align:right"><button class="del-btn" onclick="event.stopPropagation();removeTicker('${w.ticker}')" title="Remove">&times;</button></td>
       </tr>`;
   });
 
