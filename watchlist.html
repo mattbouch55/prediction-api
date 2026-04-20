@@ -254,14 +254,27 @@ function saveNote(ticker, note) {
 
 async function refreshPrices() {
   if (watchlist.length === 0) return;
-  const tickers = watchlist.map(w => w.ticker).join(',');
+  const promises = watchlist.map(w => fetchPrice(w.ticker, w.type));
+  await Promise.allSettled(promises);
+  renderTable();
+}
+
+async function fetchPrice(ticker, type) {
   try {
-    const res = await fetch(`${API}/prices?tickers=${encodeURIComponent(tickers)}`);
-    if (res.ok) {
-      prices = await res.json();
-      renderTable();
-    }
-  } catch (e) { console.log('Price fetch failed', e); }
+    // Use a CORS proxy to fetch Yahoo Finance data
+    const url = type === 'crypto'
+      ? `https://corsproxy.io/?${encodeURIComponent('https://query1.finance.yahoo.com/v8/finance/chart/' + ticker + '-USD?interval=1d&range=2d')}`
+      : `https://corsproxy.io/?${encodeURIComponent('https://query1.finance.yahoo.com/v8/finance/chart/' + ticker + '?interval=1d&range=2d')}`;
+    const res = await fetch(url);
+    const data = await res.json();
+    const meta = data.chart.result[0].meta;
+    const price = parseFloat(meta.regularMarketPrice).toFixed(2);
+    const prev = parseFloat(meta.chartPreviousClose || meta.regularMarketPrice);
+    const changePct = prev ? (((price - prev) / prev) * 100).toFixed(2) : 0;
+    prices[ticker] = { price: parseFloat(price), change_pct: parseFloat(changePct) };
+  } catch (e) {
+    prices[ticker] = { price: null, change_pct: null };
+  }
 }
 
 async function scanAll() {
