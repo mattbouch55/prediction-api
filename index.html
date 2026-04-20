@@ -96,7 +96,7 @@
     .progress-txt { font-size: 10px; color: var(--blue); font-family: 'JetBrains Mono', monospace; }
 
     /* Table */
-    .tbl { width: 100%; border-collapse: collapse; }
+    .tbl { width: 100%; border-collapse: collapse; table-layout: fixed; }
     .tbl th { font-size: 10px; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; color: var(--grey); padding: 9px 16px; text-align: left; border-bottom: 1px solid var(--border); background: var(--surface); white-space: nowrap; }
     .tbl td { padding: 12px 16px; border-bottom: 1px solid var(--border); vertical-align: middle; }
     .tbl tbody tr.main-row { cursor: pointer; transition: background 0.1s; }
@@ -106,7 +106,7 @@
     .tbl tbody tr:last-child td { border-bottom: none; }
 
     /* Cells */
-    .ticker-name { font-family: 'JetBrains Mono', monospace; font-size: 13px; font-weight: 500; color: var(--text); }
+    .ticker-name { font-family: 'JetBrains Mono', monospace; font-size: 13px; font-weight: 500; color: var(--text); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
     .ticker-sub { font-size: 10px; color: var(--grey); margin-top: 2px; }
     .alert-pill { font-size: 9px; background: var(--blue-soft); color: var(--blue); border: 1px solid rgba(21,101,255,0.2); padding: 1px 5px; border-radius: 8px; margin-left: 5px; vertical-align: middle; }
     .price-cell { font-family: 'JetBrains Mono', monospace; font-size: 13px; color: var(--text); }
