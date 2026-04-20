@@ -53,6 +53,11 @@ def serve_watchlist():
     return FileResponse("watchlist.html")
 
 
+@app.get("/search")
+def serve_search():
+    return FileResponse("search.html")
+
+
 # ── API routes ───────────────────────────────────────────────────────────────
 
 @app.get("/health")
