@@ -194,7 +194,7 @@
     /* ── RIGHT PANEL ────────────────────────────────────────── */
     .right-panel { flex: 2; min-width: 280px; }
     .panel-card { width: 100%; background: var(--surface); border: 1px solid var(--border); border-radius: 10px; box-shadow: var(--shadow); overflow: hidden; height: calc(100vh - 48px); display: flex; flex-direction: column; position: sticky; top: 24px; }
-    .panel-head { padding: 14px 16px; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: flex-start; flex-shrink: 0; }
+    .panel-head { padding: 14px 16px; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; flex-shrink: 0; }
     .panel-ticker { font-family: 'JetBrains Mono', monospace; font-size: 20px; font-weight: 600; color: var(--text); }
     .panel-name { font-size: 11px; color: var(--grey); margin-top: 2px; }
     .panel-close { background: none; border: none; color: var(--grey); cursor: pointer; font-size: 18px; padding: 0; transition: color 0.12s; line-height: 1; }
@@ -324,7 +324,7 @@
           </tr>
         </thead>
         <tbody id="tableBody">
-          <tr><td class="empty-cell" colspan="4">
+          <tr><td class="empty-cell" colspan="3">
             <div class="empty-icon">📊</div>
             <div class="empty-text">Your watchlist is empty</div>
             <div class="empty-sub">Type a ticker above and click + Add to get started</div>
@@ -500,9 +500,16 @@ function renderPanel(ticker) {
   const hist = scanHistory.filter(h => h.ticker === ticker);
 
   document.getElementById('panelHead').innerHTML = `
-    <div>
-      <div class="panel-ticker">${ticker}</div>
-      <div class="panel-name">${w.assetName || w.type}</div>
+    <div style="display:flex;align-items:center;justify-content:space-between;width:100%">
+      <div>
+        <div class="panel-ticker">${ticker}</div>
+        <div class="panel-name">${w.assetName || w.type}</div>
+      </div>
+      <div style="display:flex;gap:8px;flex-shrink:0">
+        <button class="panel-scan-btn" style="padding:7px 16px" onclick="scanTicker('${ticker}')" ${w.scanning?'disabled':''}>Scan</button>
+        <button class="panel-buy-btn" style="padding:7px 16px" onclick="alert('Trading coming soon!')">Buy</button>
+        <button class="panel-sell-btn" style="padding:7px 16px" onclick="alert('Trading coming soon!')">Sell</button>
+      </div>
     </div>
   `;
 
@@ -517,11 +524,6 @@ function renderPanel(ticker) {
     </div>`).join('') : '<div class="no-phist">No scan history yet</div>';
 
   document.getElementById('panelBody').innerHTML = `
-    <div class="panel-action-row">
-      <button class="panel-scan-btn" onclick="scanTicker('${ticker}')" ${w.scanning?'disabled':''}>Scan</button>
-      <button class="panel-buy-btn" onclick="alert('Trading coming soon!')">Buy</button>
-      <button class="panel-sell-btn" onclick="alert('Trading coming soon!')">Sell</button>
-    </div>
     ${w.signal ? `
     <div class="panel-section">
       <div style="display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:10px">
@@ -598,7 +600,7 @@ function renderTable() {
   subtitle.textContent = `${watchlist.length} ticker${watchlist.length !== 1 ? 's' : ''}`;
 
   if (!watchlist.length) {
-    body.innerHTML = `<tr><td class="empty-cell" colspan="4"><div class="empty-icon">📊</div><div class="empty-text">Your watchlist is empty</div><div class="empty-sub">Type a ticker above and click + Add to get started</div></td></tr>`;
+    body.innerHTML = `<tr><td class="empty-cell" colspan="3"><div class="empty-icon">📊</div><div class="empty-text">Your watchlist is empty</div><div class="empty-sub">Type a ticker above and click + Add to get started</div></td></tr>`;
     return;
   }
 
@@ -626,10 +628,10 @@ function renderTable() {
         rows += `
       <tr class="main-row${isSel?' selected':''}" id="row-${w.ticker}" onclick="selectStock('${w.ticker}')">
         <td>
-          <div style="display:flex;align-items:flex-start;justify-content:space-between">
+          <div style="display:flex;align-items:center;justify-content:space-between">
             <div>
               <div class="ticker-name">${w.ticker}${alertHtml}</div>
-              <div class="ticker-sub">${(w.assetName||w.type).substring(0,24)}${w.scannedAt?' · '+timeAgo(w.scannedAt):''}</div>
+              <div class="ticker-sub">${(w.assetName||w.type).substring(0,26)}${w.scannedAt?' · '+timeAgo(w.scannedAt):''}</div>
             </div>
             <button class="del-btn" onclick="event.stopPropagation();removeTicker('${w.ticker}')" title="Remove">&times;</button>
           </div>
@@ -641,7 +643,6 @@ function renderTable() {
             <div class="score-bar"><div class="score-fill" style="width:${sbWidth};background:${sbColor}"></div></div>
           </div>
         </td>
-        <td><span class="sig ${sigCls}">${sigTxt}</span></td>
       </tr>`;
   });
 
