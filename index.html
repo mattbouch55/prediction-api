@@ -265,8 +265,7 @@
             </select>
             <button class="btn btn-secondary" onclick="addTicker()">+ Add</button>
           </div>
-          <button class="btn btn-secondary" onclick="refreshPrices()" title="Refresh prices">↻</button>
-          <button class="btn btn-primary" id="scanAllBtn" onclick="scanAll()">⚡ Scan All</button>
+          <button class="btn btn-primary" id="scanAllBtn" onclick="scanAll()">Scan All</button>
         </div>
       </div>
 
@@ -383,6 +382,7 @@ async function scanAll() {
   const btn = document.getElementById('scanAllBtn');
   btn.disabled = true;
   document.getElementById('progressWrap').classList.add('active');
+  await refreshPrices();
   for (let i = 0; i < watchlist.length; i++) {
     document.getElementById('progressFill').style.width = `${Math.round((i/watchlist.length)*100)}%`;
     document.getElementById('progressTxt').textContent = `Analysing ${watchlist[i].ticker} (${i+1}/${watchlist.length})`;
@@ -502,9 +502,15 @@ function renderPanel(ticker) {
   `;
 }
 
-function saveComment(ticker) {
-  const val = document.getElementById('cmt-' + ticker)?.value || '';
+function saveComment(ticker, elemId) {
+  const id = elemId || ('cmt-' + ticker);
+  const val = document.getElementById(id)?.value || '';
   comments[ticker] = val;
+  // Sync all comment areas for this ticker
+  ['cmt-'+ticker, 'inlineCmt-'+ticker].forEach(i => {
+    const el = document.getElementById(i);
+    if (el) el.value = val;
+  });
   save();
 }
 
@@ -579,14 +585,21 @@ function renderTable() {
         <tr class="hist-row">
           <td colspan="8">
             <div class="hist-inner">
-              <div class="hist-title">Scan History</div>
-              ${hist.length ? hist.slice(0,5).map(h=>`
-                <div class="hist-entry">
-                  <span class="hist-sig" style="color:${h.signal==='BUY'?'var(--green)':h.signal==='SELL'?'var(--red)':h.signal==='WATCH'?'var(--yellow)':'var(--grey2)'}">${h.signal}</span>
-                  <span class="hist-score">${h.score?.toFixed(1)||'—'}/10</span>
-                  <div class="hist-sum">${(h.summary||'').substring(0,100)}...</div>
-                  <div class="hist-time">${timeAgo(h.time)}</div>
-                </div>`).join('') : '<div class="no-hist">No scan history yet</div>'}
+              <div class="hist-scroll">
+                <div class="hist-title">Scan History</div>
+                ${hist.length ? hist.slice(0,10).map(h=>`
+                  <div class="hist-entry">
+                    <span class="hist-sig" style="color:${h.signal==='BUY'?'var(--green)':h.signal==='SELL'?'var(--red)':h.signal==='WATCH'?'var(--yellow)':'var(--grey2)'}">${h.signal}</span>
+                    <span class="hist-score">${h.score?.toFixed(1)||'—'}/10</span>
+                    <div class="hist-sum">${(h.summary||'').substring(0,70)}...</div>
+                    <div class="hist-time">${timeAgo(h.time)}</div>
+                  </div>`).join('') : '<div class="no-hist">No history yet</div>'}
+              </div>
+              <div class="inline-comment">
+                <div class="inline-comment-label">Quick Note</div>
+                <textarea class="inline-comment-area" id="inlineCmt-${w.ticker}" placeholder="Add a note...">${comments[w.ticker]||''}</textarea>
+                <button class="inline-save-btn" onclick="event.stopPropagation();saveComment('${w.ticker}','inlineCmt-${w.ticker}')">Save</button>
+              </div>
             </div>
           </td>
         </tr>`;
