@@ -19,6 +19,8 @@
       --panel-width: 300px;
     }
     html, body { height: 100%; background: var(--bg); color: var(--text); font-family: 'Inter', sans-serif; font-size: 13px; overflow: hidden; }
+    .main { overflow-y: auto !important; height: 100% !important; }
+    .table-wrap { overflow: visible !important; min-height: 200px; }
 
     /* App shell */
     .app { display: grid; grid-template-columns: 200px 1fr var(--panel-width); grid-template-rows: 52px 1fr; height: 100vh; transition: grid-template-columns 0.25s ease; }
