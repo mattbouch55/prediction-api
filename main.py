@@ -62,25 +62,23 @@ def health_check():
 
 @app.get("/prices")
 def get_prices(tickers: str):
-    """Get current prices using direct Yahoo Finance API calls."""
+    """Get current prices using Finnhub API."""
     import requests as req
+    api_key = os.environ.get("FINNHUB_API_KEY", "")
     ticker_list = [t.strip().upper() for t in tickers.split(",") if t.strip()]
     result = {}
-    headers = {
-        "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
-        "Accept": "application/json",
-        "Referer": "https://finance.yahoo.com/",
-    }
     for ticker in ticker_list:
         try:
-            url = f"https://query1.finance.yahoo.com/v8/finance/chart/{ticker}?interval=1d&range=5d"
-            r = req.get(url, headers=headers, timeout=10)
+            url = f"https://finnhub.io/api/v1/quote?symbol={ticker}&token={api_key}"
+            r = req.get(url, timeout=10)
             data = r.json()
-            meta = data["chart"]["result"][0]["meta"]
-            price = round(float(meta["regularMarketPrice"]), 2)
-            prev = round(float(meta.get("chartPreviousClose", meta["regularMarketPrice"])), 2)
-            change_pct = round(((price - prev) / prev) * 100, 2) if prev else 0
-            result[ticker] = {"price": price, "prev_close": prev, "change_pct": change_pct}
+            price = data.get("c")  # current price
+            prev = data.get("pc")  # previous close
+            if price and prev and price > 0:
+                change_pct = round(((price - prev) / prev) * 100, 2)
+                result[ticker] = {"price": round(price, 2), "prev_close": round(prev, 2), "change_pct": change_pct}
+            else:
+                result[ticker] = {"price": None, "change_pct": None, "error": "No data"}
         except Exception as e:
             result[ticker] = {"price": None, "change_pct": None, "error": str(e)}
     return result
