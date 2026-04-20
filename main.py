@@ -43,14 +43,14 @@ def serve_frontend():
     return FileResponse("index.html")
 
 
-@app.get("/watchlist")
-def serve_watchlist():
-    return FileResponse("watchlist.html")
-
-
 @app.get("/invest")
 def serve_invest():
     return FileResponse("invest.html")
+
+
+@app.get("/watchlist")
+def serve_watchlist():
+    return FileResponse("watchlist.html")
 
 
 # ── API routes ───────────────────────────────────────────────────────────────
@@ -58,6 +58,33 @@ def serve_invest():
 @app.get("/health")
 def health_check():
     return {"status": "ok", "version": "1.0.0"}
+
+
+@app.get("/prices")
+def get_prices(tickers: str):
+    """Get current prices for a comma-separated list of tickers."""
+    try:
+        import yfinance as yf
+        ticker_list = [t.strip().upper() for t in tickers.split(",") if t.strip()]
+        result = {}
+        for ticker in ticker_list:
+            try:
+                data = yf.Ticker(ticker)
+                info = data.fast_info
+                price = round(float(info.last_price), 2)
+                prev = round(float(info.previous_close), 2)
+                change_pct = round(((price - prev) / prev) * 100, 2) if prev else 0
+                result[ticker] = {
+                    "price": price,
+                    "prev_close": prev,
+                    "change_pct": change_pct,
+                    "currency": getattr(info, "currency", "USD")
+                }
+            except Exception:
+                result[ticker] = {"price": None, "change_pct": None, "error": "Not found"}
+        return result
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
 
 
 @app.post("/predict", response_model=PredictionResponse)
