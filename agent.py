@@ -28,6 +28,10 @@ class PredictionAgent:
     def _run_sync(self, topic: str, domain: str, time_horizon: str) -> PredictionResponse:
         domain_context = DOMAIN_PROMPTS.get(domain, "You are an intelligence analyst.")
 
+        custom_source_note = ""
+        if custom_source:
+            custom_source_note = f"\n\nIMPORTANT: The user has provided this specific source URL for you to consider in your analysis: {custom_source}\nFetch and read this URL as part of your research and factor its content into your predictions."
+
         prompt = f"""
 {domain_context}
 
@@ -59,7 +63,7 @@ Then return ONLY a valid JSON object (no markdown, no explanation) in this exact
   ]
 }}
 
-Generate 2-3 predictions. Return ONLY the JSON object.
+Generate 2-3 predictions. Return ONLY the JSON object.{custom_source_note}
 """
 
         response = self.client.messages.create(
@@ -140,12 +144,12 @@ class InvestmentAgent:
         self.client = anthropic.Anthropic(api_key=api_key)
         self.model = "claude-sonnet-4-5"
 
-    async def run(self, ticker: str, asset_type: str) -> InvestmentResponse:
+    async def run(self, ticker: str, asset_type: str, custom_source: str = None) -> InvestmentResponse:
         loop = asyncio.get_event_loop()
-        result = await loop.run_in_executor(None, self._run_sync, ticker, asset_type)
+        result = await loop.run_in_executor(None, self._run_sync, ticker, asset_type, custom_source)
         return result
 
-    def _run_sync(self, ticker: str, asset_type: str) -> InvestmentResponse:
+    def _run_sync(self, ticker: str, asset_type: str, custom_source: str = None) -> InvestmentResponse:
         asset_label = "stock" if asset_type == "stock" else "cryptocurrency"
 
         prompt = f"""
