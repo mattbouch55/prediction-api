@@ -28,7 +28,7 @@
       --yellow: #d97706;
       --yellow-dim: rgba(217,119,6,0.08);
       --sidebar-w: 200px;
-      --panel-w: 340px;
+      --panel-w: 0;
       --shadow: 0 1px 3px rgba(0,0,0,0.06), 0 1px 2px rgba(0,0,0,0.04);
     }
 
@@ -67,7 +67,7 @@
     .main { margin-left: var(--sidebar-w); flex: 1; padding: 24px; display: flex; gap: 16px; align-items: flex-start; }
 
     /* ── WATCHLIST CARD ─────────────────────────────────────── */
-    .watchlist-card { flex: 1; min-width: 0; max-width: 680px; background: var(--surface); border: 1px solid var(--border); border-radius: 10px; box-shadow: var(--shadow); overflow: hidden; }
+    .watchlist-card { flex: 3; min-width: 0; background: var(--surface); border: 1px solid var(--border); border-radius: 10px; box-shadow: var(--shadow); overflow: hidden; }
 
     .card-header { padding: 14px 20px; border-bottom: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; gap: 12px; }
     .card-title { font-size: 13px; font-weight: 600; color: var(--text); }
@@ -192,8 +192,8 @@
     .empty-sub { font-size: 11px; color: var(--grey); }
 
     /* ── RIGHT PANEL ────────────────────────────────────────── */
-    .right-panel { width: var(--panel-w); flex-shrink: 0; }
-    .panel-card { width: var(--panel-w); background: var(--surface); border: 1px solid var(--border); border-radius: 10px; box-shadow: var(--shadow); overflow: hidden; height: calc(100vh - 48px); display: flex; flex-direction: column; position: sticky; top: 24px; }
+    .right-panel { flex: 2; min-width: 280px; }
+    .panel-card { width: 100%; background: var(--surface); border: 1px solid var(--border); border-radius: 10px; box-shadow: var(--shadow); overflow: hidden; height: calc(100vh - 48px); display: flex; flex-direction: column; position: sticky; top: 24px; }
     .panel-head { padding: 14px 16px; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: flex-start; flex-shrink: 0; }
     .panel-ticker { font-family: 'JetBrains Mono', monospace; font-size: 20px; font-weight: 600; color: var(--text); }
     .panel-name { font-size: 11px; color: var(--grey); margin-top: 2px; }
