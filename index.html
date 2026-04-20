@@ -221,13 +221,11 @@
     .save-btn:hover { border-color: var(--blue); color: var(--blue); background: var(--blue-soft); }
     .panel-placeholder { display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100%; color: var(--grey); text-align: center; padding: 24px; }
     .panel-action-row { display: flex; gap: 8px; margin-bottom: 16px; }
-    .panel-scan-btn { flex: 1; background: var(--blue); color: white; border: none; font-family: "Inter", sans-serif; font-size: 12px; font-weight: 500; padding: 9px 0; border-radius: 6px; cursor: pointer; transition: background 0.12s; }
+    .panel-scan-btn { background: var(--blue); color: white; border: none; font-family: "Inter", sans-serif; font-size: 12px; font-weight: 500; padding: 7px 18px; border-radius: 6px; cursor: pointer; transition: background 0.12s; white-space: nowrap; flex-shrink: 0; }
     .panel-scan-btn:hover { background: #1a6fff; }
     .panel-scan-btn:disabled { background: var(--border2); color: var(--grey); cursor: not-allowed; }
-    .panel-buy-btn { flex: 1; background: var(--green-dim); color: var(--green); border: 1px solid rgba(22,163,74,0.3); font-family: "Inter", sans-serif; font-size: 12px; font-weight: 600; padding: 9px 0; border-radius: 6px; cursor: pointer; transition: all 0.12s; }
-    .panel-buy-btn:hover { background: rgba(22,163,74,0.15); }
-    .panel-sell-btn { flex: 1; background: var(--red-dim); color: var(--red); border: 1px solid rgba(220,38,38,0.3); font-family: "Inter", sans-serif; font-size: 12px; font-weight: 600; padding: 9px 0; border-radius: 6px; cursor: pointer; transition: all 0.12s; }
-    .panel-sell-btn:hover { background: rgba(220,38,38,0.15); }
+    .panel-trade-btn { background: var(--text); color: var(--surface); border: none; font-family: "Inter", sans-serif; font-size: 12px; font-weight: 600; padding: 7px 18px; border-radius: 6px; cursor: pointer; transition: opacity 0.12s; white-space: nowrap; }
+    .panel-trade-btn:hover { opacity: 0.8; }
 
     @keyframes pulse { 0%,100%{opacity:0.3} 50%{opacity:1} }
     .scanning { animation: pulse 0.9s ease-in-out infinite; color: var(--blue); }
@@ -494,15 +492,15 @@ function renderPanel(ticker) {
   const hist = scanHistory.filter(h => h.ticker === ticker);
 
   document.getElementById('panelHead').innerHTML = `
-    <div style="display:flex;align-items:center;justify-content:space-between;width:100%">
-      <div>
+    <div style="display:flex;align-items:center;justify-content:space-between;width:100%;gap:12px">
+      <button class="panel-scan-btn" onclick="scanTicker('${ticker}')" ${w.scanning?'disabled':''}>Scan</button>
+      <div style="flex:1;min-width:0">
         <div class="panel-ticker">${ticker}</div>
         <div class="panel-name">${w.assetName || w.type}</div>
       </div>
-      <div style="display:flex;gap:8px;flex-shrink:0">
-        <button class="panel-scan-btn" style="padding:7px 16px" onclick="scanTicker('${ticker}')" ${w.scanning?'disabled':''}>Scan</button>
-        <button class="panel-buy-btn" style="padding:7px 16px" onclick="alert('Trading coming soon!')">Buy</button>
-        <button class="panel-sell-btn" style="padding:7px 16px" onclick="alert('Trading coming soon!')">Sell</button>
+      <div style="display:flex;gap:6px;flex-shrink:0">
+        <button class="panel-trade-btn" onclick="alert('Trading coming soon!')">Buy</button>
+        <button class="panel-trade-btn" onclick="alert('Trading coming soon!')">Sell</button>
       </div>
     </div>
   `;
@@ -522,12 +520,14 @@ function renderPanel(ticker) {
     <div class="panel-section">
       <div style="display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:10px">
         <div>
-          <div class="panel-score-big ${sc}">${w.score ? w.score.toFixed(1) : '—'}</div>
-          <div style="font-size:10px;color:var(--grey);margin-top:2px">/ 10 AI Score</div>
-          <div class="conf-track" style="width:100px;margin-top:6px"><div class="conf-fill" style="width:${confPct}%"></div></div>
+          <div style="display:flex;align-items:flex-start;gap:10px">
+            <div class="panel-score-big ${sc}">${w.score ? w.score.toFixed(1) : '—'}</div>
+            <span class="sig ${sigCls}" style="font-size:12px;padding:5px 12px;margin-top:6px">${w.signal}</span>
+          </div>
+          <div style="font-size:10px;color:var(--grey);margin-top:4px">/ 10 AI Score</div>
+          <div class="conf-track" style="width:120px;margin-top:6px"><div class="conf-fill" style="width:${confPct}%"></div></div>
           <div class="conf-label">Confidence: ${w.confidence || '—'}</div>
         </div>
-        <span class="sig ${sigCls}" style="font-size:12px;padding:5px 12px">${w.signal}</span>
       </div>
       ${w.summary ? `<div class="panel-summary">${w.summary}</div>` : ''}
     </div>
@@ -634,7 +634,10 @@ function renderTable() {
         <td>
           <div class="score-wrap">
             <div class="score-n ${sc}">${scoreTxt}</div>
-            <div class="score-bar"><div class="score-fill" style="width:${sbWidth};background:${sbColor}"></div></div>
+            <div>
+              <div class="score-bar"><div class="score-fill" style="width:${sbWidth};background:${sbColor}"></div></div>
+              ${w.signal ? `<span class="sig ${sigCls}" style="margin-top:4px;display:inline-block">${w.signal}</span>` : ''}
+            </div>
           </div>
         </td>
       </tr>`;
