@@ -62,29 +62,28 @@ def health_check():
 
 @app.get("/prices")
 def get_prices(tickers: str):
-    """Get current prices for a comma-separated list of tickers."""
-    try:
-        import yfinance as yf
-        ticker_list = [t.strip().upper() for t in tickers.split(",") if t.strip()]
-        result = {}
-        for ticker in ticker_list:
-            try:
-                data = yf.Ticker(ticker)
-                info = data.fast_info
-                price = round(float(info.last_price), 2)
-                prev = round(float(info.previous_close), 2)
-                change_pct = round(((price - prev) / prev) * 100, 2) if prev else 0
-                result[ticker] = {
-                    "price": price,
-                    "prev_close": prev,
-                    "change_pct": change_pct,
-                    "currency": getattr(info, "currency", "USD")
-                }
-            except Exception:
-                result[ticker] = {"price": None, "change_pct": None, "error": "Not found"}
-        return result
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+    """Get current prices using direct Yahoo Finance API calls."""
+    import requests as req
+    ticker_list = [t.strip().upper() for t in tickers.split(",") if t.strip()]
+    result = {}
+    headers = {
+        "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+        "Accept": "application/json",
+        "Referer": "https://finance.yahoo.com/",
+    }
+    for ticker in ticker_list:
+        try:
+            url = f"https://query1.finance.yahoo.com/v8/finance/chart/{ticker}?interval=1d&range=5d"
+            r = req.get(url, headers=headers, timeout=10)
+            data = r.json()
+            meta = data["chart"]["result"][0]["meta"]
+            price = round(float(meta["regularMarketPrice"]), 2)
+            prev = round(float(meta.get("chartPreviousClose", meta["regularMarketPrice"])), 2)
+            change_pct = round(((price - prev) / prev) * 100, 2) if prev else 0
+            result[ticker] = {"price": price, "prev_close": prev, "change_pct": change_pct}
+        except Exception as e:
+            result[ticker] = {"price": None, "change_pct": None, "error": str(e)}
+    return result
 
 
 @app.post("/predict", response_model=PredictionResponse)
