@@ -138,44 +138,54 @@
 
     /* Row controls */
     .ctrl-wrap { display: flex; align-items: center; gap: 4px; }
-    .expand-btn { background: none; border: none; color: var(--grey); cursor: pointer; font-size: 10px; padding: 3px 5px; transition: transform 0.2s, color 0.12s; border-radius: 3px; }
-    .expand-btn:hover { color: var(--text); background: var(--surface2); }
-    .expand-btn.open { transform: rotate(90deg); color: var(--blue); }
+
     .scan-sm { font-size: 10px; background: transparent; border: 1px solid var(--border2); color: var(--text2); padding: 3px 8px; border-radius: 4px; cursor: pointer; font-family: 'Inter', sans-serif; transition: all 0.12s; }
     .scan-sm:hover { border-color: var(--blue); color: var(--blue); background: var(--blue-soft); }
     .scan-sm:disabled { opacity: 0.35; cursor: not-allowed; }
     .del-btn { background: none; border: none; color: var(--border2); cursor: pointer; font-size: 14px; padding: 2px 4px; transition: color 0.12s; border-radius: 3px; }
     .del-btn:hover { color: var(--red); }
 
-    /* History drawer */
-    .hist-inner { padding: 12px 16px 16px 44px; display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
-    .hist-scroll { max-height: 220px; overflow-y: auto; padding-right: 6px; }
-    .hist-scroll::-webkit-scrollbar { width: 4px; }
-    .hist-scroll::-webkit-scrollbar-track { background: var(--surface2); border-radius: 2px; }
-    .hist-scroll::-webkit-scrollbar-thumb { background: var(--border2); border-radius: 2px; }
-    .hist-scroll::-webkit-scrollbar-thumb:hover { background: var(--grey); }
-    .hist-title { font-size: 10px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.08em; color: var(--grey); margin-bottom: 10px; }
-    .hist-entry { padding: 10px 0; border-bottom: 1px solid var(--border); }
-    .hist-entry:last-child { border-bottom: none; }
-    .hist-entry-top { display: flex; align-items: center; gap: 8px; margin-bottom: 5px; }
-    .hist-sig { font-weight: 700; text-transform: uppercase; font-size: 10px; letter-spacing: 0.06em; }
-    .hist-score { font-family: "JetBrains Mono", monospace; font-size: 10px; color: var(--text2); background: var(--surface2); padding: 1px 6px; border-radius: 3px; border: 1px solid var(--border); }
-    .hist-time { font-size: 10px; color: var(--grey); font-family: "JetBrains Mono", monospace; margin-left: auto; }
-    .hist-sum { font-size: 11px; color: var(--text2); line-height: 1.6; }
-    .no-hist { font-size: 11px; color: var(--grey); font-style: italic; padding: 8px 0; }
-    .notes-panel { display: flex; flex-direction: column; gap: 10px; }
-    .notes-section-label { font-size: 10px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.08em; color: var(--grey); margin-bottom: 4px; }
-    .notes-url-input { width: 100%; background: var(--surface); border: 1px solid var(--border2); border-radius: 6px; color: var(--text); font-family: "Inter", sans-serif; font-size: 11px; padding: 7px 10px; outline: none; transition: border-color 0.15s, box-shadow 0.15s; }
+    
+
+    /* Detail panel sections */
+    .panel-section { margin-bottom: 16px; }
+    .panel-section-label { font-size: 10px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.1em; color: var(--grey); margin-bottom: 8px; }
+    .panel-hist-notes { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 16px; }
+    .panel-hist-scroll { max-height: 240px; overflow-y: auto; padding-right: 6px; }
+    .panel-hist-scroll::-webkit-scrollbar { width: 4px; }
+    .panel-hist-scroll::-webkit-scrollbar-track { background: var(--surface2); border-radius: 2px; }
+    .panel-hist-scroll::-webkit-scrollbar-thumb { background: var(--border2); border-radius: 2px; }
+    .panel-hist-scroll::-webkit-scrollbar-thumb:hover { background: var(--grey); }
+    .phist-entry { padding: 9px 0; border-bottom: 1px solid var(--border); }
+    .phist-entry:last-child { border-bottom: none; }
+    .phist-top { display: flex; align-items: center; gap: 7px; margin-bottom: 4px; }
+    .phist-sig { font-weight: 700; text-transform: uppercase; font-size: 10px; letter-spacing: 0.06em; }
+    .phist-score { font-family: "JetBrains Mono", monospace; font-size: 10px; color: var(--text2); background: var(--surface2); padding: 1px 5px; border-radius: 3px; border: 1px solid var(--border); }
+    .phist-time { font-size: 10px; color: var(--grey); font-family: "JetBrains Mono", monospace; margin-left: auto; }
+    .phist-sum { font-size: 11px; color: var(--text2); line-height: 1.6; }
+    .no-phist { font-size: 11px; color: var(--grey); font-style: italic; padding: 8px 0; }
+    .notes-col { display: flex; flex-direction: column; gap: 10px; }
+    .notes-url-input { width: 100%; background: var(--bg); border: 1px solid var(--border2); border-radius: 6px; color: var(--text); font-family: "Inter", sans-serif; font-size: 11px; padding: 7px 10px; outline: none; transition: border-color 0.15s, box-shadow 0.15s; }
     .notes-url-input:focus { border-color: var(--blue); box-shadow: 0 0 0 2px var(--blue-glow); }
     .notes-url-input::placeholder { color: var(--grey); }
-    .notes-url-hint { font-size: 10px; color: var(--grey); margin-top: 3px; margin-bottom: 6px; }
-    .notes-textarea { width: 100%; background: var(--surface); border: 1px solid var(--border2); border-radius: 6px; color: var(--text); font-family: "Inter", sans-serif; font-size: 12px; padding: 10px 12px; resize: none; outline: none; line-height: 1.6; height: 90px; transition: border-color 0.15s, box-shadow 0.15s; box-shadow: inset 0 1px 2px rgba(0,0,0,0.04); }
+    .notes-url-hint { font-size: 10px; color: var(--grey); margin-top: 3px; }
+    .notes-textarea { width: 100%; background: var(--bg); border: 1px solid var(--border2); border-radius: 6px; color: var(--text); font-family: "Inter", sans-serif; font-size: 12px; padding: 10px 12px; resize: none; outline: none; line-height: 1.6; flex: 1; min-height: 100px; transition: border-color 0.15s, box-shadow 0.15s; box-shadow: inset 0 1px 2px rgba(0,0,0,0.04); }
     .notes-textarea:focus { border-color: var(--blue); box-shadow: 0 0 0 2px var(--blue-glow), inset 0 1px 2px rgba(0,0,0,0.04); }
     .notes-textarea::placeholder { color: var(--grey); }
-    .notes-save-btn { background: var(--blue); border: none; color: white; font-family: "Inter", sans-serif; font-size: 11px; font-weight: 500; padding: 6px 14px; border-radius: 5px; cursor: pointer; transition: background 0.12s; }
+    .notes-save-btn { background: var(--blue); border: none; color: white; font-family: "Inter", sans-serif; font-size: 11px; font-weight: 500; padding: 6px 14px; border-radius: 5px; cursor: pointer; transition: background 0.12s; align-self: flex-end; }
     .notes-save-btn:hover { background: #1a6fff; }
+    .panel-two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 14px; }
+    .panel-list-card { background: var(--surface2); border: 1px solid var(--border); border-radius: 6px; padding: 12px 14px; }
+    .panel-list-title { font-size: 10px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 8px; }
+    .panel-list-title.green { color: var(--green); }
+    .panel-list-title.red { color: var(--red); }
+    .panel-ul { list-style: none; }
+    .panel-li { font-size: 11px; color: var(--text2); padding: 5px 0 5px 13px; border-bottom: 1px solid var(--border); position: relative; line-height: 1.5; }
+    .panel-li:last-child { border-bottom: none; }
+    .panel-li.up::before { content:"↑"; position:absolute; left:0; color:var(--green); font-weight:700; }
+    .panel-li.dn::before { content:"↓"; position:absolute; left:0; color:var(--red); font-weight:700; }
 
-    /* Empty state */
+        /* Empty state */
     .empty-cell { padding: 56px 20px !important; text-align: center; }
     .empty-icon { font-size: 28px; margin-bottom: 10px; opacity: 0.2; }
     .empty-text { font-size: 13px; color: var(--text2); margin-bottom: 4px; }
@@ -343,7 +353,6 @@ let scanHistory = JSON.parse(localStorage.getItem('onyx_hist_v3') || '[]');
 let comments = JSON.parse(localStorage.getItem('onyx_comments') || '{}');
 let prices = {};
 let selectedTicker = null;
-let expandedRows = new Set();
 
 // Market status
 const now = new Date();
@@ -442,11 +451,6 @@ async function scanTicker(ticker, rerender = true) {
   if (rerender) { renderTable(); if (selectedTicker === ticker) renderPanel(ticker); }
 }
 
-function toggleRow(ticker) {
-  expandedRows.has(ticker) ? expandedRows.delete(ticker) : expandedRows.add(ticker);
-  renderTable();
-}
-
 function selectStock(ticker) {
   selectedTicker = ticker;
   document.getElementById('rightPanel').classList.add('open');
@@ -469,7 +473,8 @@ function renderPanel(ticker) {
   const sc = !w.score ? 'nd' : w.score >= 7 ? 'hi' : w.score >= 5 ? 'mi' : 'lo';
   const confPct = w.confidence === 'High' ? 85 : w.confidence === 'Medium' ? 60 : w.confidence === 'Low' ? 35 : 0;
   const comment = comments[ticker] || '';
-  const hist = scanHistory.filter(h => h.ticker === ticker).slice(0, 5);
+  const srcUrl = comments[ticker + '_url'] || '';
+  const hist = scanHistory.filter(h => h.ticker === ticker);
 
   document.getElementById('panelHead').innerHTML = `
     <div>
@@ -479,45 +484,61 @@ function renderPanel(ticker) {
     <button class="panel-close" onclick="closePanel()">×</button>
   `;
 
+  const histHTML = hist.length ? hist.slice(0,30).map(h => `
+    <div class="phist-entry">
+      <div class="phist-top">
+        <span class="phist-sig" style="color:${h.signal==='BUY'?'var(--green)':h.signal==='SELL'?'var(--red)':h.signal==='WATCH'?'var(--yellow)':'var(--grey2)'}">${h.signal}</span>
+        <span class="phist-score">${h.score?.toFixed(1)||'—'}/10</span>
+        <span class="phist-time">${timeAgo(h.time)}</span>
+      </div>
+      <div class="phist-sum">${h.summary||''}</div>
+    </div>`).join('') : '<div class="no-phist">No scan history yet</div>';
+
   document.getElementById('panelBody').innerHTML = `
     ${w.signal ? `
-    <div class="panel-sec">
-      <div class="panel-signal-row">
+    <div class="panel-section">
+      <div style="display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:10px">
         <div>
           <div class="panel-score-big ${sc}">${w.score ? w.score.toFixed(1) : '—'}</div>
           <div style="font-size:10px;color:var(--grey);margin-top:2px">/ 10 AI Score</div>
-          <div class="conf-track"><div class="conf-fill" style="width:${confPct}%"></div></div>
+          <div class="conf-track" style="width:100px;margin-top:6px"><div class="conf-fill" style="width:${confPct}%"></div></div>
           <div class="conf-label">Confidence: ${w.confidence || '—'}</div>
         </div>
         <span class="sig ${sigCls}" style="font-size:12px;padding:5px 12px">${w.signal}</span>
       </div>
       ${w.summary ? `<div class="panel-summary">${w.summary}</div>` : ''}
     </div>
-    ${w.catalysts?.length ? `<div class="panel-sec"><div class="panel-sec-label" style="color:var(--green)">↑ Catalysts</div><ul class="panel-list">${w.catalysts.map(c=>`<li class="panel-li up">${c}</li>`).join('')}</ul></div>` : ''}
-    ${w.risks?.length ? `<div class="panel-sec"><div class="panel-sec-label" style="color:var(--red)">↓ Risk Factors</div><ul class="panel-list">${w.risks.map(r=>`<li class="panel-li dn">${r}</li>`).join('')}</ul></div>` : ''}
-    ` : `<div style="font-size:12px;color:var(--grey2);margin-bottom:16px">No scan data yet — click Scan to analyse this stock.</div>`}
 
-    <hr class="panel-divider"/>
-    <div class="panel-sec">
-      <div class="panel-sec-label">Comments</div>
-      <textarea class="comment-area" id="cmt-${ticker}" rows="5" placeholder="Notes, thesis, trade plan...">${comment}</textarea>
-      <button class="save-btn" onclick="saveComment('${ticker}')">Save Comment</button>
-    </div>
-
-    ${hist.length ? `
-    <hr class="panel-divider"/>
-    <div class="panel-sec">
-      <div class="panel-sec-label">Scan History</div>
-      ${hist.map(h=>`
-        <div class="hist-entry">
-          <span class="hist-sig" style="color:${h.signal==='BUY'?'var(--green)':h.signal==='SELL'?'var(--red)':h.signal==='WATCH'?'var(--yellow)':'var(--grey2)'}">${h.signal}</span>
-          <span class="hist-score">${h.score?.toFixed(1)||'—'}/10</span>
-          <div class="hist-sum">${(h.summary||'').substring(0,80)}...</div>
-          <div class="hist-time">${timeAgo(h.time)}</div>
-        </div>`).join('')}
+    ${(w.catalysts?.length || w.risks?.length) ? `
+    <div class="panel-two-col">
+      ${w.catalysts?.length ? `<div class="panel-list-card"><div class="panel-list-title green">↑ Catalysts</div><ul class="panel-ul">${w.catalysts.map(c=>`<li class="panel-li up">${c}</li>`).join('')}</ul></div>` : ''}
+      ${w.risks?.length ? `<div class="panel-list-card"><div class="panel-list-title red">↓ Risks</div><ul class="panel-ul">${w.risks.map(r=>`<li class="panel-li dn">${r}</li>`).join('')}</ul></div>` : ''}
     </div>` : ''}
+    ` : `<div style="font-size:12px;color:var(--grey2);margin-bottom:16px;padding:12px;background:var(--surface2);border-radius:6px;">No scan data yet — click <strong>Scan</strong> to analyse this stock.</div>`}
+
+    <hr class="panel-divider"/>
+
+    <div class="panel-hist-notes">
+      <div>
+        <div class="panel-section-label">Scan History</div>
+        <div class="panel-hist-scroll">${histHTML}</div>
+      </div>
+      <div class="notes-col">
+        <div>
+          <div class="panel-section-label">Custom Source</div>
+          <input class="notes-url-input" type="url" id="srcUrl-${ticker}" value="${srcUrl}" placeholder="Paste URL for AI to consider..."/>
+          <div class="notes-url-hint">AI will factor this source into next scan</div>
+        </div>
+        <div style="display:flex;flex-direction:column;flex:1;gap:6px">
+          <div class="panel-section-label">Notes</div>
+          <textarea class="notes-textarea" id="cmt-${ticker}" placeholder="Your notes, thesis, trade plan...">${comment}</textarea>
+          <button class="notes-save-btn" onclick="saveNotes('${ticker}')">Save</button>
+        </div>
+      </div>
+    </div>
   `;
 }
+
 
 function saveComment(ticker, elemId) {
   const id = elemId || ('cmt-' + ticker);
@@ -531,13 +552,10 @@ function saveComment(ticker, elemId) {
 }
 
 function saveNotes(ticker) {
-  const note = document.getElementById('inlineCmt-' + ticker)?.value || '';
+  const note = document.getElementById('cmt-' + ticker)?.value || '';
   const url = document.getElementById('srcUrl-' + ticker)?.value || '';
   comments[ticker] = note;
   comments[ticker + '_url'] = url;
-  // Also sync panel comment area if open
-  const panelCmt = document.getElementById('cmt-' + ticker);
-  if (panelCmt) panelCmt.value = note;
   save();
   // Visual feedback
   const btn = event.target;
@@ -576,16 +594,10 @@ function renderTable() {
     const sbColor = !w.score?'#e5e4e2':w.score>=7?'#16a34a':w.score>=5?'#d97706':'#dc2626';
     const sbWidth = w.score ? `${w.score*10}%` : '0%';
     const scoreTxt = w.scanning ? '...' : (w.score ? w.score.toFixed(1) : '—');
-    const isExp = expandedRows.has(w.ticker);
     const isSel = selectedTicker === w.ticker;
     const alertHtml = (w.signal && w.prevSignal && w.prevSignal!==w.signal) ? `<span class="alert-pill">⚡ ${w.prevSignal}→${w.signal}</span>` : '';
-    const hist = scanHistory.filter(h => h.ticker === w.ticker);
-
     rows += `
       <tr class="main-row${isSel?' selected':''}" id="row-${w.ticker}" onclick="selectStock('${w.ticker}')">
-        <td onclick="event.stopPropagation()">
-          <button class="expand-btn${isExp?' open':''}" onclick="toggleRow('${w.ticker}')" title="Scan history">▶</button>
-        </td>
         <td>
           <div class="ticker-name">${w.ticker}${alertHtml}</div>
           <div class="ticker-sub">${w.assetName || w.type}${w.scannedAt ? ' · ' + timeAgo(w.scannedAt) : ''}</div>
@@ -613,39 +625,6 @@ function renderTable() {
         </td>
       </tr>`;
 
-    if (isExp) {
-      rows += `
-        <tr class="hist-row">
-          <td colspan="8">
-            <div class="hist-inner">
-              <div class="hist-scroll">
-                <div class="hist-title">Scan History</div>
-                ${hist.length ? hist.slice(0,20).map(h=>`
-                  <div class="hist-entry">
-                    <div class="hist-entry-top">
-                      <span class="hist-sig" style="color:${h.signal==='BUY'?'var(--green)':h.signal==='SELL'?'var(--red)':h.signal==='WATCH'?'var(--yellow)':'var(--grey2)'}">${h.signal}</span>
-                      <span class="hist-score">${h.score?.toFixed(1)||'—'}/10</span>
-                      <span class="hist-time">${timeAgo(h.time)}</span>
-                    </div>
-                    <div class="hist-sum">${h.summary||''}</div>
-                  </div>`).join('') : '<div class="no-hist">No scan history yet</div>'}
-              </div>
-              <div class="notes-panel">
-                <div>
-                  <div class="notes-section-label">Custom Source URL</div>
-                  <input class="notes-url-input" type="url" id="srcUrl-${w.ticker}" placeholder="Paste a URL to include in next scan..." value="${comments[w.ticker+'_url']||''}" onclick="event.stopPropagation()"/>
-                  <div class="notes-url-hint">AI will consider this source when scanning this stock</div>
-                </div>
-                <div>
-                  <div class="notes-section-label">Notes</div>
-                  <textarea class="notes-textarea" id="inlineCmt-${w.ticker}" placeholder="Add your notes, thesis, or trade plan..." onclick="event.stopPropagation()">${comments[w.ticker]||''}</textarea>
-                  <button class="notes-save-btn" onclick="event.stopPropagation();saveNotes('${w.ticker}')">Save</button>
-                </div>
-              </div>
-            </div>
-          </td>
-        </tr>`;
-    }
   });
 
   body.innerHTML = rows;
