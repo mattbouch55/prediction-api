@@ -96,7 +96,7 @@
     .progress-txt { font-size: 10px; color: var(--blue); font-family: 'JetBrains Mono', monospace; }
 
     /* Table */
-    .tbl { width: 100%; border-collapse: collapse; table-layout: fixed; }
+    .tbl { width: 100%; border-collapse: collapse; }
     .tbl th { font-size: 10px; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; color: var(--grey); padding: 9px 12px; text-align: left; border-bottom: 1px solid var(--border); background: var(--surface); white-space: nowrap; }
     .tbl td { padding: 10px 12px; border-bottom: 1px solid var(--border); vertical-align: middle; overflow: hidden; }
     .tbl tbody tr.main-row { cursor: pointer; transition: background 0.1s; }
@@ -221,6 +221,14 @@
     .save-btn { margin-top: 6px; width: 100%; background: var(--surface2); border: 1px solid var(--border); color: var(--text2); font-family: 'Inter', sans-serif; font-size: 11px; padding: 7px; border-radius: 6px; cursor: pointer; transition: all 0.12s; }
     .save-btn:hover { border-color: var(--blue); color: var(--blue); background: var(--blue-soft); }
     .panel-placeholder { display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100%; color: var(--grey); text-align: center; padding: 24px; }
+    .panel-action-row { display: flex; gap: 8px; margin-bottom: 16px; }
+    .panel-scan-btn { flex: 1; background: var(--blue); color: white; border: none; font-family: "Inter", sans-serif; font-size: 12px; font-weight: 500; padding: 9px 0; border-radius: 6px; cursor: pointer; transition: background 0.12s; }
+    .panel-scan-btn:hover { background: #1a6fff; }
+    .panel-scan-btn:disabled { background: var(--border2); color: var(--grey); cursor: not-allowed; }
+    .panel-buy-btn { flex: 1; background: var(--green-dim); color: var(--green); border: 1px solid rgba(22,163,74,0.3); font-family: "Inter", sans-serif; font-size: 12px; font-weight: 600; padding: 9px 0; border-radius: 6px; cursor: pointer; transition: all 0.12s; }
+    .panel-buy-btn:hover { background: rgba(22,163,74,0.15); }
+    .panel-sell-btn { flex: 1; background: var(--red-dim); color: var(--red); border: 1px solid rgba(220,38,38,0.3); font-family: "Inter", sans-serif; font-size: 12px; font-weight: 600; padding: 9px 0; border-radius: 6px; cursor: pointer; transition: all 0.12s; }
+    .panel-sell-btn:hover { background: rgba(220,38,38,0.15); }
 
     @keyframes pulse { 0%,100%{opacity:0.3} 50%{opacity:1} }
     .scanning { animation: pulse 0.9s ease-in-out infinite; color: var(--blue); }
@@ -316,7 +324,7 @@
           </tr>
         </thead>
         <tbody id="tableBody">
-          <tr><td class="empty-cell" colspan="8">
+          <tr><td class="empty-cell" colspan="4">
             <div class="empty-icon">📊</div>
             <div class="empty-text">Your watchlist is empty</div>
             <div class="empty-sub">Type a ticker above and click + Add to get started</div>
@@ -509,6 +517,11 @@ function renderPanel(ticker) {
     </div>`).join('') : '<div class="no-phist">No scan history yet</div>';
 
   document.getElementById('panelBody').innerHTML = `
+    <div class="panel-action-row">
+      <button class="panel-scan-btn" onclick="scanTicker('${ticker}')" ${w.scanning?'disabled':''}>Scan</button>
+      <button class="panel-buy-btn" onclick="alert('Trading coming soon!')">Buy</button>
+      <button class="panel-sell-btn" onclick="alert('Trading coming soon!')">Sell</button>
+    </div>
     ${w.signal ? `
     <div class="panel-section">
       <div style="display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:10px">
@@ -585,7 +598,7 @@ function renderTable() {
   subtitle.textContent = `${watchlist.length} ticker${watchlist.length !== 1 ? 's' : ''}`;
 
   if (!watchlist.length) {
-    body.innerHTML = `<tr><td class="empty-cell" colspan="8"><div class="empty-icon">📊</div><div class="empty-text">Your watchlist is empty</div><div class="empty-sub">Type a ticker above and click + Add to get started</div></td></tr>`;
+    body.innerHTML = `<tr><td class="empty-cell" colspan="4"><div class="empty-icon">📊</div><div class="empty-text">Your watchlist is empty</div><div class="empty-sub">Type a ticker above and click + Add to get started</div></td></tr>`;
     return;
   }
 
@@ -610,14 +623,18 @@ function renderTable() {
     const scoreTxt = w.scanning ? '...' : (w.score ? w.score.toFixed(1) : '—');
     const isSel = selectedTicker === w.ticker;
     const alertHtml = (w.signal && w.prevSignal && w.prevSignal!==w.signal) ? `<span class="alert-pill">⚡ ${w.prevSignal}→${w.signal}</span>` : '';
-    rows += `
+        rows += `
       <tr class="main-row${isSel?' selected':''}" id="row-${w.ticker}" onclick="selectStock('${w.ticker}')">
         <td>
-          <div class="ticker-name">${w.ticker}${alertHtml}</div>
-          <div class="ticker-sub">${(w.assetName || w.type).substring(0,22)}${w.scannedAt ? ' · ' + timeAgo(w.scannedAt) : ''}</div>
+          <div style="display:flex;align-items:flex-start;justify-content:space-between">
+            <div>
+              <div class="ticker-name">${w.ticker}${alertHtml}</div>
+              <div class="ticker-sub">${(w.assetName||w.type).substring(0,24)}${w.scannedAt?' · '+timeAgo(w.scannedAt):''}</div>
+            </div>
+            <button class="del-btn" onclick="event.stopPropagation();removeTicker('${w.ticker}')" title="Remove">&times;</button>
+          </div>
         </td>
-        <td class="price-cell${w.scanning?' scanning':''}">${w.scanning ? '...' : price}</td>
-        <td class="change-cell ${chgCls}">${chgStr}</td>
+        <td class="price-cell${w.scanning?' scanning':''}">${w.scanning?'...':price}</td>
         <td>
           <div class="score-wrap">
             <div class="score-n ${sc}">${scoreTxt}</div>
@@ -625,22 +642,7 @@ function renderTable() {
           </div>
         </td>
         <td><span class="sig ${sigCls}">${sigTxt}</span></td>
-        <td onclick="event.stopPropagation()">
-          <div class="act-wrap">
-            <button class="act-btn buy" onclick="alert('Trading coming soon!')">Buy</button>
-            <button class="act-btn sell" onclick="alert('Trading coming soon!')">Sell</button>
-          </div>
-        </td>
-        <td onclick="event.stopPropagation()">
-          <div class="ctrl-wrap">
-            <button class="scan-sm" onclick="scanTicker('${w.ticker}')" ${w.scanning?'disabled':''}>Scan</button>
-            <button class="del-btn" onclick="removeTicker('${w.ticker}')">&times;</button>
-          </div>
-        </td>
       </tr>`;
-
-  });
-
   body.innerHTML = rows;
 }
 
