@@ -108,7 +108,8 @@ async def run_investment(request: InvestmentRequest):
     try:
         result = await invest_agent.run(
             ticker=request.ticker,
-            asset_type=request.asset_type
+            asset_type=request.asset_type,
+            custom_source=request.custom_source
         )
         return result
     except Exception as e:
