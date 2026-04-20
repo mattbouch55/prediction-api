@@ -22,6 +22,7 @@
       --buy: #4caf7a;
       --watch: #c9a84c;
       --hold: #c0554a;
+      --sell: #e53935;
     }
 
     html, body {
@@ -365,7 +366,7 @@
     /* Summary row */
     .summary-row {
       display: grid;
-      grid-template-columns: 1fr 1fr 1fr;
+      grid-template-columns: 1fr 1fr 1fr 1fr;
       gap: 12px;
       margin-bottom: 32px;
     }
@@ -439,6 +440,7 @@
     .tc-signal.buy { color: var(--buy); border-color: var(--buy); }
     .tc-signal.watch { color: var(--watch); border-color: var(--watch); }
     .tc-signal.hold { color: var(--hold); border-color: var(--hold); }
+    .tc-signal.sell { color: var(--sell); border-color: var(--sell); }
 
     .tc-main { min-width: 0; }
 
@@ -657,8 +659,13 @@
         <div class="summary-number hold" id="holdCount">0</div>
         <div class="summary-label">Hold</div>
       </div>
+      <div class="summary-card">
+        <div class="summary-number" style="color:var(--sell)" id="sellCount">0</div>
+        <div class="summary-label">Sell</div>
+      </div>
     </div>
 
+    <div id="sellSection"></div>
     <div id="buySection"></div>
     <div id="watchSection"></div>
     <div id="holdSection"></div>
@@ -795,16 +802,19 @@
     const buys = results.filter(r => r.signal === 'BUY');
     const watches = results.filter(r => r.signal === 'WATCH');
     const holds = results.filter(r => r.signal === 'HOLD');
+    const sells = results.filter(r => r.signal === 'SELL');
 
     document.getElementById('buyCount').textContent = buys.length;
     document.getElementById('watchCount').textContent = watches.length;
     document.getElementById('holdCount').textContent = holds.length;
+    document.getElementById('sellCount').textContent = sells.length;
     document.getElementById('resultsTime').textContent = new Date().toLocaleTimeString();
 
     // Sort each group by confidence
     const order = { High: 0, Medium: 1, Low: 2 };
     const sort = arr => arr.sort((a, b) => (order[a.confidence] || 1) - (order[b.confidence] || 1));
 
+    renderSection('sellSection', sort(sells), 'sell', 'Sell Signals');
     renderSection('buySection', sort(buys), 'buy', 'Buy Signals');
     renderSection('watchSection', sort(watches), 'watch', 'Watch Signals');
     renderSection('holdSection', sort(holds), 'hold', 'Hold Signals');
