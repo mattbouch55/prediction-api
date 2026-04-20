@@ -16,95 +16,82 @@
       --green: #22c55e; --green-dim: rgba(34,197,94,0.1);
       --red: #ef4444; --red-dim: rgba(239,68,68,0.1);
       --yellow: #f59e0b; --yellow-dim: rgba(245,158,11,0.1);
-      --panel-width: 300px;
     }
-    html, body { height: 100%; background: var(--bg); color: var(--text); font-family: 'Inter', sans-serif; font-size: 13px; overflow: hidden; }
-    .main { overflow-y: auto !important; height: 100% !important; }
-    .table-wrap { overflow: visible !important; min-height: 200px; }
 
-    /* App shell */
-    .app { display: grid; grid-template-columns: 200px 1fr var(--panel-width); grid-template-rows: 52px 1fr; height: 100vh; transition: grid-template-columns 0.25s ease; }
-    .app.panel-closed { grid-template-columns: 200px 1fr 0px; }
+    body { background: var(--bg); color: var(--text); font-family: 'Inter', sans-serif; font-size: 13px; min-height: 100vh; }
 
-    /* Sidebar */
-    .sidebar { grid-row: 1/3; background: var(--surface); border-right: 1px solid var(--border); display: flex; flex-direction: column; }
-    .sidebar-logo { padding: 16px; border-bottom: 1px solid var(--border); display: flex; align-items: center; gap: 10px; }
-    .logo-icon { width: 26px; height: 26px; background: var(--blue); border-radius: 5px; display: flex; align-items: center; justify-content: center; font-size: 13px; font-weight: 700; color: white; font-family: 'JetBrains Mono', monospace; flex-shrink: 0; }
-    .logo-text { font-size: 14px; font-weight: 600; color: var(--white); }
-    .logo-sub { font-size: 9px; color: var(--grey); text-transform: uppercase; letter-spacing: 0.1em; }
-    .sidebar-nav { padding: 12px 8px; flex: 1; }
-    .nav-label { font-size: 9px; letter-spacing: 0.12em; text-transform: uppercase; color: var(--grey); padding: 6px 8px 4px; }
-    .nav-item { display: flex; align-items: center; gap: 8px; padding: 8px 10px; border-radius: 5px; color: var(--grey2); text-decoration: none; font-size: 12px; transition: all 0.12s; margin-bottom: 1px; }
-    .nav-item:hover { background: var(--surface2); color: var(--white); }
-    .nav-item.active { background: var(--blue-glow); color: var(--blue); border: 1px solid rgba(21,101,255,0.2); }
-    .nav-soon { opacity: 0.35; cursor: not-allowed; font-size: 12px; display: flex; align-items: center; gap: 8px; padding: 8px 10px; color: var(--grey2); }
-    .nav-chip { font-size: 9px; background: var(--border2); color: var(--grey); padding: 1px 5px; border-radius: 8px; margin-left: auto; }
-    .sidebar-footer { padding: 12px; border-top: 1px solid var(--border); }
-    .market-pill { display: flex; align-items: center; gap: 6px; font-size: 11px; color: var(--grey); }
+    /* Top nav bar */
+    .navbar { background: var(--surface); border-bottom: 1px solid var(--border); display: flex; align-items: center; padding: 0 24px; height: 52px; gap: 20px; position: sticky; top: 0; z-index: 100; }
+    .logo-wrap { display: flex; align-items: center; gap: 8px; margin-right: 16px; }
+    .logo-icon { width: 26px; height: 26px; background: var(--blue); border-radius: 5px; display: flex; align-items: center; justify-content: center; font-size: 13px; font-weight: 700; color: white; font-family: 'JetBrains Mono', monospace; }
+    .logo-txt { font-size: 14px; font-weight: 600; color: var(--white); }
+    .nav-link { font-size: 12px; color: var(--grey2); text-decoration: none; padding: 4px 10px; border-radius: 5px; transition: all 0.12s; }
+    .nav-link:hover { color: var(--white); background: var(--surface2); }
+    .nav-link.active { color: var(--blue); background: var(--blue-glow); }
+    .nav-link.disabled { color: var(--grey); opacity: 0.4; cursor: not-allowed; pointer-events: none; }
+    .market-pill { margin-left: auto; display: flex; align-items: center; gap: 6px; font-size: 11px; color: var(--grey); }
     .dot { width: 5px; height: 5px; border-radius: 50%; }
     .dot.open { background: var(--green); box-shadow: 0 0 5px var(--green); }
     .dot.closed { background: var(--red); box-shadow: 0 0 5px var(--red); }
 
-    /* Topbar */
-    .topbar { background: var(--surface); border-bottom: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; padding: 0 20px; gap: 12px; }
-    .topbar-left { display: flex; align-items: center; gap: 16px; }
-    .topbar-title { font-size: 13px; font-weight: 600; color: var(--white); }
-    .topbar-date { font-size: 11px; color: var(--grey); font-family: 'JetBrains Mono', monospace; }
-
-    /* Compact add bar inside topbar */
-    .add-bar { display: flex; align-items: center; gap: 6px; }
-    .input-sm { background: var(--bg); border: 1px solid var(--border2); color: var(--white); font-family: 'JetBrains Mono', monospace; font-size: 12px; font-weight: 500; padding: 5px 10px; border-radius: 5px; outline: none; width: 110px; text-transform: uppercase; transition: border-color 0.15s; }
-    .input-sm::placeholder { color: var(--grey); text-transform: none; font-weight: 400; font-family: 'Inter', sans-serif; }
+    /* Toolbar */
+    .toolbar { background: var(--surface); border-bottom: 1px solid var(--border); display: flex; align-items: center; padding: 8px 24px; gap: 8px; }
+    .toolbar-label { font-size: 11px; color: var(--grey); margin-right: 4px; }
+    .input-sm { background: var(--bg); border: 1px solid var(--border2); color: var(--white); font-family: 'JetBrains Mono', monospace; font-size: 12px; padding: 6px 10px; border-radius: 5px; outline: none; width: 120px; text-transform: uppercase; }
+    .input-sm::placeholder { color: var(--grey); text-transform: none; font-family: 'Inter', sans-serif; }
     .input-sm:focus { border-color: var(--blue); }
-    .select-sm { background: var(--bg); border: 1px solid var(--border2); color: var(--text); font-family: 'Inter', sans-serif; font-size: 11px; padding: 5px 8px; border-radius: 5px; outline: none; cursor: pointer; appearance: none; }
-    .btn { border: none; font-family: 'Inter', sans-serif; font-size: 11px; font-weight: 500; padding: 5px 12px; border-radius: 5px; cursor: pointer; transition: all 0.12s; white-space: nowrap; }
+    .select-sm { background: var(--bg); border: 1px solid var(--border2); color: var(--text); font-size: 12px; padding: 6px 8px; border-radius: 5px; outline: none; appearance: none; cursor: pointer; }
+    .spacer { flex: 1; }
+    .date-txt { font-size: 11px; color: var(--grey); font-family: 'JetBrains Mono', monospace; }
+
+    .btn { border: none; font-family: 'Inter', sans-serif; font-size: 11px; font-weight: 500; padding: 6px 12px; border-radius: 5px; cursor: pointer; transition: all 0.12s; white-space: nowrap; display: flex; align-items: center; gap: 5px; }
     .btn-ghost { background: transparent; color: var(--grey2); border: 1px solid var(--border2); }
-    .btn-ghost:hover { color: var(--white); border-color: var(--grey); background: var(--surface2); }
-    .btn-blue { background: var(--blue); color: white; font-size: 11px; }
+    .btn-ghost:hover { color: var(--white); border-color: var(--grey); }
+    .btn-blue { background: var(--blue); color: white; }
     .btn-blue:hover { background: #1a6fff; }
     .btn-blue:disabled { background: var(--border2); color: var(--grey); cursor: not-allowed; }
 
-    /* Main content */
-    .main { overflow-y: auto; display: flex; flex-direction: column; }
+    /* Layout: table + right panel side by side */
+    .content-wrap { display: flex; min-height: calc(100vh - 104px); }
+    .table-section { flex: 1; overflow-x: auto; }
+    .panel-section { width: 0; overflow: hidden; transition: width 0.25s ease; border-left: 1px solid var(--border); background: var(--surface); flex-shrink: 0; }
+    .panel-section.open { width: 300px; }
 
     /* Progress bar */
-    .progress-wrap { display: none; background: var(--surface); border-bottom: 1px solid var(--border); padding: 10px 20px; }
+    .progress-wrap { display: none; background: var(--surface); border-bottom: 1px solid var(--border); padding: 8px 24px; }
     .progress-wrap.active { display: block; }
-    .progress-track { background: var(--border); height: 2px; border-radius: 2px; margin-bottom: 5px; overflow: hidden; }
-    .progress-fill { background: var(--blue); height: 2px; width: 0%; transition: width 0.4s; }
+    .progress-track { background: var(--border); height: 2px; border-radius: 2px; margin-bottom: 4px; }
+    .progress-fill { background: var(--blue); height: 2px; width: 0%; transition: width 0.4s; border-radius: 2px; }
     .progress-txt { font-size: 10px; color: var(--grey); font-family: 'JetBrains Mono', monospace; }
 
     /* Table */
-    .table-wrap { flex: 1; }
-    .table-head { display: grid; grid-template-columns: 36px 120px 100px 80px 110px 90px 110px 36px; padding: 8px 20px; border-bottom: 1px solid var(--border); background: var(--surface); position: sticky; top: 0; z-index: 10; }
-    .th { font-size: 10px; font-weight: 600; letter-spacing: 0.1em; text-transform: uppercase; color: var(--grey); }
+    .tbl { width: 100%; border-collapse: collapse; }
+    .tbl thead { background: var(--surface); position: sticky; top: 52px; z-index: 10; }
+    .tbl th { font-size: 10px; font-weight: 600; letter-spacing: 0.1em; text-transform: uppercase; color: var(--grey); padding: 10px 16px; text-align: left; border-bottom: 1px solid var(--border); white-space: nowrap; }
+    .tbl td { padding: 13px 16px; border-bottom: 1px solid var(--border); vertical-align: middle; }
+    .tbl tbody tr:hover { background: rgba(255,255,255,0.02); cursor: pointer; }
+    .tbl tbody tr.selected { background: var(--blue-glow); }
+    .tbl tbody tr.history-row { cursor: default; }
+    .tbl tbody tr.history-row:hover { background: #090d1c; }
 
-    .ticker-block { border-bottom: 1px solid var(--border); }
-    .ticker-block:last-child { border-bottom: none; }
+    /* Ticker cell */
+    .ticker-name { font-family: 'JetBrains Mono', monospace; font-size: 13px; font-weight: 500; color: var(--white); }
+    .ticker-sub { font-size: 10px; color: var(--grey); margin-top: 2px; }
+    .alert-pill { font-size: 9px; background: var(--blue-glow); color: var(--blue); border: 1px solid rgba(21,101,255,0.25); padding: 1px 5px; border-radius: 8px; margin-left: 6px; vertical-align: middle; }
 
-    .ticker-row { display: grid; grid-template-columns: 36px 120px 100px 80px 110px 90px 110px 36px; padding: 12px 20px; align-items: center; cursor: pointer; transition: background 0.1s; }
-    .ticker-row:hover { background: rgba(255,255,255,0.02); }
-    .ticker-row.selected { background: var(--blue-glow); }
-
-    .expand-btn { background: none; border: none; color: var(--grey); cursor: pointer; font-size: 12px; padding: 2px; transition: transform 0.2s, color 0.15s; }
-    .expand-btn:hover { color: var(--white); }
-    .expand-btn.open { transform: rotate(90deg); color: var(--blue); }
-
-    .td-ticker { font-family: 'JetBrains Mono', monospace; font-size: 13px; font-weight: 500; color: var(--white); }
-    .td-sub { font-size: 10px; color: var(--grey); margin-top: 1px; }
-    .td-price { font-family: 'JetBrains Mono', monospace; font-size: 13px; color: var(--white); }
-    .td-change { font-family: 'JetBrains Mono', monospace; font-size: 12px; font-weight: 500; }
+    .price-cell { font-family: 'JetBrains Mono', monospace; font-size: 13px; color: var(--white); }
+    .change-cell { font-family: 'JetBrains Mono', monospace; font-size: 12px; font-weight: 500; }
     .pos { color: var(--green); } .neg { color: var(--red); } .neu { color: var(--grey); }
 
     /* Score */
-    .score-cell { display: flex; align-items: center; gap: 8px; }
-    .score-num { font-family: 'JetBrains Mono', monospace; font-size: 16px; font-weight: 600; min-width: 28px; }
-    .score-num.hi { color: var(--green); } .score-num.mi { color: var(--yellow); } .score-num.lo { color: var(--red); } .score-num.nd { color: var(--grey); font-size: 12px; }
-    .score-track { width: 36px; height: 3px; background: var(--border); border-radius: 2px; }
+    .score-wrap { display: flex; align-items: center; gap: 8px; }
+    .score-n { font-family: 'JetBrains Mono', monospace; font-size: 16px; font-weight: 600; min-width: 30px; }
+    .score-n.hi { color: var(--green); } .score-n.mi { color: var(--yellow); } .score-n.lo { color: var(--red); } .score-n.nd { color: var(--grey); font-size: 12px; }
+    .score-bar { width: 40px; height: 3px; background: var(--border); border-radius: 2px; overflow: hidden; }
     .score-fill { height: 3px; border-radius: 2px; }
 
-    /* Signal badge */
-    .sig { font-size: 10px; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; padding: 3px 8px; border-radius: 4px; display: inline-block; }
+    /* Signal */
+    .sig { font-size: 10px; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; padding: 3px 8px; border-radius: 4px; display: inline-block; white-space: nowrap; }
     .sig.buy { background: var(--green-dim); color: var(--green); }
     .sig.watch { background: var(--yellow-dim); color: var(--yellow); }
     .sig.hold { background: rgba(107,114,128,0.1); color: var(--grey2); }
@@ -112,182 +99,147 @@
     .sig.pending { background: var(--border); color: var(--grey); }
 
     /* Action buttons */
-    .action-btns { display: flex; gap: 5px; }
-    .act-btn { font-size: 10px; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; padding: 4px 10px; border-radius: 4px; border: 1px solid; cursor: pointer; font-family: 'Inter', sans-serif; transition: all 0.15s; }
-    .act-btn.buy-btn { color: var(--green); border-color: rgba(34,197,94,0.4); background: transparent; }
-    .act-btn.buy-btn:hover { background: var(--green-dim); }
-    .act-btn.sell-btn { color: var(--red); border-color: rgba(239,68,68,0.4); background: transparent; }
-    .act-btn.sell-btn:hover { background: var(--red-dim); }
+    .act-wrap { display: flex; gap: 5px; }
+    .act-btn { font-size: 10px; font-weight: 600; padding: 4px 10px; border-radius: 4px; border: 1px solid; cursor: pointer; font-family: 'Inter', sans-serif; transition: all 0.12s; background: transparent; }
+    .act-btn.buy { color: var(--green); border-color: rgba(34,197,94,0.35); }
+    .act-btn.buy:hover { background: var(--green-dim); }
+    .act-btn.sell { color: var(--red); border-color: rgba(239,68,68,0.35); }
+    .act-btn.sell:hover { background: var(--red-dim); }
 
-    /* Row actions */
-    .row-act { display: flex; align-items: center; gap: 4px; }
+    /* Row controls */
+    .ctrl-wrap { display: flex; align-items: center; gap: 5px; }
+    .expand-btn { background: none; border: none; color: var(--grey); cursor: pointer; font-size: 11px; padding: 2px 4px; transition: transform 0.2s, color 0.12s; border-radius: 3px; }
+    .expand-btn:hover { color: var(--white); }
+    .expand-btn.open { transform: rotate(90deg); color: var(--blue); }
     .scan-sm { font-size: 10px; background: transparent; border: 1px solid var(--border2); color: var(--grey); padding: 3px 8px; border-radius: 4px; cursor: pointer; font-family: 'Inter', sans-serif; transition: all 0.12s; }
     .scan-sm:hover { border-color: var(--blue); color: var(--blue); }
     .scan-sm:disabled { opacity: 0.35; cursor: not-allowed; }
-    .del-btn { background: none; border: none; color: var(--border2); cursor: pointer; font-size: 14px; padding: 2px 4px; transition: color 0.12s; }
+    .del-btn { background: none; border: none; color: var(--border2); cursor: pointer; font-size: 14px; padding: 2px 4px; transition: color 0.12s; border-radius: 3px; }
     .del-btn:hover { color: var(--red); }
 
-    /* History drawer */
-    .history-drawer { display: none; background: #090d1c; border-top: 1px solid var(--border); }
-    .history-drawer.open { display: block; }
-    .history-inner { padding: 14px 20px 14px 56px; }
-    .history-title { font-size: 10px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.1em; color: var(--grey); margin-bottom: 10px; }
-    .hist-item { display: grid; grid-template-columns: 70px 70px 1fr auto; gap: 12px; align-items: start; padding: 8px 0; border-bottom: 1px solid var(--border); }
-    .hist-item:last-child { border-bottom: none; }
-    .hist-sig { font-size: 10px; font-weight: 600; text-transform: uppercase; }
-    .hist-score { font-family: 'JetBrains Mono', monospace; font-size: 11px; color: var(--grey2); }
-    .hist-summary { font-size: 11px; color: var(--grey); line-height: 1.5; }
-    .hist-time { font-size: 10px; color: var(--grey); font-family: 'JetBrains Mono', monospace; white-space: nowrap; }
-    .no-history { font-size: 11px; color: var(--grey); padding: 4px 0; font-style: italic; }
+    /* History drawer row */
+    .history-drawer-row { background: #090d1c; }
+    .history-inner { padding: 10px 16px 10px 48px; }
+    .hist-title { font-size: 10px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.1em; color: var(--grey); margin-bottom: 8px; }
+    .hist-entry { display: grid; grid-template-columns: 60px 50px 1fr 80px; gap: 10px; padding: 6px 0; border-bottom: 1px solid var(--border); align-items: start; font-size: 11px; }
+    .hist-entry:last-child { border-bottom: none; }
+    .hist-sig { font-weight: 600; text-transform: uppercase; font-size: 10px; }
+    .hist-score { font-family: 'JetBrains Mono', monospace; color: var(--grey2); }
+    .hist-sum { color: var(--grey); line-height: 1.4; }
+    .hist-time { color: var(--grey); font-family: 'JetBrains Mono', monospace; text-align: right; font-size: 10px; }
+    .no-hist { font-size: 11px; color: var(--grey); font-style: italic; }
 
     /* Empty state */
-    .empty-state { padding: 60px 20px; text-align: center; color: var(--grey); }
-    .empty-icon { font-size: 28px; margin-bottom: 10px; opacity: 0.25; }
+    .empty-row td { padding: 60px; text-align: center; color: var(--grey); }
+    .empty-icon { font-size: 28px; margin-bottom: 10px; opacity: 0.2; }
 
     /* Right panel */
-    .right-panel { grid-row: 1/3; background: var(--surface); border-left: 1px solid var(--border); display: flex; flex-direction: column; overflow: hidden; }
-    .app.panel-closed .right-panel { display: none; }
-    .panel-header { padding: 14px 16px; border-bottom: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; min-height: 52px; }
-    .panel-title { font-size: 12px; font-weight: 600; color: var(--white); }
+    .panel-inner { padding: 0; display: flex; flex-direction: column; height: 100%; overflow-y: auto; }
+    .panel-head { padding: 14px 16px; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: flex-start; }
     .panel-ticker { font-family: 'JetBrains Mono', monospace; font-size: 20px; font-weight: 500; color: var(--white); }
     .panel-name { font-size: 11px; color: var(--grey); margin-top: 2px; }
-    .panel-close { background: none; border: none; color: var(--grey); cursor: pointer; font-size: 18px; line-height: 1; padding: 2px; }
+    .panel-close { background: none; border: none; color: var(--grey); cursor: pointer; font-size: 18px; padding: 0; transition: color 0.12s; }
     .panel-close:hover { color: var(--white); }
-    .panel-body { flex: 1; overflow-y: auto; padding: 16px; }
-    .panel-section { margin-bottom: 20px; }
-    .panel-section-label { font-size: 10px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.1em; color: var(--grey); margin-bottom: 8px; }
-    .panel-signal-row { display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; }
-    .panel-score-big { font-family: 'JetBrains Mono', monospace; font-size: 36px; font-weight: 600; }
-    .panel-score-big.hi { color: var(--green); }
-    .panel-score-big.mi { color: var(--yellow); }
-    .panel-score-big.lo { color: var(--red); }
-    .panel-score-big.nd { color: var(--grey); }
-    .panel-conf-bar { margin-top: 6px; }
-    .panel-conf-label { font-size: 10px; color: var(--grey); margin-bottom: 3px; }
-    .panel-conf-track { background: var(--border); height: 3px; border-radius: 2px; }
-    .panel-conf-fill { height: 3px; border-radius: 2px; background: var(--blue); transition: width 0.4s; }
+    .panel-body { padding: 16px; flex: 1; }
+    .panel-sec { margin-bottom: 18px; }
+    .panel-sec-label { font-size: 10px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.1em; color: var(--grey); margin-bottom: 8px; }
+    .panel-score-big { font-family: 'JetBrains Mono', monospace; font-size: 40px; font-weight: 600; line-height: 1; }
+    .panel-score-big.hi { color: var(--green); } .panel-score-big.mi { color: var(--yellow); } .panel-score-big.lo { color: var(--red); } .panel-score-big.nd { color: var(--grey); }
+    .panel-signal-row { display: flex; align-items: flex-start; justify-content: space-between; margin-bottom: 12px; }
+    .conf-track { background: var(--border); height: 3px; border-radius: 2px; width: 100%; margin-top: 8px; }
+    .conf-fill { height: 3px; border-radius: 2px; background: var(--blue); }
+    .conf-label { font-size: 10px; color: var(--grey); margin-top: 4px; }
     .panel-summary { font-size: 12px; color: var(--grey2); line-height: 1.7; }
     .panel-list { list-style: none; }
-    .panel-list-item { font-size: 11px; color: var(--grey2); padding: 6px 0; border-bottom: 1px solid var(--border); padding-left: 14px; position: relative; line-height: 1.5; }
-    .panel-list-item:last-child { border-bottom: none; }
-    .panel-list-item.up::before { content:'↑'; position:absolute; left:0; color:var(--green); }
-    .panel-list-item.dn::before { content:'↓'; position:absolute; left:0; color:var(--red); }
-    .panel-divider { border: none; border-top: 1px solid var(--border); margin: 16px 0; }
-    .comment-area { width: 100%; background: var(--bg); border: 1px solid var(--border2); border-radius: 5px; color: var(--text); font-family: 'Inter', sans-serif; font-size: 12px; padding: 10px 12px; resize: none; outline: none; line-height: 1.6; transition: border-color 0.15s; }
+    .panel-li { font-size: 11px; color: var(--grey2); padding: 6px 0 6px 14px; border-bottom: 1px solid var(--border); position: relative; line-height: 1.5; }
+    .panel-li:last-child { border-bottom: none; }
+    .panel-li.up::before { content:'↑'; position:absolute; left:0; color:var(--green); }
+    .panel-li.dn::before { content:'↓'; position:absolute; left:0; color:var(--red); }
+    .panel-divider { border: none; border-top: 1px solid var(--border); margin: 14px 0; }
+    .comment-area { width: 100%; background: var(--bg); border: 1px solid var(--border2); border-radius: 5px; color: var(--text); font-family: 'Inter', sans-serif; font-size: 12px; padding: 10px; resize: none; outline: none; line-height: 1.6; }
     .comment-area:focus { border-color: var(--blue); }
     .comment-area::placeholder { color: var(--border2); }
-    .save-comment-btn { margin-top: 8px; width: 100%; background: var(--surface2); border: 1px solid var(--border2); color: var(--grey2); font-family: 'Inter', sans-serif; font-size: 11px; padding: 6px; border-radius: 5px; cursor: pointer; transition: all 0.12s; }
-    .save-comment-btn:hover { border-color: var(--blue); color: var(--blue); }
-    .panel-placeholder { display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100%; color: var(--grey); text-align: center; padding: 20px; }
-    .panel-placeholder-icon { font-size: 24px; margin-bottom: 10px; opacity: 0.2; }
-    .panel-placeholder-text { font-size: 12px; line-height: 1.6; }
+    .save-btn { margin-top: 6px; width: 100%; background: var(--surface2); border: 1px solid var(--border2); color: var(--grey2); font-family: 'Inter', sans-serif; font-size: 11px; padding: 7px; border-radius: 5px; cursor: pointer; transition: all 0.12s; }
+    .save-btn:hover { border-color: var(--blue); color: var(--blue); }
+    .panel-placeholder { display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100%; color: var(--grey); text-align: center; padding: 24px; }
 
     @keyframes pulse { 0%,100%{opacity:0.3} 50%{opacity:1} }
     .scanning { animation: pulse 0.9s ease-in-out infinite; color: var(--blue); }
-
-    /* Scanning animation */
-    .alert-pill { font-size: 10px; background: var(--blue-glow); color: var(--blue); border: 1px solid rgba(21,101,255,0.25); padding: 1px 6px; border-radius: 8px; }
   </style>
 </head>
 <body>
-<div class="app panel-closed" id="app">
 
-  <!-- Sidebar -->
-  <aside class="sidebar">
-    <div class="sidebar-logo">
-      <div class="logo-icon">O</div>
-      <div>
-        <div class="logo-text">ONYX AI</div>
-        <div class="logo-sub">Intelligence</div>
-      </div>
-    </div>
-    <nav class="sidebar-nav">
-      <div class="nav-label">Main</div>
-      <a class="nav-item active" href="/">
-        <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor"><path d="M2 2h5v5H2V2zm0 7h5v5H2V9zm7-7h5v5H9V2zm0 7h5v5H9V9z"/></svg>
-        Dashboard
-      </a>
-      <a class="nav-item" href="/search">
-        <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor"><path d="M11.742 10.344a6.5 6.5 0 1 0-1.397 1.398h-.001l3.85 3.85a1 1 0 0 0 1.415-1.414l-3.85-3.85a1.007 1.007 0 0 0-.115-.099zm-5.242 1.656a5.5 5.5 0 1 1 0-11 5.5 5.5 0 0 1 0 11z"/></svg>
-        Search & Predict
-      </a>
-      <div class="nav-label" style="margin-top:12px">Coming Soon</div>
-      <div class="nav-soon">
-        <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor"><path d="M8 1a2 2 0 0 1 2 2v4H6V3a2 2 0 0 1 2-2zm3 6V3a3 3 0 0 0-6 0v4a2 2 0 0 0-2 2v5a2 2 0 0 0 2 2h6a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2z"/></svg>
-        Trading
-        <span class="nav-chip">Soon</span>
-      </div>
-    </nav>
-    <div class="sidebar-footer">
-      <div class="market-pill">
-        <div class="dot" id="mktDot"></div>
-        <span id="mktTxt">Checking...</span>
-      </div>
-    </div>
-  </aside>
+<!-- Navbar -->
+<nav class="navbar">
+  <div class="logo-wrap">
+    <div class="logo-icon">O</div>
+    <div class="logo-txt">ONYX AI</div>
+  </div>
+  <a class="nav-link active" href="/">Dashboard</a>
+  <a class="nav-link" href="/search">Search & Predict</a>
+  <a class="nav-link disabled" href="#">Trading</a>
+  <div class="market-pill">
+    <div class="dot" id="mktDot"></div>
+    <span id="mktTxt">Checking...</span>
+  </div>
+</nav>
 
-  <!-- Topbar -->
-  <header class="topbar">
-    <div class="topbar-left">
-      <div class="topbar-title">Dashboard</div>
-      <div class="topbar-date" id="topDate"></div>
-    </div>
-    <div class="add-bar">
-      <input class="input-sm" type="text" id="tickerInput" placeholder="Add ticker…" maxlength="10"/>
-      <select class="select-sm" id="assetType">
-        <option value="stock">Stock</option>
-        <option value="crypto">Crypto</option>
-      </select>
-      <button class="btn btn-ghost" onclick="addTicker()">+ Add</button>
-      <button class="btn btn-ghost" onclick="refreshPrices()">↻</button>
-      <button class="btn btn-blue" id="scanAllBtn" onclick="scanAll()">⚡ Scan All</button>
-    </div>
-  </header>
+<!-- Toolbar -->
+<div class="toolbar">
+  <span class="toolbar-label">Add Ticker</span>
+  <input class="input-sm" type="text" id="tickerInput" placeholder="e.g. AAPL" maxlength="10"/>
+  <select class="select-sm" id="assetType">
+    <option value="stock">Stock</option>
+    <option value="crypto">Crypto</option>
+  </select>
+  <button class="btn btn-ghost" onclick="addTicker()">+ Add</button>
+  <div class="spacer"></div>
+  <span class="date-txt" id="topDate"></span>
+  <button class="btn btn-ghost" onclick="refreshPrices()">↻ Prices</button>
+  <button class="btn btn-blue" id="scanAllBtn" onclick="scanAll()">⚡ Scan All</button>
+</div>
 
-  <!-- Main -->
-  <main class="main">
-    <!-- Progress -->
-    <div class="progress-wrap" id="progressWrap">
-      <div class="progress-track"><div class="progress-fill" id="progressFill"></div></div>
-      <div class="progress-txt" id="progressTxt">Preparing...</div>
-    </div>
+<!-- Progress -->
+<div class="progress-wrap" id="progressWrap">
+  <div class="progress-track"><div class="progress-fill" id="progressFill"></div></div>
+  <div class="progress-txt" id="progressTxt">Preparing...</div>
+</div>
 
-    <!-- Table -->
-    <div class="table-wrap">
-      <div class="table-head">
-        <div class="th"></div>
-        <div class="th">Ticker</div>
-        <div class="th">Price</div>
-        <div class="th">Change</div>
-        <div class="th">Score</div>
-        <div class="th">Signal</div>
-        <div class="th">Actions</div>
-        <div class="th"></div>
-      </div>
-      <div id="tableBody">
-        <div class="empty-state">
+<!-- Content -->
+<div class="content-wrap">
+  <div class="table-section">
+    <table class="tbl">
+      <thead>
+        <tr>
+          <th style="width:36px"></th>
+          <th>Ticker</th>
+          <th>Price</th>
+          <th>Change</th>
+          <th>Score</th>
+          <th>Signal</th>
+          <th>Actions</th>
+          <th style="width:100px"></th>
+        </tr>
+      </thead>
+      <tbody id="tableBody">
+        <tr class="empty-row"><td colspan="8">
           <div class="empty-icon">📊</div>
-          <div style="font-size:13px;margin-bottom:4px">Your watchlist is empty</div>
+          <div style="font-size:13px;margin-bottom:4px;color:var(--grey2)">Your watchlist is empty</div>
           <div style="font-size:11px">Add a ticker above to get started</div>
-        </div>
-      </div>
-    </div>
-  </main>
+        </td></tr>
+      </tbody>
+    </table>
+  </div>
 
-  <!-- Right Panel -->
-  <aside class="right-panel" id="rightPanel">
-    <div class="panel-header" id="panelHeader">
-      <div class="panel-title">Stock Detail</div>
-      <button class="panel-close" onclick="closePanel()">×</button>
-    </div>
-    <div class="panel-body" id="panelBody">
+  <!-- Right panel -->
+  <div class="panel-section" id="panelSection">
+    <div class="panel-inner" id="panelInner">
       <div class="panel-placeholder">
-        <div class="panel-placeholder-icon">👆</div>
-        <div class="panel-placeholder-text">Click any stock to view details, AI analysis, and add comments</div>
+        <div style="font-size:24px;margin-bottom:10px;opacity:0.2">👆</div>
+        <div style="font-size:12px;line-height:1.6">Click any stock row to view details and add comments</div>
       </div>
     </div>
-  </aside>
-
+  </div>
 </div>
 
 <script>
@@ -306,7 +258,6 @@ const h = now.getUTCHours(), d = now.getUTCDay();
 const open = d > 0 && d < 6 && h >= 13 && h < 21;
 document.getElementById('mktDot').className = 'dot ' + (open ? 'open' : 'closed');
 document.getElementById('mktTxt').textContent = open ? 'Market Open' : 'Market Closed';
-
 document.getElementById('tickerInput').addEventListener('keydown', e => { if (e.key === 'Enter') addTicker(); });
 
 renderTable();
@@ -354,10 +305,9 @@ async function scanAll() {
   btn.disabled = true;
   document.getElementById('progressWrap').classList.add('active');
   for (let i = 0; i < watchlist.length; i++) {
-    const w = watchlist[i];
     document.getElementById('progressFill').style.width = `${Math.round((i/watchlist.length)*100)}%`;
-    document.getElementById('progressTxt').textContent = `Analysing ${w.ticker} (${i+1}/${watchlist.length})`;
-    await scanTicker(w.ticker, false);
+    document.getElementById('progressTxt').textContent = `Analysing ${watchlist[i].ticker} (${i+1}/${watchlist.length})`;
+    await scanTicker(watchlist[i].ticker, false);
     if (i < watchlist.length - 1) await sleep(3000);
   }
   document.getElementById('progressFill').style.width = '100%';
@@ -381,15 +331,10 @@ async function scanTicker(ticker, rerender = true) {
     });
     const data = await res.json();
     if (res.ok) {
-      w.signal = data.signal;
-      w.assetName = data.asset_name;
-      w.summary = data.summary;
-      w.scannedAt = new Date().toISOString();
-      w.prevSignal = prev;
-      w.catalysts = data.catalysts || [];
-      w.risks = data.risks || [];
-      w.signals = data.supporting_signals || [];
-      w.confidence = data.confidence;
+      w.signal = data.signal; w.assetName = data.asset_name; w.summary = data.summary;
+      w.scannedAt = new Date().toISOString(); w.prevSignal = prev;
+      w.catalysts = data.catalysts || []; w.risks = data.risks || [];
+      w.signals = data.supporting_signals || []; w.confidence = data.confidence;
       const sm = { BUY:{High:8.5,Medium:7.0,Low:6.0}, WATCH:{High:6.0,Medium:5.5,Low:4.5}, HOLD:{High:5.0,Medium:4.5,Low:4.0}, SELL:{High:2.0,Medium:3.0,Low:3.5} };
       w.score = sm[data.signal]?.[data.confidence] ?? 5.0;
       scanHistory.unshift({ ticker, signal: data.signal, score: w.score, summary: data.summary, prevSignal: prev, time: new Date().toISOString() });
@@ -409,92 +354,80 @@ function toggleRow(ticker) {
 
 function selectStock(ticker) {
   selectedTicker = ticker;
-  document.getElementById('app').classList.remove('panel-closed');
+  document.getElementById('panelSection').classList.add('open');
   renderPanel(ticker);
-  document.querySelectorAll('.ticker-row').forEach(r => r.classList.remove('selected'));
+  document.querySelectorAll('tbody tr.main-row').forEach(r => r.classList.remove('selected'));
   const row = document.getElementById('row-' + ticker);
   if (row) row.classList.add('selected');
 }
 
 function closePanel() {
   selectedTicker = null;
-  document.getElementById('app').classList.add('panel-closed');
-  document.querySelectorAll('.ticker-row').forEach(r => r.classList.remove('selected'));
+  document.getElementById('panelSection').classList.remove('open');
+  document.querySelectorAll('tbody tr.main-row').forEach(r => r.classList.remove('selected'));
 }
 
 function renderPanel(ticker) {
   const w = watchlist.find(w => w.ticker === ticker);
   if (!w) return;
-  const sigClass = w.signal ? w.signal.toLowerCase() : 'pending';
-  const scoreColor = !w.score ? 'nd' : w.score >= 7 ? 'hi' : w.score >= 5 ? 'mi' : 'lo';
+  const sigCls = w.signal ? w.signal.toLowerCase() : 'pending';
+  const sc = !w.score ? 'nd' : w.score >= 7 ? 'hi' : w.score >= 5 ? 'mi' : 'lo';
   const confPct = w.confidence === 'High' ? 85 : w.confidence === 'Medium' ? 60 : w.confidence === 'Low' ? 35 : 0;
   const comment = comments[ticker] || '';
   const hist = scanHistory.filter(h => h.ticker === ticker).slice(0, 5);
 
-  document.getElementById('panelHeader').innerHTML = `
-    <div>
-      <div class="panel-ticker">${ticker}</div>
-      <div class="panel-name">${w.assetName || w.type}</div>
-    </div>
-    <button class="panel-close" onclick="closePanel()">×</button>
-  `;
-
-  document.getElementById('panelBody').innerHTML = `
-    ${w.signal ? `
-    <div class="panel-section">
-      <div class="panel-signal-row">
-        <div>
-          <div class="panel-score-big ${scoreColor}">${w.score ? w.score.toFixed(1) : '—'}</div>
-          <div style="font-size:10px;color:var(--grey);margin-top:2px">/ 10 AI Score</div>
-          <div class="panel-conf-bar">
-            <div class="panel-conf-label">Confidence: ${w.confidence || '—'}</div>
-            <div class="panel-conf-track"><div class="panel-conf-fill" style="width:${confPct}%"></div></div>
-          </div>
-        </div>
-        <span class="sig ${sigClass}" style="font-size:13px;padding:6px 14px">${w.signal}</span>
+  document.getElementById('panelInner').innerHTML = `
+    <div class="panel-head">
+      <div>
+        <div class="panel-ticker">${ticker}</div>
+        <div class="panel-name">${w.assetName || w.type}</div>
       </div>
-      ${w.summary ? `<div class="panel-summary">${w.summary}</div>` : ''}
+      <button class="panel-close" onclick="closePanel()">×</button>
     </div>
-
-    ${w.catalysts?.length ? `
-    <div class="panel-section">
-      <div class="panel-section-label" style="color:var(--green)">↑ Catalysts</div>
-      <ul class="panel-list">${w.catalysts.map(c=>`<li class="panel-list-item up">${c}</li>`).join('')}</ul>
-    </div>` : ''}
-
-    ${w.risks?.length ? `
-    <div class="panel-section">
-      <div class="panel-section-label" style="color:var(--red)">↓ Risk Factors</div>
-      <ul class="panel-list">${w.risks.map(r=>`<li class="panel-list-item dn">${r}</li>`).join('')}</ul>
-    </div>` : ''}
-    ` : `<div style="font-size:12px;color:var(--grey);margin-bottom:16px">No scan data yet. Click Scan to analyse this stock.</div>`}
-
-    <hr class="panel-divider"/>
-
-    <div class="panel-section">
-      <div class="panel-section-label">Comments</div>
-      <textarea class="comment-area" id="commentArea-${ticker}" rows="5" placeholder="Add your notes, thesis, or trade plan...">${comment}</textarea>
-      <button class="save-comment-btn" onclick="saveComment('${ticker}')">Save Comment</button>
-    </div>
-
-    ${hist.length ? `
-    <hr class="panel-divider"/>
-    <div class="panel-section">
-      <div class="panel-section-label">Scan History</div>
-      ${hist.map(h => `
-        <div class="hist-item">
-          <span class="hist-sig ${h.signal.toLowerCase()}" style="font-size:10px;font-weight:600;text-transform:uppercase;color:${h.signal==='BUY'?'var(--green)':h.signal==='SELL'?'var(--red)':h.signal==='WATCH'?'var(--yellow)':'var(--grey2)'}">${h.signal}</span>
-          <span class="hist-score">${h.score?.toFixed(1) || '—'}/10</span>
-          <div class="hist-summary">${(h.summary||'').substring(0,80)}...</div>
-          <div class="hist-time">${timeAgo(h.time)}</div>
+    <div class="panel-body">
+      ${w.signal ? `
+      <div class="panel-sec">
+        <div class="panel-signal-row">
+          <div>
+            <div class="panel-score-big ${sc}">${w.score ? w.score.toFixed(1) : '—'}</div>
+            <div style="font-size:10px;color:var(--grey);margin-top:2px">/ 10 AI Score</div>
+            <div class="conf-track"><div class="conf-fill" style="width:${confPct}%"></div></div>
+            <div class="conf-label">Confidence: ${w.confidence || '—'}</div>
+          </div>
+          <span class="sig ${sigCls}" style="font-size:12px;padding:5px 12px">${w.signal}</span>
         </div>
-      `).join('')}
-    </div>` : ''}
+        ${w.summary ? `<div class="panel-summary">${w.summary}</div>` : ''}
+      </div>
+      ${w.catalysts?.length ? `<div class="panel-sec"><div class="panel-sec-label" style="color:var(--green)">↑ Catalysts</div><ul class="panel-list">${w.catalysts.map(c=>`<li class="panel-li up">${c}</li>`).join('')}</ul></div>` : ''}
+      ${w.risks?.length ? `<div class="panel-sec"><div class="panel-sec-label" style="color:var(--red)">↓ Risk Factors</div><ul class="panel-list">${w.risks.map(r=>`<li class="panel-li dn">${r}</li>`).join('')}</ul></div>` : ''}
+      ` : `<div style="font-size:12px;color:var(--grey);margin-bottom:16px">No scan data yet — click Scan to analyse.</div>`}
+
+      <hr class="panel-divider"/>
+      <div class="panel-sec">
+        <div class="panel-sec-label">Comments</div>
+        <textarea class="comment-area" id="cmt-${ticker}" rows="5" placeholder="Notes, thesis, trade plan...">${comment}</textarea>
+        <button class="save-btn" onclick="saveComment('${ticker}')">Save Comment</button>
+      </div>
+
+      ${hist.length ? `
+      <hr class="panel-divider"/>
+      <div class="panel-sec">
+        <div class="panel-sec-label">Scan History</div>
+        ${hist.map(h=>`
+          <div class="hist-entry">
+            <span class="hist-sig" style="color:${h.signal==='BUY'?'var(--green)':h.signal==='SELL'?'var(--red)':h.signal==='WATCH'?'var(--yellow)':'var(--grey2)'}">${h.signal}</span>
+            <span class="hist-score">${h.score?.toFixed(1)||'—'}/10</span>
+            <div class="hist-sum">${(h.summary||'').substring(0,80)}...</div>
+            <div class="hist-time">${timeAgo(h.time)}</div>
+          </div>
+        `).join('')}
+      </div>` : ''}
+    </div>
   `;
 }
 
 function saveComment(ticker) {
-  const val = document.getElementById('commentArea-' + ticker)?.value || '';
+  const val = document.getElementById('cmt-' + ticker)?.value || '';
   comments[ticker] = val;
   save();
 }
@@ -502,7 +435,7 @@ function saveComment(ticker) {
 function renderTable() {
   const body = document.getElementById('tableBody');
   if (!watchlist.length) {
-    body.innerHTML = `<div class="empty-state"><div class="empty-icon">📊</div><div style="font-size:13px;margin-bottom:4px">Your watchlist is empty</div><div style="font-size:11px">Add a ticker above to get started</div></div>`;
+    body.innerHTML = `<tr class="empty-row"><td colspan="8"><div class="empty-icon">📊</div><div style="font-size:13px;margin-bottom:4px;color:var(--grey2)">Your watchlist is empty</div><div style="font-size:11px">Add a ticker above to get started</div></td></tr>`;
     return;
   }
 
@@ -512,7 +445,8 @@ function renderTable() {
     if (a.signal) return -1; if (b.signal) return 1; return 0;
   });
 
-  body.innerHTML = sorted.map(w => {
+  let rows = '';
+  sorted.forEach(w => {
     const p = prices[w.ticker];
     const price = p?.price ? '$'+parseFloat(p.price).toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2}) : '—';
     const chg = p?.change_pct ?? null;
@@ -520,68 +454,74 @@ function renderTable() {
     const chgCls = chg==null?'neu':chg>0?'pos':chg<0?'neg':'neu';
     const sigCls = w.signal?w.signal.toLowerCase():'pending';
     const sigTxt = w.scanning?'...':w.signal||'Pending';
-    const scoreColor = !w.score?'nd':w.score>=7?'hi':w.score>=5?'mi':'lo';
-    const scoreBarColor = !w.score?'#1e2740':w.score>=7?'#22c55e':w.score>=5?'#f59e0b':'#ef4444';
-    const scoreWidth = w.score?`${w.score*10}%`:'0%';
+    const sc = !w.score?'nd':w.score>=7?'hi':w.score>=5?'mi':'lo';
+    const sbColor = !w.score?'#1e2740':w.score>=7?'#22c55e':w.score>=5?'#f59e0b':'#ef4444';
+    const sbWidth = w.score?`${w.score*10}%`:'0%';
     const scoreTxt = w.scanning?'...':w.score?w.score.toFixed(1):'—';
-    const isExpanded = expandedRows.has(w.ticker);
-    const isSelected = selectedTicker === w.ticker;
-    const alertHtml = (w.signal && w.prevSignal && w.prevSignal!==w.signal) ? `<span class="alert-pill" style="margin-left:6px">⚡${w.prevSignal}→${w.signal}</span>` : '';
+    const isExp = expandedRows.has(w.ticker);
+    const isSel = selectedTicker === w.ticker;
+    const alertHtml = (w.signal && w.prevSignal && w.prevSignal!==w.signal) ? `<span class="alert-pill">⚡${w.prevSignal}→${w.signal}</span>` : '';
     const hist = scanHistory.filter(h => h.ticker === w.ticker);
 
-    return `
-      <div class="ticker-block">
-        <div class="ticker-row${isSelected?' selected':''}" id="row-${w.ticker}" onclick="selectStock('${w.ticker}')">
-          <div>
-            <button class="expand-btn${isExpanded?' open':''}" onclick="event.stopPropagation();toggleRow('${w.ticker}')" title="View history">▶</button>
+    rows += `
+      <tr class="main-row${isSel?' selected':''}" id="row-${w.ticker}" onclick="selectStock('${w.ticker}')">
+        <td onclick="event.stopPropagation()">
+          <button class="expand-btn${isExp?' open':''}" onclick="toggleRow('${w.ticker}')" title="Scan history">▶</button>
+        </td>
+        <td>
+          <div class="ticker-name">${w.ticker}${alertHtml}</div>
+          <div class="ticker-sub">${w.type}${w.scannedAt?' · '+timeAgo(w.scannedAt):''}</div>
+        </td>
+        <td class="price-cell${w.scanning?' scanning':''}">${w.scanning?'...':price}</td>
+        <td class="change-cell ${chgCls}">${chgStr}</td>
+        <td>
+          <div class="score-wrap">
+            <div class="score-n ${sc}">${scoreTxt}</div>
+            <div class="score-bar"><div class="score-fill" style="width:${sbWidth};background:${sbColor}"></div></div>
           </div>
-          <div>
-            <div class="td-ticker">${w.ticker}${alertHtml}</div>
-            <div class="td-sub">${w.type}${w.scannedAt?' · '+timeAgo(w.scannedAt):''}</div>
+        </td>
+        <td><span class="sig ${sigCls}">${sigTxt}</span></td>
+        <td onclick="event.stopPropagation()">
+          <div class="act-wrap">
+            <button class="act-btn buy" onclick="alert('Trading coming soon!')">Buy</button>
+            <button class="act-btn sell" onclick="alert('Trading coming soon!')">Sell</button>
           </div>
-          <div class="td-price${w.scanning?' scanning':''}">${w.scanning?'..':price}</div>
-          <div class="td-change ${chgCls}">${chgStr}</div>
-          <div class="score-cell">
-            <div class="score-num ${scoreColor}">${scoreTxt}</div>
-            <div>
-              <div class="score-track"><div class="score-fill" style="width:${scoreWidth};background:${scoreBarColor}"></div></div>
-            </div>
-          </div>
-          <div><span class="sig ${sigCls}">${sigTxt}</span></div>
-          <div class="action-btns">
-            <button class="act-btn buy-btn" onclick="event.stopPropagation();alert('Trading coming soon!')">Buy</button>
-            <button class="act-btn sell-btn" onclick="event.stopPropagation();alert('Trading coming soon!')">Sell</button>
-          </div>
-          <div class="row-act" onclick="event.stopPropagation()">
+        </td>
+        <td onclick="event.stopPropagation()">
+          <div class="ctrl-wrap">
             <button class="scan-sm" onclick="scanTicker('${w.ticker}')" ${w.scanning?'disabled':''}>Scan</button>
             <button class="del-btn" onclick="removeTicker('${w.ticker}')">&times;</button>
           </div>
-        </div>
-        <div class="history-drawer${isExpanded?' open':''}">
-          <div class="history-inner">
-            <div class="history-title">Scan History</div>
-            ${hist.length ? hist.slice(0,5).map(h=>`
-              <div class="hist-item">
-                <span class="hist-sig" style="color:${h.signal==='BUY'?'var(--green)':h.signal==='SELL'?'var(--red)':h.signal==='WATCH'?'var(--yellow)':'var(--grey2)'}">${h.signal}</span>
-                <span class="hist-score">${h.score?.toFixed(1)||'—'}/10</span>
-                <div class="hist-summary">${(h.summary||'').substring(0,100)}...</div>
-                <div class="hist-time">${timeAgo(h.time)}</div>
-              </div>
-            `).join('') : '<div class="no-history">No scan history yet</div>'}
-          </div>
-        </div>
-      </div>`;
-  }).join('');
+        </td>
+      </tr>`;
+
+    if (isExp) {
+      rows += `
+        <tr class="history-drawer-row">
+          <td colspan="8">
+            <div class="history-inner">
+              <div class="hist-title">Scan History</div>
+              ${hist.length ? hist.slice(0,5).map(h=>`
+                <div class="hist-entry">
+                  <span class="hist-sig" style="color:${h.signal==='BUY'?'var(--green)':h.signal==='SELL'?'var(--red)':h.signal==='WATCH'?'var(--yellow)':'var(--grey2)'}">${h.signal}</span>
+                  <span class="hist-score">${h.score?.toFixed(1)||'—'}/10</span>
+                  <div class="hist-sum">${(h.summary||'').substring(0,100)}...</div>
+                  <div class="hist-time">${timeAgo(h.time)}</div>
+                </div>`).join('') : '<div class="no-hist">No scan history yet</div>'}
+            </div>
+          </td>
+        </tr>`;
+    }
+  });
+
+  body.innerHTML = rows;
 }
 
 function timeAgo(iso) {
   const s = Math.floor((Date.now()-new Date(iso))/1000);
-  if (s<60) return `${s}s ago`;
-  if (s<3600) return `${Math.floor(s/60)}m ago`;
-  if (s<86400) return `${Math.floor(s/3600)}h ago`;
-  return `${Math.floor(s/86400)}d ago`;
+  if (s<60) return `${s}s ago`; if (s<3600) return `${Math.floor(s/60)}m ago`;
+  if (s<86400) return `${Math.floor(s/3600)}h ago`; return `${Math.floor(s/86400)}d ago`;
 }
-
 function sleep(ms) { return new Promise(r=>setTimeout(r,ms)); }
 </script>
 </body>
