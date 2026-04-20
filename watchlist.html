@@ -3,580 +3,124 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Onyx AI — Watchlist</title>
+  <title>Onyx AI — Daily Dashboard</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300&family=DM+Mono:wght@300;400&display=swap" rel="stylesheet">
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-
     :root {
-      --black: #080808;
-      --obsidian: #0f0f0f;
-      --charcoal: #1a1a1a;
-      --gold: #c9a84c;
-      --gold-light: #e2c47a;
-      --gold-dim: #7a6230;
-      --white: #f0ece4;
-      --muted: #6b6760;
-      --text: #ccc5b9;
-      --buy: #4caf7a;
-      --watch: #c9a84c;
-      --hold: #c0554a;
-      --sell: #e53935;
+      --black: #080808; --obsidian: #0f0f0f; --charcoal: #1a1a1a;
+      --gold: #c9a84c; --gold-light: #e2c47a; --gold-dim: #7a6230;
+      --white: #f0ece4; --muted: #6b6760; --text: #ccc5b9;
+      --buy: #4caf7a; --watch: #c9a84c; --hold: #c0554a; --sell: #e53935;
     }
-
-    html, body {
-      height: 100%;
-      background: var(--black);
-      color: var(--text);
-      font-family: 'DM Mono', monospace;
-      font-size: 13px;
-      letter-spacing: 0.02em;
-      overflow-x: hidden;
-    }
-
-    body::before {
-      content: '';
-      position: fixed;
-      inset: 0;
-      background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.04'/%3E%3C/svg%3E");
-      pointer-events: none;
-      z-index: 0;
-      opacity: 0.4;
-    }
-
-    .container {
-      position: relative;
-      z-index: 1;
-      min-height: 100vh;
-      display: flex;
-      flex-direction: column;
-      max-width: 900px;
-      margin: 0 auto;
-      padding: 0 32px;
-    }
-
-    header {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      padding: 36px 0 24px;
-      border-bottom: 1px solid #1e1e1e;
-    }
-
-    .logo {
-      display: flex;
-      align-items: baseline;
-      gap: 10px;
-      text-decoration: none;
-    }
-
-    .logo-mark {
-      width: 22px; height: 22px;
-      background: var(--gold);
-      clip-path: polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%);
-      flex-shrink: 0;
-      position: relative;
-      top: 2px;
-    }
-
-    .logo-name {
-      font-family: 'Cormorant Garamond', serif;
-      font-size: 22px;
-      font-weight: 300;
-      color: var(--white);
-      letter-spacing: 0.12em;
-      text-transform: uppercase;
-    }
-
-    .logo-sub {
-      font-size: 10px;
-      color: var(--gold-dim);
-      letter-spacing: 0.18em;
-      text-transform: uppercase;
-    }
-
-    nav { display: flex; gap: 24px; align-items: center; }
-
-    nav a {
-      font-size: 10px;
-      letter-spacing: 0.2em;
-      text-transform: uppercase;
-      color: var(--muted);
-      text-decoration: none;
-      transition: color 0.2s;
-    }
-
+    html, body { height: 100%; background: var(--black); color: var(--text); font-family: 'DM Mono', monospace; font-size: 13px; letter-spacing: 0.02em; overflow-x: hidden; }
+    body::before { content: ''; position: fixed; inset: 0; background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.04'/%3E%3C/svg%3E"); pointer-events: none; z-index: 0; opacity: 0.4; }
+    .container { position: relative; z-index: 1; min-height: 100vh; display: flex; flex-direction: column; max-width: 1100px; margin: 0 auto; padding: 0 32px; }
+    header { display: flex; align-items: center; justify-content: space-between; padding: 36px 0 24px; border-bottom: 1px solid #1e1e1e; }
+    .logo { display: flex; align-items: baseline; gap: 10px; text-decoration: none; }
+    .logo-mark { width: 22px; height: 22px; background: var(--gold); clip-path: polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%); flex-shrink: 0; position: relative; top: 2px; }
+    .logo-name { font-family: 'Cormorant Garamond', serif; font-size: 22px; font-weight: 300; color: var(--white); letter-spacing: 0.12em; text-transform: uppercase; }
+    .logo-sub { font-size: 10px; color: var(--gold-dim); letter-spacing: 0.18em; text-transform: uppercase; }
+    nav { display: flex; gap: 24px; }
+    nav a { font-size: 10px; letter-spacing: 0.2em; text-transform: uppercase; color: var(--muted); text-decoration: none; transition: color 0.2s; }
     nav a:hover { color: var(--white); }
     nav a.active { color: var(--gold); }
 
-    .hero {
-      padding: 56px 0 40px;
-      text-align: center;
-    }
+    /* Dashboard header */
+    .dash-header { display: flex; align-items: center; justify-content: space-between; padding: 40px 0 28px; }
+    .dash-title { font-family: 'Cormorant Garamond', serif; font-size: 32px; font-weight: 300; color: var(--white); }
+    .dash-date { font-size: 11px; color: var(--muted); letter-spacing: 0.1em; margin-top: 4px; }
+    .dash-actions { display: flex; gap: 10px; }
 
-    .hero-eyebrow {
-      font-size: 10px;
-      letter-spacing: 0.3em;
-      text-transform: uppercase;
-      color: var(--gold);
-      margin-bottom: 16px;
-      opacity: 0;
-      animation: fadeUp 0.8s ease forwards 0.2s;
-    }
-
-    .hero-title {
-      font-family: 'Cormorant Garamond', serif;
-      font-size: clamp(36px, 6vw, 60px);
-      font-weight: 300;
-      color: var(--white);
-      line-height: 1.05;
-      margin-bottom: 12px;
-      opacity: 0;
-      animation: fadeUp 0.8s ease forwards 0.4s;
-    }
-
-    .hero-title em { font-style: italic; color: var(--gold); }
-
-    .hero-sub {
-      font-size: 12px;
-      color: var(--muted);
-      opacity: 0;
-      animation: fadeUp 0.8s ease forwards 0.6s;
-    }
-
-    /* Add ticker panel */
-    .add-panel {
-      background: var(--obsidian);
-      border: 1px solid #222;
-      padding: 24px 28px;
-      margin-bottom: 24px;
-      opacity: 0;
-      animation: fadeUp 0.8s ease forwards 0.8s;
-    }
-
-    .panel-label {
-      font-size: 10px;
-      letter-spacing: 0.25em;
-      text-transform: uppercase;
-      color: var(--gold-dim);
-      margin-bottom: 16px;
-    }
-
-    .add-row {
-      display: grid;
-      grid-template-columns: 1fr auto auto auto;
-      gap: 10px;
-      align-items: stretch;
-    }
-
-    input[type="text"] {
-      background: var(--charcoal);
-      border: 1px solid #2a2a2a;
-      color: var(--white);
-      font-family: 'DM Mono', monospace;
-      font-size: 13px;
-      padding: 12px 16px;
-      outline: none;
-      transition: border-color 0.2s;
-      text-transform: uppercase;
-    }
-
-    input[type="text"]::placeholder { color: var(--muted); text-transform: none; }
-    input[type="text"]:focus { border-color: var(--gold-dim); }
-
-    select {
-      background: var(--charcoal);
-      border: 1px solid #2a2a2a;
-      color: var(--white);
-      font-family: 'DM Mono', monospace;
-      font-size: 12px;
-      padding: 12px 14px;
-      outline: none;
-      cursor: pointer;
-      appearance: none;
-    }
-
-    .btn {
-      border: none;
-      font-family: 'DM Mono', monospace;
-      font-size: 11px;
-      letter-spacing: 0.15em;
-      text-transform: uppercase;
-      padding: 12px 20px;
-      cursor: pointer;
-      transition: background 0.2s, transform 0.1s;
-      white-space: nowrap;
-    }
-
+    .btn { border: none; font-family: 'DM Mono', monospace; font-size: 11px; letter-spacing: 0.15em; text-transform: uppercase; padding: 10px 18px; cursor: pointer; transition: background 0.2s, transform 0.1s; white-space: nowrap; }
     .btn:active { transform: scale(0.98); }
+    .btn-outline { background: transparent; color: var(--gold); border: 1px solid var(--gold-dim); }
+    .btn-outline:hover { background: #1a1a1a; }
+    .btn-primary { background: var(--gold); color: var(--black); }
+    .btn-primary:hover { background: var(--gold-light); }
+    .btn-primary:disabled { background: var(--gold-dim); cursor: not-allowed; }
 
-    .btn-add {
-      background: var(--charcoal);
-      color: var(--gold);
-      border: 1px solid var(--gold-dim);
-    }
+    /* Summary strip */
+    .summary-strip { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin-bottom: 24px; }
+    .strip-card { background: var(--obsidian); border: 1px solid #1e1e1e; padding: 16px 20px; display: flex; align-items: center; gap: 14px; }
+    .strip-num { font-family: 'Cormorant Garamond', serif; font-size: 32px; font-weight: 300; line-height: 1; }
+    .strip-num.sell { color: var(--sell); } .strip-num.buy { color: var(--buy); } .strip-num.watch { color: var(--watch); } .strip-num.hold { color: var(--hold); }
+    .strip-label { font-size: 10px; letter-spacing: 0.2em; text-transform: uppercase; color: var(--muted); }
 
-    .btn-add:hover { background: #222; }
+    /* Add ticker row */
+    .add-row { display: flex; gap: 10px; margin-bottom: 20px; }
+    .add-row input { background: var(--charcoal); border: 1px solid #2a2a2a; color: var(--white); font-family: 'DM Mono', monospace; font-size: 13px; padding: 10px 14px; outline: none; width: 160px; text-transform: uppercase; transition: border-color 0.2s; }
+    .add-row input::placeholder { color: var(--muted); text-transform: none; }
+    .add-row input:focus { border-color: var(--gold-dim); }
+    .add-row select { background: var(--charcoal); border: 1px solid #2a2a2a; color: var(--white); font-family: 'DM Mono', monospace; font-size: 12px; padding: 10px 12px; outline: none; cursor: pointer; appearance: none; }
 
-    .btn-scan {
-      background: var(--gold);
-      color: var(--black);
-    }
+    /* Progress */
+    .progress-wrap { display: none; background: var(--charcoal); border: 1px solid #222; padding: 16px 20px; margin-bottom: 16px; }
+    .progress-wrap.active { display: block; }
+    .progress-track { background: #1a1a1a; height: 2px; width: 100%; margin: 10px 0 6px; }
+    .progress-fill { background: var(--gold); height: 2px; width: 0%; transition: width 0.5s ease; }
+    .progress-label { font-size: 10px; letter-spacing: 0.2em; text-transform: uppercase; color: var(--gold-dim); }
+    .progress-status { font-size: 11px; color: var(--muted); }
 
-    .btn-scan:hover { background: var(--gold-light); }
-    .btn-scan:disabled { background: var(--gold-dim); cursor: not-allowed; }
+    /* Main table */
+    .table-wrap { background: var(--obsidian); border: 1px solid #1e1e1e; margin-bottom: 40px; }
+    .table-header { display: grid; grid-template-columns: 100px 90px 80px 90px 110px 120px 1fr 80px; gap: 0; padding: 12px 20px; border-bottom: 1px solid #1a1a1a; }
+    .th { font-size: 10px; letter-spacing: 0.2em; text-transform: uppercase; color: var(--gold-dim); }
+    .ticker-row { display: grid; grid-template-columns: 100px 90px 80px 90px 110px 120px 1fr 80px; gap: 0; padding: 16px 20px; border-bottom: 1px solid #111; align-items: center; transition: background 0.15s; }
+    .ticker-row:hover { background: #0d0d0d; }
+    .ticker-row:last-child { border-bottom: none; }
 
-    /* Watchlist chips */
-    .watchlist-panel {
-      background: var(--obsidian);
-      border: 1px solid #222;
-      padding: 20px 28px;
-      margin-bottom: 32px;
-    }
+    .td-ticker { font-family: 'Cormorant Garamond', serif; font-size: 18px; color: var(--white); letter-spacing: 0.05em; }
+    .td-type { font-size: 10px; color: var(--muted); margin-top: 2px; }
+    .td-price { font-size: 14px; color: var(--white); }
+    .td-change { font-size: 12px; }
+    .td-change.pos { color: var(--buy); }
+    .td-change.neg { color: var(--sell); }
+    .td-change.neu { color: var(--muted); }
 
-    .watchlist-header {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      margin-bottom: 16px;
-    }
+    .signal-badge { font-size: 10px; letter-spacing: 0.12em; text-transform: uppercase; padding: 3px 8px; border: 1px solid; display: inline-block; }
+    .signal-badge.buy { color: var(--buy); border-color: var(--buy); }
+    .signal-badge.watch { color: var(--watch); border-color: var(--watch); }
+    .signal-badge.hold { color: var(--hold); border-color: var(--hold); }
+    .signal-badge.sell { color: var(--sell); border-color: var(--sell); }
+    .signal-badge.pending { color: var(--muted); border-color: #333; }
 
-    .watchlist-count {
-      font-size: 10px;
-      color: var(--muted);
-      letter-spacing: 0.1em;
-    }
+    .alert-badge { font-size: 10px; color: var(--gold); letter-spacing: 0.05em; }
+    .td-scanned { font-size: 10px; color: var(--muted); }
 
-    .clear-btn {
-      font-size: 10px;
-      color: var(--hold);
-      background: none;
-      border: none;
-      cursor: pointer;
-      font-family: 'DM Mono', monospace;
-      letter-spacing: 0.1em;
-      text-transform: uppercase;
-    }
+    .note-input { background: transparent; border: none; border-bottom: 1px solid #2a2a2a; color: var(--text); font-family: 'DM Mono', monospace; font-size: 11px; width: 100%; padding: 4px 0; outline: none; transition: border-color 0.2s; }
+    .note-input:focus { border-color: var(--gold-dim); }
+    .note-input::placeholder { color: #3a3a3a; }
 
-    .chips {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 8px;
-    }
+    .scan-row-btn { font-size: 10px; letter-spacing: 0.1em; text-transform: uppercase; background: transparent; border: 1px solid #2a2a2a; color: var(--muted); padding: 5px 10px; cursor: pointer; font-family: 'DM Mono', monospace; transition: all 0.2s; }
+    .scan-row-btn:hover { border-color: var(--gold-dim); color: var(--gold); }
+    .scan-row-btn:disabled { opacity: 0.4; cursor: not-allowed; }
 
-    .chip {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      background: var(--charcoal);
-      border: 1px solid #2a2a2a;
-      padding: 6px 12px;
-      font-size: 11px;
-      letter-spacing: 0.1em;
-    }
+    .remove-btn { background: none; border: none; color: #333; cursor: pointer; font-size: 16px; transition: color 0.2s; margin-left: 6px; }
+    .remove-btn:hover { color: var(--sell); }
 
-    .chip-ticker { color: var(--white); }
-    .chip-type { color: var(--muted); font-size: 10px; }
+    .empty-row { padding: 40px 20px; text-align: center; color: var(--muted); font-size: 12px; }
 
-    .chip-remove {
-      color: var(--muted);
-      cursor: pointer;
-      background: none;
-      border: none;
-      font-size: 14px;
-      line-height: 1;
-      padding: 0;
-      transition: color 0.2s;
-    }
+    /* History panel */
+    .history-section { margin-bottom: 40px; }
+    .section-title { font-size: 10px; letter-spacing: 0.25em; text-transform: uppercase; color: var(--gold-dim); margin-bottom: 16px; padding-bottom: 10px; border-bottom: 1px solid #1a1a1a; }
+    .history-list { display: flex; flex-direction: column; gap: 8px; }
+    .history-item { background: var(--obsidian); border: 1px solid #1e1e1e; padding: 14px 20px; display: grid; grid-template-columns: 80px 80px 1fr auto; gap: 16px; align-items: center; }
+    .hi-ticker { font-family: 'Cormorant Garamond', serif; font-size: 16px; color: var(--white); }
+    .hi-time { font-size: 10px; color: var(--muted); }
+    .hi-summary { font-size: 11px; color: var(--muted); line-height: 1.4; }
+    .hi-change { font-size: 10px; color: var(--gold); text-align: right; }
 
-    .chip-remove:hover { color: var(--hold); }
+    footer { margin-top: auto; padding: 32px 0; border-top: 1px solid #1a1a1a; display: flex; justify-content: space-between; font-size: 10px; color: var(--muted); letter-spacing: 0.1em; }
 
-    .empty-watchlist {
-      color: var(--muted);
-      font-size: 12px;
-      text-align: center;
-      padding: 16px 0;
-    }
+    @keyframes pulse { 0%, 100% { opacity: 0.4; } 50% { opacity: 1; } }
+    .scanning { animation: pulse 1s ease-in-out infinite; }
 
-    /* Progress bar */
-    .progress-bar {
-      display: none;
-      background: var(--charcoal);
-      border: 1px solid #222;
-      padding: 20px 28px;
-      margin-bottom: 24px;
-    }
-
-    .progress-bar.active { display: block; }
-
-    .progress-label {
-      font-size: 10px;
-      letter-spacing: 0.2em;
-      text-transform: uppercase;
-      color: var(--gold-dim);
-      margin-bottom: 12px;
-    }
-
-    .progress-track {
-      background: #1a1a1a;
-      height: 2px;
-      width: 100%;
-      margin-bottom: 8px;
-    }
-
-    .progress-fill {
-      background: var(--gold);
-      height: 2px;
-      width: 0%;
-      transition: width 0.5s ease;
-    }
-
-    .progress-status {
-      font-size: 11px;
-      color: var(--muted);
-    }
-
-    /* Results */
-    .results { display: none; }
-    .results.active { display: block; }
-
-    .results-header {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      margin-bottom: 20px;
-      padding-bottom: 16px;
-      border-bottom: 1px solid #1e1e1e;
-    }
-
-    .results-title {
-      font-family: 'Cormorant Garamond', serif;
-      font-size: 20px;
-      font-weight: 300;
-      color: var(--white);
-    }
-
-    .results-time {
-      font-size: 10px;
-      color: var(--muted);
-      letter-spacing: 0.1em;
-    }
-
-    /* Summary row */
-    .summary-row {
-      display: grid;
-      grid-template-columns: 1fr 1fr 1fr 1fr;
-      gap: 12px;
-      margin-bottom: 32px;
-    }
-
-    .summary-card {
-      background: var(--obsidian);
-      border: 1px solid #1e1e1e;
-      padding: 20px;
-      text-align: center;
-    }
-
-    .summary-number {
-      font-family: 'Cormorant Garamond', serif;
-      font-size: 40px;
-      font-weight: 300;
-      line-height: 1;
-      margin-bottom: 6px;
-    }
-
-    .summary-number.buy { color: var(--buy); }
-    .summary-number.watch { color: var(--watch); }
-    .summary-number.hold { color: var(--hold); }
-
-    .summary-label {
-      font-size: 10px;
-      letter-spacing: 0.2em;
-      text-transform: uppercase;
-      color: var(--muted);
-    }
-
-    /* Ticker result rows */
-    .section-label {
-      font-size: 10px;
-      letter-spacing: 0.25em;
-      text-transform: uppercase;
-      color: var(--gold-dim);
-      margin-bottom: 12px;
-      margin-top: 28px;
-      padding-bottom: 8px;
-      border-bottom: 1px solid #1a1a1a;
-    }
-
-    .section-label:first-of-type { margin-top: 0; }
-
-    .ticker-card {
-      background: var(--obsidian);
-      border: 1px solid #1e1e1e;
-      padding: 20px 24px;
-      margin-bottom: 10px;
-      display: grid;
-      grid-template-columns: auto 1fr auto;
-      gap: 20px;
-      align-items: start;
-      transition: border-color 0.2s;
-      cursor: pointer;
-    }
-
-    .ticker-card:hover { border-color: #2e2e2e; }
-
-    .ticker-card.expanded { border-color: var(--gold-dim); }
-
-    .tc-signal {
-      font-size: 11px;
-      letter-spacing: 0.15em;
-      text-transform: uppercase;
-      padding: 4px 10px;
-      border: 1px solid;
-      white-space: nowrap;
-    }
-
-    .tc-signal.buy { color: var(--buy); border-color: var(--buy); }
-    .tc-signal.watch { color: var(--watch); border-color: var(--watch); }
-    .tc-signal.hold { color: var(--hold); border-color: var(--hold); }
-    .tc-signal.sell { color: var(--sell); border-color: var(--sell); }
-
-    .tc-main { min-width: 0; }
-
-    .tc-ticker {
-      font-family: 'Cormorant Garamond', serif;
-      font-size: 22px;
-      color: var(--white);
-      letter-spacing: 0.06em;
-    }
-
-    .tc-name {
-      font-size: 11px;
-      color: var(--muted);
-      margin-top: 2px;
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
-    }
-
-    .tc-summary {
-      font-size: 11px;
-      color: var(--muted);
-      line-height: 1.5;
-      margin-top: 8px;
-    }
-
-    .tc-right {
-      text-align: right;
-      white-space: nowrap;
-    }
-
-    .tc-confidence {
-      font-size: 10px;
-      color: var(--muted);
-      letter-spacing: 0.1em;
-      text-transform: uppercase;
-      margin-bottom: 4px;
-    }
-
-    .tc-horizon {
-      font-size: 10px;
-      color: var(--gold-dim);
-      letter-spacing: 0.08em;
-    }
-
-    /* Expanded detail */
-    .tc-detail {
-      display: none;
-      grid-column: 1 / -1;
-      border-top: 1px solid #1a1a1a;
-      padding-top: 16px;
-      margin-top: 4px;
-    }
-
-    .tc-detail.open { display: block; }
-
-    .detail-grid {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 16px;
-    }
-
-    .detail-section-label {
-      font-size: 10px;
-      letter-spacing: 0.2em;
-      text-transform: uppercase;
-      color: var(--gold-dim);
-      margin-bottom: 8px;
-    }
-
-    .detail-list { list-style: none; }
-
-    .detail-item {
-      font-size: 11px;
-      line-height: 1.5;
-      padding: 5px 0;
-      padding-left: 16px;
-      position: relative;
-      color: var(--text);
-      border-bottom: 1px solid #181818;
-    }
-
-    .detail-item:last-child { border-bottom: none; }
-    .detail-item.up::before { content: '↑'; position: absolute; left: 0; color: var(--buy); }
-    .detail-item.down::before { content: '↓'; position: absolute; left: 0; color: var(--hold); }
-
-    /* Loading spinner in card */
-    .ticker-card.loading {
-      opacity: 0.6;
-      cursor: default;
-    }
-
-    .tc-loading-text {
-      font-size: 11px;
-      color: var(--gold-dim);
-      animation: pulse 1.5s ease-in-out infinite;
-      letter-spacing: 0.1em;
-    }
-
-    .error-box {
-      display: none;
-      background: #1a0e0e;
-      border: 1px solid #3a1a1a;
-      padding: 16px 20px;
-      color: var(--hold);
-      font-size: 11px;
-      margin-bottom: 8px;
-    }
-
-    .error-box.active { display: block; }
-
-    @keyframes fadeUp {
-      from { opacity: 0; transform: translateY(16px); }
-      to { opacity: 1; transform: translateY(0); }
-    }
-
-    @keyframes pulse {
-      0%, 100% { opacity: 0.4; }
-      50% { opacity: 1; }
-    }
-
-    footer {
-      margin-top: auto;
-      padding: 32px 0;
-      border-top: 1px solid #1a1a1a;
-      display: flex;
-      justify-content: space-between;
-      font-size: 10px;
-      color: var(--muted);
-      letter-spacing: 0.1em;
-    }
-
-    @media (max-width: 600px) {
-      .add-row { grid-template-columns: 1fr 1fr; }
-      .summary-row { grid-template-columns: 1fr; }
-      .detail-grid { grid-template-columns: 1fr; }
+    @media (max-width: 800px) {
+      .table-header, .ticker-row { grid-template-columns: 80px 70px 70px 80px 100px 1fr 60px; }
+      .th:nth-child(6), .ticker-row > *:nth-child(6) { display: none; }
+      .summary-strip { grid-template-columns: 1fr 1fr; }
     }
   </style>
 </head>
@@ -596,288 +140,282 @@
     </nav>
   </header>
 
-  <div class="hero">
-    <div class="hero-eyebrow">AI Portfolio Scanner</div>
-    <h1 class="hero-title">Your <em>Watchlist</em></h1>
-    <p class="hero-sub">Add tickers. Scan all at once. Ranked by opportunity.</p>
+  <div class="dash-header">
+    <div>
+      <div class="dash-title">Daily Dashboard</div>
+      <div class="dash-date" id="dashDate"></div>
+    </div>
+    <div class="dash-actions">
+      <button class="btn btn-outline" onclick="refreshPrices()">↻ Prices</button>
+      <button class="btn btn-primary" id="scanAllBtn" onclick="scanAll()">Scan All →</button>
+    </div>
+  </div>
+
+  <!-- Summary strip -->
+  <div class="summary-strip">
+    <div class="strip-card"><div class="strip-num sell" id="cntSell">0</div><div class="strip-label">Sell</div></div>
+    <div class="strip-card"><div class="strip-num buy" id="cntBuy">0</div><div class="strip-label">Buy</div></div>
+    <div class="strip-card"><div class="strip-num watch" id="cntWatch">0</div><div class="strip-label">Watch</div></div>
+    <div class="strip-card"><div class="strip-num hold" id="cntHold">0</div><div class="strip-label">Hold</div></div>
   </div>
 
   <!-- Add ticker -->
-  <div class="add-panel">
-    <div class="panel-label">Add to Watchlist</div>
-    <div class="add-row">
-      <input type="text" id="tickerInput" placeholder="e.g. AAPL, NVDA, BTC" maxlength="10" />
-      <select id="assetType">
-        <option value="stock">Stock</option>
-        <option value="crypto">Crypto</option>
-      </select>
-      <button class="btn btn-add" onclick="addTicker()">+ Add</button>
-      <button class="btn btn-scan" id="scanBtn" onclick="scanAll()">Scan All →</button>
-    </div>
-  </div>
-
-  <!-- Watchlist chips -->
-  <div class="watchlist-panel">
-    <div class="watchlist-header">
-      <div class="panel-label" style="margin:0">Your Tickers</div>
-      <div style="display:flex;gap:16px;align-items:center;">
-        <span class="watchlist-count" id="tickerCount">0 tickers</span>
-        <button class="clear-btn" onclick="clearAll()">Clear All</button>
-      </div>
-    </div>
-    <div class="chips" id="chipsContainer">
-      <div class="empty-watchlist">No tickers added yet — add some above</div>
-    </div>
+  <div class="add-row">
+    <input type="text" id="tickerInput" placeholder="Add ticker e.g. AAPL" maxlength="10" />
+    <select id="assetType">
+      <option value="stock">Stock</option>
+      <option value="crypto">Crypto</option>
+    </select>
+    <button class="btn btn-outline" onclick="addTicker()">+ Add</button>
   </div>
 
   <!-- Progress -->
-  <div class="progress-bar" id="progressBar">
+  <div class="progress-wrap" id="progressWrap">
     <div class="progress-label">Scanning Watchlist</div>
-    <div class="progress-track">
-      <div class="progress-fill" id="progressFill"></div>
-    </div>
+    <div class="progress-track"><div class="progress-fill" id="progressFill"></div></div>
     <div class="progress-status" id="progressStatus">Preparing...</div>
   </div>
 
-  <!-- Results -->
-  <div class="results" id="results">
-    <div class="results-header">
-      <div class="results-title">Scan Results</div>
-      <div class="results-time" id="resultsTime"></div>
+  <!-- Main table -->
+  <div class="table-wrap">
+    <div class="table-header">
+      <div class="th">Ticker</div>
+      <div class="th">Price</div>
+      <div class="th">Change</div>
+      <div class="th">Signal</div>
+      <div class="th">Alert</div>
+      <div class="th">Last Scanned</div>
+      <div class="th">Notes</div>
+      <div class="th"></div>
     </div>
-
-    <div class="summary-row">
-      <div class="summary-card">
-        <div class="summary-number buy" id="buyCount">0</div>
-        <div class="summary-label">Buy</div>
-      </div>
-      <div class="summary-card">
-        <div class="summary-number watch" id="watchCount">0</div>
-        <div class="summary-label">Watch</div>
-      </div>
-      <div class="summary-card">
-        <div class="summary-number hold" id="holdCount">0</div>
-        <div class="summary-label">Hold</div>
-      </div>
-      <div class="summary-card">
-        <div class="summary-number" style="color:var(--sell)" id="sellCount">0</div>
-        <div class="summary-label">Sell</div>
-      </div>
+    <div id="tableBody">
+      <div class="empty-row">No tickers yet — add one above</div>
     </div>
+  </div>
 
-    <div id="sellSection"></div>
-    <div id="buySection"></div>
-    <div id="watchSection"></div>
-    <div id="holdSection"></div>
+  <!-- History -->
+  <div class="history-section" id="historySection" style="display:none">
+    <div class="section-title">Scan History</div>
+    <div class="history-list" id="historyList"></div>
   </div>
 
   <footer>
-    <span>Onyx AI · Watchlist Scanner</span>
+    <span>Onyx AI · Daily Dashboard</span>
     <span id="footerTime"></span>
   </footer>
-
 </div>
 
 <script>
-  const API = 'https://prediction-api-production-ad66.up.railway.app';
+const API = 'https://prediction-api-production-ad66.up.railway.app';
 
-  document.getElementById('footerTime').textContent = new Date().toLocaleDateString('en-US', {
-    weekday: 'long', year: 'numeric', month: 'long', day: 'numeric'
+// State
+let watchlist = JSON.parse(localStorage.getItem('onyx_watchlist_v2') || '[]');
+let scanHistory = JSON.parse(localStorage.getItem('onyx_history') || '[]');
+let prices = {};
+
+// Init
+document.getElementById('dashDate').textContent = new Date().toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
+document.getElementById('footerTime').textContent = new Date().toLocaleTimeString();
+
+document.getElementById('tickerInput').addEventListener('keydown', e => { if (e.key === 'Enter') addTicker(); });
+
+renderTable();
+renderHistory();
+if (watchlist.length > 0) refreshPrices();
+
+function save() {
+  localStorage.setItem('onyx_watchlist_v2', JSON.stringify(watchlist));
+  localStorage.setItem('onyx_history', JSON.stringify(scanHistory));
+}
+
+function addTicker() {
+  const ticker = document.getElementById('tickerInput').value.trim().toUpperCase();
+  const type = document.getElementById('assetType').value;
+  if (!ticker) return;
+  if (watchlist.find(w => w.ticker === ticker)) { document.getElementById('tickerInput').value = ''; return; }
+  watchlist.push({ ticker, type, signal: null, confidence: null, scannedAt: null, note: '' });
+  save();
+  renderTable();
+  document.getElementById('tickerInput').value = '';
+  refreshPrices();
+}
+
+function removeTicker(ticker) {
+  watchlist = watchlist.filter(w => w.ticker !== ticker);
+  save();
+  renderTable();
+  updateSummary();
+}
+
+function saveNote(ticker, note) {
+  const w = watchlist.find(w => w.ticker === ticker);
+  if (w) { w.note = note; save(); }
+}
+
+async function refreshPrices() {
+  if (watchlist.length === 0) return;
+  const tickers = watchlist.map(w => w.ticker).join(',');
+  try {
+    const res = await fetch(`${API}/prices?tickers=${encodeURIComponent(tickers)}`);
+    if (res.ok) {
+      prices = await res.json();
+      renderTable();
+    }
+  } catch (e) { console.log('Price fetch failed', e); }
+}
+
+async function scanAll() {
+  if (watchlist.length === 0) return;
+  const btn = document.getElementById('scanAllBtn');
+  btn.disabled = true;
+  document.getElementById('progressWrap').classList.add('active');
+
+  for (let i = 0; i < watchlist.length; i++) {
+    const w = watchlist[i];
+    const pct = Math.round((i / watchlist.length) * 100);
+    document.getElementById('progressFill').style.width = `${pct}%`;
+    document.getElementById('progressStatus').textContent = `Scanning ${w.ticker} (${i + 1} of ${watchlist.length})...`;
+    await scanTicker(w.ticker, false);
+    if (i < watchlist.length - 1) await new Promise(r => setTimeout(r, 3000));
+  }
+
+  document.getElementById('progressFill').style.width = '100%';
+  document.getElementById('progressStatus').textContent = 'Complete!';
+  setTimeout(() => document.getElementById('progressWrap').classList.remove('active'), 1000);
+  btn.disabled = false;
+  renderTable();
+  renderHistory();
+  updateSummary();
+}
+
+async function scanTicker(ticker, rerender = true) {
+  const w = watchlist.find(w => w.ticker === ticker);
+  if (!w) return;
+  const prevSignal = w.signal;
+  w.scanning = true;
+  if (rerender) renderTable();
+
+  try {
+    const res = await fetch(`${API}/invest`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ ticker, asset_type: w.type })
+    });
+    const data = await res.json();
+    if (res.ok) {
+      w.signal = data.signal;
+      w.confidence = data.confidence;
+      w.assetName = data.asset_name;
+      w.summary = data.summary;
+      w.scannedAt = new Date().toISOString();
+      w.prevSignal = prevSignal;
+
+      // Save to history
+      scanHistory.unshift({
+        ticker, signal: data.signal, confidence: data.confidence,
+        summary: data.summary, prevSignal,
+        time: new Date().toISOString()
+      });
+      if (scanHistory.length > 100) scanHistory = scanHistory.slice(0, 100);
+    }
+  } catch (e) { w.error = true; }
+
+  w.scanning = false;
+  save();
+  if (rerender) { renderTable(); renderHistory(); updateSummary(); }
+}
+
+function renderTable() {
+  const body = document.getElementById('tableBody');
+  if (watchlist.length === 0) {
+    body.innerHTML = '<div class="empty-row">No tickers yet — add one above</div>';
+    updateSummary();
+    return;
+  }
+
+  // Sort: sell first, then buy, watch, hold, unsorted
+  const order = { SELL: 0, BUY: 1, WATCH: 2, HOLD: 3 };
+  const sorted = [...watchlist].sort((a, b) => {
+    const ao = a.signal ? (order[a.signal] ?? 4) : 5;
+    const bo = b.signal ? (order[b.signal] ?? 4) : 5;
+    return ao - bo;
   });
 
-  // Load watchlist from localStorage
-  let watchlist = JSON.parse(localStorage.getItem('onyx_watchlist') || '[]');
-  renderChips();
+  body.innerHTML = sorted.map(w => {
+    const p = prices[w.ticker];
+    const priceStr = p && p.price ? `$${p.price.toLocaleString()}` : '—';
+    const changeVal = p && p.change_pct != null ? p.change_pct : null;
+    const changeStr = changeVal != null ? `${changeVal > 0 ? '+' : ''}${changeVal}%` : '—';
+    const changeClass = changeVal == null ? 'neu' : changeVal > 0 ? 'pos' : changeVal < 0 ? 'neg' : 'neu';
+    const sigClass = w.signal ? w.signal.toLowerCase() : 'pending';
+    const sigText = w.signal || 'Pending';
 
-  document.getElementById('tickerInput').addEventListener('keydown', e => {
-    if (e.key === 'Enter') addTicker();
-  });
-
-  function saveWatchlist() {
-    localStorage.setItem('onyx_watchlist', JSON.stringify(watchlist));
-  }
-
-  function addTicker() {
-    const ticker = document.getElementById('tickerInput').value.trim().toUpperCase();
-    const type = document.getElementById('assetType').value;
-    if (!ticker) return;
-    if (watchlist.find(w => w.ticker === ticker)) {
-      document.getElementById('tickerInput').value = '';
-      return;
-    }
-    watchlist.push({ ticker, type });
-    saveWatchlist();
-    renderChips();
-    document.getElementById('tickerInput').value = '';
-  }
-
-  function removeTicker(ticker) {
-    watchlist = watchlist.filter(w => w.ticker !== ticker);
-    saveWatchlist();
-    renderChips();
-  }
-
-  function clearAll() {
-    watchlist = [];
-    saveWatchlist();
-    renderChips();
-    document.getElementById('results').classList.remove('active');
-  }
-
-  function renderChips() {
-    const container = document.getElementById('chipsContainer');
-    const count = document.getElementById('tickerCount');
-    count.textContent = `${watchlist.length} ticker${watchlist.length !== 1 ? 's' : ''}`;
-
-    if (watchlist.length === 0) {
-      container.innerHTML = '<div class="empty-watchlist">No tickers added yet — add some above</div>';
-      return;
+    // Alert if signal changed
+    let alertText = '';
+    if (w.signal && w.prevSignal && w.prevSignal !== w.signal) {
+      alertText = `${w.prevSignal} → ${w.signal}`;
     }
 
-    container.innerHTML = watchlist.map(w => `
-      <div class="chip">
-        <span class="chip-ticker">${w.ticker}</span>
-        <span class="chip-type">${w.type}</span>
-        <button class="chip-remove" onclick="removeTicker('${w.ticker}')">&times;</button>
-      </div>
-    `).join('');
-  }
+    const timeStr = w.scannedAt ? timeAgo(w.scannedAt) : '—';
 
-  async function scanAll() {
-    if (watchlist.length === 0) return;
-
-    const btn = document.getElementById('scanBtn');
-    btn.disabled = true;
-
-    // Show progress
-    const progress = document.getElementById('progressBar');
-    const fill = document.getElementById('progressFill');
-    const status = document.getElementById('progressStatus');
-    progress.classList.add('active');
-    document.getElementById('results').classList.remove('active');
-
-    const results = [];
-    const errors = [];
-
-    for (let i = 0; i < watchlist.length; i++) {
-      const w = watchlist[i];
-      const pct = Math.round((i / watchlist.length) * 100);
-      fill.style.width = `${pct}%`;
-      status.textContent = `Scanning ${w.ticker} (${i + 1} of ${watchlist.length})...`;
-
-      try {
-        const res = await fetch(`${API}/invest`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ ticker: w.ticker, asset_type: w.type })
-        });
-        const data = await res.json();
-        if (res.ok) {
-          results.push(data);
-        } else {
-          errors.push({ ticker: w.ticker, error: data.detail || 'Error' });
-        }
-      } catch (err) {
-        errors.push({ ticker: w.ticker, error: err.message });
-      }
-
-      // Small delay to avoid rate limits
-      if (i < watchlist.length - 1) {
-        await new Promise(r => setTimeout(r, 3000));
-      }
-    }
-
-    fill.style.width = '100%';
-    status.textContent = 'Complete!';
-
-    setTimeout(() => {
-      progress.classList.remove('active');
-      renderResults(results, errors);
-    }, 800);
-
-    btn.disabled = false;
-  }
-
-  function renderResults(results, errors) {
-    const buys = results.filter(r => r.signal === 'BUY');
-    const watches = results.filter(r => r.signal === 'WATCH');
-    const holds = results.filter(r => r.signal === 'HOLD');
-    const sells = results.filter(r => r.signal === 'SELL');
-
-    document.getElementById('buyCount').textContent = buys.length;
-    document.getElementById('watchCount').textContent = watches.length;
-    document.getElementById('holdCount').textContent = holds.length;
-    document.getElementById('sellCount').textContent = sells.length;
-    document.getElementById('resultsTime').textContent = new Date().toLocaleTimeString();
-
-    // Sort each group by confidence
-    const order = { High: 0, Medium: 1, Low: 2 };
-    const sort = arr => arr.sort((a, b) => (order[a.confidence] || 1) - (order[b.confidence] || 1));
-
-    renderSection('sellSection', sort(sells), 'sell', 'Sell Signals');
-    renderSection('buySection', sort(buys), 'buy', 'Buy Signals');
-    renderSection('watchSection', sort(watches), 'watch', 'Watch Signals');
-    renderSection('holdSection', sort(holds), 'hold', 'Hold Signals');
-
-    // Render errors
-    if (errors.length > 0) {
-      const errHtml = errors.map(e => `
-        <div class="error-box active">${e.ticker}: ${e.error}</div>
-      `).join('');
-      document.getElementById('holdSection').innerHTML += errHtml;
-    }
-
-    document.getElementById('results').classList.add('active');
-    document.getElementById('results').scrollIntoView({ behavior: 'smooth', block: 'start' });
-  }
-
-  function renderSection(containerId, items, signalClass, label) {
-    const container = document.getElementById(containerId);
-    if (items.length === 0) {
-      container.innerHTML = '';
-      return;
-    }
-
-    container.innerHTML = `<div class="section-label">${label}</div>` +
-      items.map((r, idx) => `
-        <div class="ticker-card" onclick="toggleCard(this)" data-idx="${containerId}-${idx}">
-          <div class="tc-signal ${signalClass}">${r.signal}</div>
-          <div class="tc-main">
-            <div class="tc-ticker">${r.ticker}</div>
-            <div class="tc-name">${r.asset_name || ''}</div>
-            <div class="tc-summary">${r.summary || ''}</div>
-            <div class="tc-detail" id="detail-${containerId}-${idx}">
-              <div class="detail-grid">
-                <div>
-                  <div class="detail-section-label">Catalysts</div>
-                  <ul class="detail-list">
-                    ${(r.catalysts || []).map(c => `<li class="detail-item up">${c}</li>`).join('')}
-                  </ul>
-                </div>
-                <div>
-                  <div class="detail-section-label">Risks</div>
-                  <ul class="detail-list">
-                    ${(r.risks || []).map(risk => `<li class="detail-item down">${risk}</li>`).join('')}
-                  </ul>
-                </div>
-              </div>
-            </div>
-          </div>
-          <div class="tc-right">
-            <div class="tc-confidence">${r.confidence}</div>
-            <div class="tc-horizon">${r.time_horizon}</div>
-          </div>
+    return `
+      <div class="ticker-row" id="row-${w.ticker}">
+        <div>
+          <div class="td-ticker">${w.ticker}</div>
+          <div class="td-type">${w.type}</div>
         </div>
-      `).join('');
-  }
+        <div class="td-price">${w.scanning ? '<span class="scanning">...</span>' : priceStr}</div>
+        <div class="td-change ${changeClass}">${changeStr}</div>
+        <div><span class="signal-badge ${sigClass}">${w.scanning ? '...' : sigText}</span></div>
+        <div class="alert-badge">${alertText}</div>
+        <div class="td-scanned">${timeStr}</div>
+        <div><input class="note-input" placeholder="Add note..." value="${w.note || ''}" onchange="saveNote('${w.ticker}', this.value)" /></div>
+        <div style="display:flex;align-items:center;">
+          <button class="scan-row-btn" onclick="scanTicker('${w.ticker}')" ${w.scanning ? 'disabled' : ''}>Scan</button>
+          <button class="remove-btn" onclick="removeTicker('${w.ticker}')">&times;</button>
+        </div>
+      </div>
+    `;
+  }).join('');
 
-  function toggleCard(card) {
-    const idx = card.dataset.idx;
-    const detail = document.getElementById(`detail-${idx}`);
-    if (!detail) return;
-    detail.classList.toggle('open');
-    card.classList.toggle('expanded');
-  }
+  updateSummary();
+}
+
+function updateSummary() {
+  document.getElementById('cntSell').textContent = watchlist.filter(w => w.signal === 'SELL').length;
+  document.getElementById('cntBuy').textContent = watchlist.filter(w => w.signal === 'BUY').length;
+  document.getElementById('cntWatch').textContent = watchlist.filter(w => w.signal === 'WATCH').length;
+  document.getElementById('cntHold').textContent = watchlist.filter(w => w.signal === 'HOLD').length;
+}
+
+function renderHistory() {
+  const section = document.getElementById('historySection');
+  const list = document.getElementById('historyList');
+  if (scanHistory.length === 0) { section.style.display = 'none'; return; }
+  section.style.display = 'block';
+  list.innerHTML = scanHistory.slice(0, 20).map(h => {
+    const changeText = h.prevSignal && h.prevSignal !== h.signal ? `${h.prevSignal} → ${h.signal}` : '';
+    return `
+      <div class="history-item">
+        <div class="hi-ticker">${h.ticker}</div>
+        <div><span class="signal-badge ${h.signal.toLowerCase()}">${h.signal}</span></div>
+        <div class="hi-summary">${h.summary || ''}</div>
+        <div>
+          ${changeText ? `<div class="hi-change">⚡ ${changeText}</div>` : ''}
+          <div class="hi-time">${timeAgo(h.time)}</div>
+        </div>
+      </div>
+    `;
+  }).join('');
+}
+
+function timeAgo(iso) {
+  const diff = Math.floor((Date.now() - new Date(iso)) / 1000);
+  if (diff < 60) return `${diff}s ago`;
+  if (diff < 3600) return `${Math.floor(diff / 60)}m ago`;
+  if (diff < 86400) return `${Math.floor(diff / 3600)}h ago`;
+  return `${Math.floor(diff / 86400)}d ago`;
+}
 </script>
 </body>
 </html>
