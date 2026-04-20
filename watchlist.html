@@ -1,0 +1,873 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Onyx AI — Watchlist</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300&family=DM+Mono:wght@300;400&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --black: #080808;
+      --obsidian: #0f0f0f;
+      --charcoal: #1a1a1a;
+      --gold: #c9a84c;
+      --gold-light: #e2c47a;
+      --gold-dim: #7a6230;
+      --white: #f0ece4;
+      --muted: #6b6760;
+      --text: #ccc5b9;
+      --buy: #4caf7a;
+      --watch: #c9a84c;
+      --hold: #c0554a;
+    }
+
+    html, body {
+      height: 100%;
+      background: var(--black);
+      color: var(--text);
+      font-family: 'DM Mono', monospace;
+      font-size: 13px;
+      letter-spacing: 0.02em;
+      overflow-x: hidden;
+    }
+
+    body::before {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.04'/%3E%3C/svg%3E");
+      pointer-events: none;
+      z-index: 0;
+      opacity: 0.4;
+    }
+
+    .container {
+      position: relative;
+      z-index: 1;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      max-width: 900px;
+      margin: 0 auto;
+      padding: 0 32px;
+    }
+
+    header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 36px 0 24px;
+      border-bottom: 1px solid #1e1e1e;
+    }
+
+    .logo {
+      display: flex;
+      align-items: baseline;
+      gap: 10px;
+      text-decoration: none;
+    }
+
+    .logo-mark {
+      width: 22px; height: 22px;
+      background: var(--gold);
+      clip-path: polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%);
+      flex-shrink: 0;
+      position: relative;
+      top: 2px;
+    }
+
+    .logo-name {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 22px;
+      font-weight: 300;
+      color: var(--white);
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+    }
+
+    .logo-sub {
+      font-size: 10px;
+      color: var(--gold-dim);
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+    }
+
+    nav { display: flex; gap: 24px; align-items: center; }
+
+    nav a {
+      font-size: 10px;
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
+      color: var(--muted);
+      text-decoration: none;
+      transition: color 0.2s;
+    }
+
+    nav a:hover { color: var(--white); }
+    nav a.active { color: var(--gold); }
+
+    .hero {
+      padding: 56px 0 40px;
+      text-align: center;
+    }
+
+    .hero-eyebrow {
+      font-size: 10px;
+      letter-spacing: 0.3em;
+      text-transform: uppercase;
+      color: var(--gold);
+      margin-bottom: 16px;
+      opacity: 0;
+      animation: fadeUp 0.8s ease forwards 0.2s;
+    }
+
+    .hero-title {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: clamp(36px, 6vw, 60px);
+      font-weight: 300;
+      color: var(--white);
+      line-height: 1.05;
+      margin-bottom: 12px;
+      opacity: 0;
+      animation: fadeUp 0.8s ease forwards 0.4s;
+    }
+
+    .hero-title em { font-style: italic; color: var(--gold); }
+
+    .hero-sub {
+      font-size: 12px;
+      color: var(--muted);
+      opacity: 0;
+      animation: fadeUp 0.8s ease forwards 0.6s;
+    }
+
+    /* Add ticker panel */
+    .add-panel {
+      background: var(--obsidian);
+      border: 1px solid #222;
+      padding: 24px 28px;
+      margin-bottom: 24px;
+      opacity: 0;
+      animation: fadeUp 0.8s ease forwards 0.8s;
+    }
+
+    .panel-label {
+      font-size: 10px;
+      letter-spacing: 0.25em;
+      text-transform: uppercase;
+      color: var(--gold-dim);
+      margin-bottom: 16px;
+    }
+
+    .add-row {
+      display: grid;
+      grid-template-columns: 1fr auto auto auto;
+      gap: 10px;
+      align-items: stretch;
+    }
+
+    input[type="text"] {
+      background: var(--charcoal);
+      border: 1px solid #2a2a2a;
+      color: var(--white);
+      font-family: 'DM Mono', monospace;
+      font-size: 13px;
+      padding: 12px 16px;
+      outline: none;
+      transition: border-color 0.2s;
+      text-transform: uppercase;
+    }
+
+    input[type="text"]::placeholder { color: var(--muted); text-transform: none; }
+    input[type="text"]:focus { border-color: var(--gold-dim); }
+
+    select {
+      background: var(--charcoal);
+      border: 1px solid #2a2a2a;
+      color: var(--white);
+      font-family: 'DM Mono', monospace;
+      font-size: 12px;
+      padding: 12px 14px;
+      outline: none;
+      cursor: pointer;
+      appearance: none;
+    }
+
+    .btn {
+      border: none;
+      font-family: 'DM Mono', monospace;
+      font-size: 11px;
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+      padding: 12px 20px;
+      cursor: pointer;
+      transition: background 0.2s, transform 0.1s;
+      white-space: nowrap;
+    }
+
+    .btn:active { transform: scale(0.98); }
+
+    .btn-add {
+      background: var(--charcoal);
+      color: var(--gold);
+      border: 1px solid var(--gold-dim);
+    }
+
+    .btn-add:hover { background: #222; }
+
+    .btn-scan {
+      background: var(--gold);
+      color: var(--black);
+    }
+
+    .btn-scan:hover { background: var(--gold-light); }
+    .btn-scan:disabled { background: var(--gold-dim); cursor: not-allowed; }
+
+    /* Watchlist chips */
+    .watchlist-panel {
+      background: var(--obsidian);
+      border: 1px solid #222;
+      padding: 20px 28px;
+      margin-bottom: 32px;
+    }
+
+    .watchlist-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 16px;
+    }
+
+    .watchlist-count {
+      font-size: 10px;
+      color: var(--muted);
+      letter-spacing: 0.1em;
+    }
+
+    .clear-btn {
+      font-size: 10px;
+      color: var(--hold);
+      background: none;
+      border: none;
+      cursor: pointer;
+      font-family: 'DM Mono', monospace;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+    }
+
+    .chips {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+
+    .chip {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      background: var(--charcoal);
+      border: 1px solid #2a2a2a;
+      padding: 6px 12px;
+      font-size: 11px;
+      letter-spacing: 0.1em;
+    }
+
+    .chip-ticker { color: var(--white); }
+    .chip-type { color: var(--muted); font-size: 10px; }
+
+    .chip-remove {
+      color: var(--muted);
+      cursor: pointer;
+      background: none;
+      border: none;
+      font-size: 14px;
+      line-height: 1;
+      padding: 0;
+      transition: color 0.2s;
+    }
+
+    .chip-remove:hover { color: var(--hold); }
+
+    .empty-watchlist {
+      color: var(--muted);
+      font-size: 12px;
+      text-align: center;
+      padding: 16px 0;
+    }
+
+    /* Progress bar */
+    .progress-bar {
+      display: none;
+      background: var(--charcoal);
+      border: 1px solid #222;
+      padding: 20px 28px;
+      margin-bottom: 24px;
+    }
+
+    .progress-bar.active { display: block; }
+
+    .progress-label {
+      font-size: 10px;
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
+      color: var(--gold-dim);
+      margin-bottom: 12px;
+    }
+
+    .progress-track {
+      background: #1a1a1a;
+      height: 2px;
+      width: 100%;
+      margin-bottom: 8px;
+    }
+
+    .progress-fill {
+      background: var(--gold);
+      height: 2px;
+      width: 0%;
+      transition: width 0.5s ease;
+    }
+
+    .progress-status {
+      font-size: 11px;
+      color: var(--muted);
+    }
+
+    /* Results */
+    .results { display: none; }
+    .results.active { display: block; }
+
+    .results-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 20px;
+      padding-bottom: 16px;
+      border-bottom: 1px solid #1e1e1e;
+    }
+
+    .results-title {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 20px;
+      font-weight: 300;
+      color: var(--white);
+    }
+
+    .results-time {
+      font-size: 10px;
+      color: var(--muted);
+      letter-spacing: 0.1em;
+    }
+
+    /* Summary row */
+    .summary-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr;
+      gap: 12px;
+      margin-bottom: 32px;
+    }
+
+    .summary-card {
+      background: var(--obsidian);
+      border: 1px solid #1e1e1e;
+      padding: 20px;
+      text-align: center;
+    }
+
+    .summary-number {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 40px;
+      font-weight: 300;
+      line-height: 1;
+      margin-bottom: 6px;
+    }
+
+    .summary-number.buy { color: var(--buy); }
+    .summary-number.watch { color: var(--watch); }
+    .summary-number.hold { color: var(--hold); }
+
+    .summary-label {
+      font-size: 10px;
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
+      color: var(--muted);
+    }
+
+    /* Ticker result rows */
+    .section-label {
+      font-size: 10px;
+      letter-spacing: 0.25em;
+      text-transform: uppercase;
+      color: var(--gold-dim);
+      margin-bottom: 12px;
+      margin-top: 28px;
+      padding-bottom: 8px;
+      border-bottom: 1px solid #1a1a1a;
+    }
+
+    .section-label:first-of-type { margin-top: 0; }
+
+    .ticker-card {
+      background: var(--obsidian);
+      border: 1px solid #1e1e1e;
+      padding: 20px 24px;
+      margin-bottom: 10px;
+      display: grid;
+      grid-template-columns: auto 1fr auto;
+      gap: 20px;
+      align-items: start;
+      transition: border-color 0.2s;
+      cursor: pointer;
+    }
+
+    .ticker-card:hover { border-color: #2e2e2e; }
+
+    .ticker-card.expanded { border-color: var(--gold-dim); }
+
+    .tc-signal {
+      font-size: 11px;
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+      padding: 4px 10px;
+      border: 1px solid;
+      white-space: nowrap;
+    }
+
+    .tc-signal.buy { color: var(--buy); border-color: var(--buy); }
+    .tc-signal.watch { color: var(--watch); border-color: var(--watch); }
+    .tc-signal.hold { color: var(--hold); border-color: var(--hold); }
+
+    .tc-main { min-width: 0; }
+
+    .tc-ticker {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 22px;
+      color: var(--white);
+      letter-spacing: 0.06em;
+    }
+
+    .tc-name {
+      font-size: 11px;
+      color: var(--muted);
+      margin-top: 2px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .tc-summary {
+      font-size: 11px;
+      color: var(--muted);
+      line-height: 1.5;
+      margin-top: 8px;
+    }
+
+    .tc-right {
+      text-align: right;
+      white-space: nowrap;
+    }
+
+    .tc-confidence {
+      font-size: 10px;
+      color: var(--muted);
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      margin-bottom: 4px;
+    }
+
+    .tc-horizon {
+      font-size: 10px;
+      color: var(--gold-dim);
+      letter-spacing: 0.08em;
+    }
+
+    /* Expanded detail */
+    .tc-detail {
+      display: none;
+      grid-column: 1 / -1;
+      border-top: 1px solid #1a1a1a;
+      padding-top: 16px;
+      margin-top: 4px;
+    }
+
+    .tc-detail.open { display: block; }
+
+    .detail-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+    }
+
+    .detail-section-label {
+      font-size: 10px;
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
+      color: var(--gold-dim);
+      margin-bottom: 8px;
+    }
+
+    .detail-list { list-style: none; }
+
+    .detail-item {
+      font-size: 11px;
+      line-height: 1.5;
+      padding: 5px 0;
+      padding-left: 16px;
+      position: relative;
+      color: var(--text);
+      border-bottom: 1px solid #181818;
+    }
+
+    .detail-item:last-child { border-bottom: none; }
+    .detail-item.up::before { content: '↑'; position: absolute; left: 0; color: var(--buy); }
+    .detail-item.down::before { content: '↓'; position: absolute; left: 0; color: var(--hold); }
+
+    /* Loading spinner in card */
+    .ticker-card.loading {
+      opacity: 0.6;
+      cursor: default;
+    }
+
+    .tc-loading-text {
+      font-size: 11px;
+      color: var(--gold-dim);
+      animation: pulse 1.5s ease-in-out infinite;
+      letter-spacing: 0.1em;
+    }
+
+    .error-box {
+      display: none;
+      background: #1a0e0e;
+      border: 1px solid #3a1a1a;
+      padding: 16px 20px;
+      color: var(--hold);
+      font-size: 11px;
+      margin-bottom: 8px;
+    }
+
+    .error-box.active { display: block; }
+
+    @keyframes fadeUp {
+      from { opacity: 0; transform: translateY(16px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    @keyframes pulse {
+      0%, 100% { opacity: 0.4; }
+      50% { opacity: 1; }
+    }
+
+    footer {
+      margin-top: auto;
+      padding: 32px 0;
+      border-top: 1px solid #1a1a1a;
+      display: flex;
+      justify-content: space-between;
+      font-size: 10px;
+      color: var(--muted);
+      letter-spacing: 0.1em;
+    }
+
+    @media (max-width: 600px) {
+      .add-row { grid-template-columns: 1fr 1fr; }
+      .summary-row { grid-template-columns: 1fr; }
+      .detail-grid { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+<div class="container">
+
+  <header>
+    <a class="logo" href="/">
+      <div class="logo-mark"></div>
+      <span class="logo-name">Onyx</span>
+      <span class="logo-sub">Intelligence</span>
+    </a>
+    <nav>
+      <a href="/">Predictions</a>
+      <a href="/invest">Investments</a>
+      <a href="/watchlist" class="active">Watchlist</a>
+    </nav>
+  </header>
+
+  <div class="hero">
+    <div class="hero-eyebrow">AI Portfolio Scanner</div>
+    <h1 class="hero-title">Your <em>Watchlist</em></h1>
+    <p class="hero-sub">Add tickers. Scan all at once. Ranked by opportunity.</p>
+  </div>
+
+  <!-- Add ticker -->
+  <div class="add-panel">
+    <div class="panel-label">Add to Watchlist</div>
+    <div class="add-row">
+      <input type="text" id="tickerInput" placeholder="e.g. AAPL, NVDA, BTC" maxlength="10" />
+      <select id="assetType">
+        <option value="stock">Stock</option>
+        <option value="crypto">Crypto</option>
+      </select>
+      <button class="btn btn-add" onclick="addTicker()">+ Add</button>
+      <button class="btn btn-scan" id="scanBtn" onclick="scanAll()">Scan All →</button>
+    </div>
+  </div>
+
+  <!-- Watchlist chips -->
+  <div class="watchlist-panel">
+    <div class="watchlist-header">
+      <div class="panel-label" style="margin:0">Your Tickers</div>
+      <div style="display:flex;gap:16px;align-items:center;">
+        <span class="watchlist-count" id="tickerCount">0 tickers</span>
+        <button class="clear-btn" onclick="clearAll()">Clear All</button>
+      </div>
+    </div>
+    <div class="chips" id="chipsContainer">
+      <div class="empty-watchlist">No tickers added yet — add some above</div>
+    </div>
+  </div>
+
+  <!-- Progress -->
+  <div class="progress-bar" id="progressBar">
+    <div class="progress-label">Scanning Watchlist</div>
+    <div class="progress-track">
+      <div class="progress-fill" id="progressFill"></div>
+    </div>
+    <div class="progress-status" id="progressStatus">Preparing...</div>
+  </div>
+
+  <!-- Results -->
+  <div class="results" id="results">
+    <div class="results-header">
+      <div class="results-title">Scan Results</div>
+      <div class="results-time" id="resultsTime"></div>
+    </div>
+
+    <div class="summary-row">
+      <div class="summary-card">
+        <div class="summary-number buy" id="buyCount">0</div>
+        <div class="summary-label">Buy</div>
+      </div>
+      <div class="summary-card">
+        <div class="summary-number watch" id="watchCount">0</div>
+        <div class="summary-label">Watch</div>
+      </div>
+      <div class="summary-card">
+        <div class="summary-number hold" id="holdCount">0</div>
+        <div class="summary-label">Hold</div>
+      </div>
+    </div>
+
+    <div id="buySection"></div>
+    <div id="watchSection"></div>
+    <div id="holdSection"></div>
+  </div>
+
+  <footer>
+    <span>Onyx AI · Watchlist Scanner</span>
+    <span id="footerTime"></span>
+  </footer>
+
+</div>
+
+<script>
+  const API = 'https://prediction-api-production-ad66.up.railway.app';
+
+  document.getElementById('footerTime').textContent = new Date().toLocaleDateString('en-US', {
+    weekday: 'long', year: 'numeric', month: 'long', day: 'numeric'
+  });
+
+  // Load watchlist from localStorage
+  let watchlist = JSON.parse(localStorage.getItem('onyx_watchlist') || '[]');
+  renderChips();
+
+  document.getElementById('tickerInput').addEventListener('keydown', e => {
+    if (e.key === 'Enter') addTicker();
+  });
+
+  function saveWatchlist() {
+    localStorage.setItem('onyx_watchlist', JSON.stringify(watchlist));
+  }
+
+  function addTicker() {
+    const ticker = document.getElementById('tickerInput').value.trim().toUpperCase();
+    const type = document.getElementById('assetType').value;
+    if (!ticker) return;
+    if (watchlist.find(w => w.ticker === ticker)) {
+      document.getElementById('tickerInput').value = '';
+      return;
+    }
+    watchlist.push({ ticker, type });
+    saveWatchlist();
+    renderChips();
+    document.getElementById('tickerInput').value = '';
+  }
+
+  function removeTicker(ticker) {
+    watchlist = watchlist.filter(w => w.ticker !== ticker);
+    saveWatchlist();
+    renderChips();
+  }
+
+  function clearAll() {
+    watchlist = [];
+    saveWatchlist();
+    renderChips();
+    document.getElementById('results').classList.remove('active');
+  }
+
+  function renderChips() {
+    const container = document.getElementById('chipsContainer');
+    const count = document.getElementById('tickerCount');
+    count.textContent = `${watchlist.length} ticker${watchlist.length !== 1 ? 's' : ''}`;
+
+    if (watchlist.length === 0) {
+      container.innerHTML = '<div class="empty-watchlist">No tickers added yet — add some above</div>';
+      return;
+    }
+
+    container.innerHTML = watchlist.map(w => `
+      <div class="chip">
+        <span class="chip-ticker">${w.ticker}</span>
+        <span class="chip-type">${w.type}</span>
+        <button class="chip-remove" onclick="removeTicker('${w.ticker}')">&times;</button>
+      </div>
+    `).join('');
+  }
+
+  async function scanAll() {
+    if (watchlist.length === 0) return;
+
+    const btn = document.getElementById('scanBtn');
+    btn.disabled = true;
+
+    // Show progress
+    const progress = document.getElementById('progressBar');
+    const fill = document.getElementById('progressFill');
+    const status = document.getElementById('progressStatus');
+    progress.classList.add('active');
+    document.getElementById('results').classList.remove('active');
+
+    const results = [];
+    const errors = [];
+
+    for (let i = 0; i < watchlist.length; i++) {
+      const w = watchlist[i];
+      const pct = Math.round((i / watchlist.length) * 100);
+      fill.style.width = `${pct}%`;
+      status.textContent = `Scanning ${w.ticker} (${i + 1} of ${watchlist.length})...`;
+
+      try {
+        const res = await fetch(`${API}/invest`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ ticker: w.ticker, asset_type: w.type })
+        });
+        const data = await res.json();
+        if (res.ok) {
+          results.push(data);
+        } else {
+          errors.push({ ticker: w.ticker, error: data.detail || 'Error' });
+        }
+      } catch (err) {
+        errors.push({ ticker: w.ticker, error: err.message });
+      }
+
+      // Small delay to avoid rate limits
+      if (i < watchlist.length - 1) {
+        await new Promise(r => setTimeout(r, 3000));
+      }
+    }
+
+    fill.style.width = '100%';
+    status.textContent = 'Complete!';
+
+    setTimeout(() => {
+      progress.classList.remove('active');
+      renderResults(results, errors);
+    }, 800);
+
+    btn.disabled = false;
+  }
+
+  function renderResults(results, errors) {
+    const buys = results.filter(r => r.signal === 'BUY');
+    const watches = results.filter(r => r.signal === 'WATCH');
+    const holds = results.filter(r => r.signal === 'HOLD');
+
+    document.getElementById('buyCount').textContent = buys.length;
+    document.getElementById('watchCount').textContent = watches.length;
+    document.getElementById('holdCount').textContent = holds.length;
+    document.getElementById('resultsTime').textContent = new Date().toLocaleTimeString();
+
+    // Sort each group by confidence
+    const order = { High: 0, Medium: 1, Low: 2 };
+    const sort = arr => arr.sort((a, b) => (order[a.confidence] || 1) - (order[b.confidence] || 1));
+
+    renderSection('buySection', sort(buys), 'buy', 'Buy Signals');
+    renderSection('watchSection', sort(watches), 'watch', 'Watch Signals');
+    renderSection('holdSection', sort(holds), 'hold', 'Hold Signals');
+
+    // Render errors
+    if (errors.length > 0) {
+      const errHtml = errors.map(e => `
+        <div class="error-box active">${e.ticker}: ${e.error}</div>
+      `).join('');
+      document.getElementById('holdSection').innerHTML += errHtml;
+    }
+
+    document.getElementById('results').classList.add('active');
+    document.getElementById('results').scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }
+
+  function renderSection(containerId, items, signalClass, label) {
+    const container = document.getElementById(containerId);
+    if (items.length === 0) {
+      container.innerHTML = '';
+      return;
+    }
+
+    container.innerHTML = `<div class="section-label">${label}</div>` +
+      items.map((r, idx) => `
+        <div class="ticker-card" onclick="toggleCard(this)" data-idx="${containerId}-${idx}">
+          <div class="tc-signal ${signalClass}">${r.signal}</div>
+          <div class="tc-main">
+            <div class="tc-ticker">${r.ticker}</div>
+            <div class="tc-name">${r.asset_name || ''}</div>
+            <div class="tc-summary">${r.summary || ''}</div>
+            <div class="tc-detail" id="detail-${containerId}-${idx}">
+              <div class="detail-grid">
+                <div>
+                  <div class="detail-section-label">Catalysts</div>
+                  <ul class="detail-list">
+                    ${(r.catalysts || []).map(c => `<li class="detail-item up">${c}</li>`).join('')}
+                  </ul>
+                </div>
+                <div>
+                  <div class="detail-section-label">Risks</div>
+                  <ul class="detail-list">
+                    ${(r.risks || []).map(risk => `<li class="detail-item down">${risk}</li>`).join('')}
+                  </ul>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="tc-right">
+            <div class="tc-confidence">${r.confidence}</div>
+            <div class="tc-horizon">${r.time_horizon}</div>
+          </div>
+        </div>
+      `).join('');
+  }
+
+  function toggleCard(card) {
+    const idx = card.dataset.idx;
+    const detail = document.getElementById(`detail-${idx}`);
+    if (!detail) return;
+    detail.classList.toggle('open');
+    card.classList.toggle('expanded');
+  }
+</script>
+</body>
+</html>
