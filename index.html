@@ -28,7 +28,7 @@
       --yellow: #d97706;
       --yellow-dim: rgba(217,119,6,0.08);
       --sidebar-w: 200px;
-      --panel-w: 300px;
+      --panel-w: 340px;
       --shadow: 0 1px 3px rgba(0,0,0,0.06), 0 1px 2px rgba(0,0,0,0.04);
     }
 
@@ -67,7 +67,7 @@
     .main { margin-left: var(--sidebar-w); flex: 1; padding: 24px; display: flex; gap: 16px; align-items: flex-start; }
 
     /* ── WATCHLIST CARD ─────────────────────────────────────── */
-    .watchlist-card { flex: 1; background: var(--surface); border: 1px solid var(--border); border-radius: 10px; box-shadow: var(--shadow); overflow: hidden; min-width: 0; }
+    .watchlist-card { flex: 1; min-width: 0; max-width: 680px; background: var(--surface); border: 1px solid var(--border); border-radius: 10px; box-shadow: var(--shadow); overflow: hidden; }
 
     .card-header { padding: 14px 20px; border-bottom: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; gap: 12px; }
     .card-title { font-size: 13px; font-weight: 600; color: var(--text); }
@@ -192,8 +192,7 @@
     .empty-sub { font-size: 11px; color: var(--grey); }
 
     /* ── RIGHT PANEL ────────────────────────────────────────── */
-    .right-panel { width: 0; overflow: hidden; transition: width 0.25s ease; flex-shrink: 0; }
-    .right-panel.open { width: var(--panel-w); }
+    .right-panel { width: var(--panel-w); flex-shrink: 0; }
     .panel-card { width: var(--panel-w); background: var(--surface); border: 1px solid var(--border); border-radius: 10px; box-shadow: var(--shadow); overflow: hidden; height: calc(100vh - 48px); display: flex; flex-direction: column; position: sticky; top: 24px; }
     .panel-head { padding: 14px 16px; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: flex-start; flex-shrink: 0; }
     .panel-ticker { font-family: 'JetBrains Mono', monospace; font-size: 20px; font-weight: 600; color: var(--text); }
@@ -331,13 +330,15 @@
     <div class="right-panel" id="rightPanel">
       <div class="panel-card">
         <div class="panel-head" id="panelHead">
-          <div class="panel-sec-label" style="margin:0">Stock Detail</div>
-          <button class="panel-close" onclick="closePanel()">×</button>
+          <div>
+            <div style="font-size:11px;font-weight:600;color:var(--grey);text-transform:uppercase;letter-spacing:0.1em">Stock Detail</div>
+          </div>
         </div>
         <div class="panel-body" id="panelBody">
           <div class="panel-placeholder">
-            <div style="font-size:22px;margin-bottom:10px;opacity:0.2">👆</div>
-            <div style="font-size:12px;line-height:1.6;color:var(--grey2)">Click any row to view AI analysis and add comments</div>
+            <div style="font-size:32px;margin-bottom:14px;opacity:0.15">📋</div>
+            <div style="font-size:13px;font-weight:500;color:var(--text2);margin-bottom:6px">No stock selected</div>
+            <div style="font-size:12px;line-height:1.6;color:var(--grey)">Click any row in the watchlist to view AI analysis, scan history, and add notes</div>
           </div>
         </div>
       </div>
@@ -452,8 +453,23 @@ async function scanTicker(ticker, rerender = true) {
 }
 
 function selectStock(ticker) {
+  // Toggle deselect if clicking same stock
+  if (selectedTicker === ticker) {
+    selectedTicker = null;
+    document.querySelectorAll('tr.main-row').forEach(r => r.classList.remove('selected'));
+    document.getElementById('panelHead').innerHTML = `
+      <div>
+        <div style="font-size:11px;font-weight:600;color:var(--grey);text-transform:uppercase;letter-spacing:0.1em">Stock Detail</div>
+      </div>`;
+    document.getElementById('panelBody').innerHTML = `
+      <div class="panel-placeholder">
+        <div style="font-size:32px;margin-bottom:14px;opacity:0.15">📋</div>
+        <div style="font-size:13px;font-weight:500;color:var(--text2);margin-bottom:6px">No stock selected</div>
+        <div style="font-size:12px;line-height:1.6;color:var(--grey)">Click any row in the watchlist to view AI analysis, scan history, and add notes</div>
+      </div>`;
+    return;
+  }
   selectedTicker = ticker;
-  document.getElementById('rightPanel').classList.add('open');
   renderPanel(ticker);
   document.querySelectorAll('tr.main-row').forEach(r => r.classList.remove('selected'));
   const row = document.getElementById('row-' + ticker);
@@ -462,7 +478,6 @@ function selectStock(ticker) {
 
 function closePanel() {
   selectedTicker = null;
-  document.getElementById('rightPanel').classList.remove('open');
   document.querySelectorAll('tr.main-row').forEach(r => r.classList.remove('selected'));
 }
 
@@ -481,7 +496,6 @@ function renderPanel(ticker) {
       <div class="panel-ticker">${ticker}</div>
       <div class="panel-name">${w.assetName || w.type}</div>
     </div>
-    <button class="panel-close" onclick="closePanel()">×</button>
   `;
 
   const histHTML = hist.length ? hist.slice(0,30).map(h => `
