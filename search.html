@@ -1,0 +1,493 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Onyx AI — Search & Predict</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@300;400;500&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --bg: #080c18; --surface: #0d1224; --surface2: #111827;
+      --border: #1e2740; --border2: #263354;
+      --blue: #1565ff; --blue-dim: #1040bb; --blue-glow: rgba(21,101,255,0.15);
+      --white: #ffffff; --grey: #6b7280; --grey2: #9ca3af; --text: #e2e8f0;
+      --green: #22c55e; --green-dim: rgba(34,197,94,0.12);
+      --red: #ef4444; --red-dim: rgba(239,68,68,0.12);
+      --yellow: #f59e0b; --yellow-dim: rgba(245,158,11,0.12);
+    }
+    html, body { height: 100%; background: var(--bg); color: var(--text); font-family: 'Inter', sans-serif; font-size: 13px; overflow-x: hidden; }
+
+    .app { display: grid; grid-template-columns: 220px 1fr; grid-template-rows: auto 1fr; min-height: 100vh; }
+
+    /* Sidebar (same as dashboard) */
+    .sidebar { grid-row: 1/3; background: var(--surface); border-right: 1px solid var(--border); display: flex; flex-direction: column; }
+    .sidebar-logo { padding: 24px 20px; border-bottom: 1px solid var(--border); }
+    .logo-mark { display: flex; align-items: center; gap: 10px; }
+    .logo-icon { width: 28px; height: 28px; background: var(--blue); border-radius: 6px; display: flex; align-items: center; justify-content: center; font-size: 14px; font-weight: 700; color: white; font-family: 'JetBrains Mono', monospace; }
+    .logo-text { font-size: 15px; font-weight: 600; color: var(--white); letter-spacing: 0.05em; }
+    .logo-sub { font-size: 10px; color: var(--grey); letter-spacing: 0.1em; text-transform: uppercase; margin-top: 2px; }
+    .sidebar-nav { padding: 16px 12px; flex: 1; }
+    .nav-section-label { font-size: 10px; letter-spacing: 0.12em; text-transform: uppercase; color: var(--grey); padding: 8px 8px 6px; }
+    .nav-item { display: flex; align-items: center; gap: 10px; padding: 9px 10px; border-radius: 6px; color: var(--grey2); text-decoration: none; font-size: 13px; font-weight: 400; transition: all 0.15s; margin-bottom: 2px; cursor: pointer; }
+    .nav-item:hover { background: var(--surface2); color: var(--white); }
+    .nav-item.active { background: var(--blue-glow); color: var(--blue); border: 1px solid rgba(21,101,255,0.2); }
+    .nav-icon { width: 16px; height: 16px; opacity: 0.7; }
+    .nav-item.active .nav-icon { opacity: 1; }
+    .nav-badge { margin-left: auto; font-size: 10px; background: var(--border2); color: var(--grey); padding: 1px 6px; border-radius: 10px; }
+    .sidebar-footer { padding: 16px 12px; border-top: 1px solid var(--border); }
+    .market-status { display: flex; align-items: center; gap: 8px; font-size: 11px; color: var(--grey); }
+    .status-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--green); box-shadow: 0 0 6px var(--green); }
+    .status-dot.closed { background: var(--red); box-shadow: 0 0 6px var(--red); }
+
+    .topbar { background: var(--surface); border-bottom: 1px solid var(--border); padding: 0 28px; display: flex; align-items: center; justify-content: space-between; height: 56px; }
+    .topbar-title { font-size: 15px; font-weight: 600; color: var(--white); }
+
+    .main { padding: 32px 28px; overflow-y: auto; max-width: 900px; }
+
+    /* Search modes */
+    .mode-tabs { display: flex; gap: 4px; background: var(--surface); border: 1px solid var(--border); border-radius: 8px; padding: 4px; margin-bottom: 28px; width: fit-content; }
+    .mode-tab { padding: 7px 18px; border-radius: 6px; font-size: 13px; font-weight: 500; cursor: pointer; border: none; background: transparent; color: var(--grey2); transition: all 0.15s; font-family: 'Inter', sans-serif; }
+    .mode-tab.active { background: var(--blue); color: white; }
+    .mode-tab:hover:not(.active) { color: var(--white); }
+
+    /* Search box */
+    .search-box { background: var(--surface); border: 1px solid var(--border); border-radius: 8px; padding: 20px; margin-bottom: 20px; }
+    .search-label { font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.1em; color: var(--grey); margin-bottom: 14px; }
+    .search-row { display: flex; gap: 10px; }
+    .search-input { flex: 1; background: var(--bg); border: 1px solid var(--border2); color: var(--white); font-family: 'Inter', sans-serif; font-size: 14px; padding: 11px 16px; border-radius: 6px; outline: none; transition: border-color 0.15s; }
+    .search-input:focus { border-color: var(--blue); box-shadow: 0 0 0 2px var(--blue-glow); }
+    .search-input::placeholder { color: var(--grey); }
+    .select-input { background: var(--bg); border: 1px solid var(--border2); color: var(--text); font-family: 'Inter', sans-serif; font-size: 13px; padding: 11px 14px; border-radius: 6px; outline: none; cursor: pointer; appearance: none; min-width: 120px; }
+
+    .btn { border: none; font-family: 'Inter', sans-serif; font-size: 12px; font-weight: 500; padding: 10px 20px; border-radius: 6px; cursor: pointer; transition: all 0.15s; display: flex; align-items: center; gap: 6px; white-space: nowrap; }
+    .btn-primary { background: var(--blue); color: white; }
+    .btn-primary:hover { background: #1a6fff; }
+    .btn-primary:disabled { background: var(--border2); color: var(--grey); cursor: not-allowed; }
+
+    /* Loading */
+    .loading { display: none; padding: 48px; text-align: center; }
+    .loading.active { display: block; }
+    .loading-spinner { width: 36px; height: 36px; border: 2px solid var(--border2); border-top-color: var(--blue); border-radius: 50%; animation: spin 0.8s linear infinite; margin: 0 auto 16px; }
+    .loading-text { font-size: 12px; color: var(--grey); font-family: 'JetBrains Mono', monospace; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    @keyframes pulse { 0%,100%{opacity:0.4} 50%{opacity:1} }
+
+    /* Results */
+    .results { display: none; }
+    .results.active { display: block; }
+
+    .error-box { display: none; background: var(--red-dim); border: 1px solid rgba(239,68,68,0.3); border-radius: 8px; padding: 16px 20px; color: var(--red); font-size: 12px; margin-bottom: 16px; }
+    .error-box.active { display: block; }
+
+    /* Stock result */
+    .stock-hero { background: var(--surface); border: 1px solid var(--border); border-radius: 8px; padding: 24px; margin-bottom: 16px; }
+    .stock-hero-top { display: flex; align-items: flex-start; justify-content: space-between; margin-bottom: 20px; }
+    .stock-ticker-large { font-family: 'JetBrains Mono', monospace; font-size: 36px; font-weight: 500; color: var(--white); line-height: 1; }
+    .stock-name { font-size: 13px; color: var(--grey); margin-top: 6px; }
+    .signal-big { text-align: right; }
+    .signal-badge-large { font-size: 13px; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase; padding: 8px 20px; border-radius: 6px; display: inline-block; }
+    .signal-badge-large.buy { background: var(--green-dim); color: var(--green); border: 1px solid rgba(34,197,94,0.3); }
+    .signal-badge-large.watch { background: var(--yellow-dim); color: var(--yellow); border: 1px solid rgba(245,158,11,0.3); }
+    .signal-badge-large.hold { background: rgba(107,114,128,0.1); color: var(--grey2); border: 1px solid var(--border2); }
+    .signal-badge-large.sell { background: var(--red-dim); color: var(--red); border: 1px solid rgba(239,68,68,0.3); }
+
+    .score-display { display: flex; align-items: center; gap: 20px; }
+    .score-big { font-family: 'JetBrains Mono', monospace; font-size: 48px; font-weight: 600; line-height: 1; }
+    .score-big.high { color: var(--green); }
+    .score-big.mid { color: var(--yellow); }
+    .score-big.low { color: var(--red); }
+    .score-details { }
+    .score-out-of { font-size: 14px; color: var(--grey); }
+    .conf-bar-wrap { margin-top: 10px; }
+    .conf-label { font-size: 11px; color: var(--grey); margin-bottom: 4px; }
+    .conf-track { background: var(--border); height: 4px; border-radius: 2px; width: 140px; }
+    .conf-fill { height: 4px; border-radius: 2px; background: var(--blue); }
+
+    .meta-row { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; }
+    .meta-item { }
+    .meta-label { font-size: 10px; text-transform: uppercase; letter-spacing: 0.1em; color: var(--grey); margin-bottom: 4px; }
+    .meta-value { font-size: 13px; color: var(--text); font-family: 'JetBrains Mono', monospace; }
+
+    /* Summary */
+    .summary-text { background: var(--surface); border: 1px solid var(--border); border-left: 3px solid var(--blue); border-radius: 0 8px 8px 0; padding: 16px 20px; margin-bottom: 16px; font-size: 13px; line-height: 1.7; color: var(--grey2); }
+
+    /* Two column cards */
+    .two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 16px; }
+    .result-card { background: var(--surface); border: 1px solid var(--border); border-radius: 8px; padding: 20px; }
+    .card-title { font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 14px; }
+    .card-title.green { color: var(--green); }
+    .card-title.red { color: var(--red); }
+
+    .bullet-list { list-style: none; }
+    .bullet-item { font-size: 12px; line-height: 1.6; padding: 7px 0; padding-left: 18px; position: relative; color: var(--grey2); border-bottom: 1px solid var(--border); }
+    .bullet-item:last-child { border-bottom: none; }
+    .bullet-item.up::before { content: '↑'; position: absolute; left: 0; color: var(--green); }
+    .bullet-item.down::before { content: '↓'; position: absolute; left: 0; color: var(--red); }
+
+    /* Signals grid */
+    .signals-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 16px; }
+    .signal-card { background: var(--surface); border: 1px solid var(--border); border-radius: 8px; padding: 14px; }
+    .signal-type { font-size: 10px; text-transform: uppercase; letter-spacing: 0.1em; color: var(--blue); margin-bottom: 6px; }
+    .signal-desc { font-size: 12px; color: var(--grey2); line-height: 1.5; margin-bottom: 8px; }
+    .signal-source-link { font-size: 11px; color: var(--grey); text-decoration: none; transition: color 0.15s; }
+    .signal-source-link:hover { color: var(--blue); }
+    .strength-dot { display: inline-block; width: 6px; height: 6px; border-radius: 50%; margin-right: 4px; }
+    .strength-dot.strong { background: var(--green); }
+    .strength-dot.moderate { background: var(--yellow); }
+    .strength-dot.weak { background: var(--grey); }
+
+    /* Prediction results */
+    .pred-summary-box { background: var(--surface); border: 1px solid var(--border); border-left: 3px solid var(--blue); border-radius: 0 8px 8px 0; padding: 16px 20px; margin-bottom: 16px; font-size: 13px; line-height: 1.7; color: var(--grey2); }
+
+    .pred-card { background: var(--surface); border: 1px solid var(--border); border-radius: 8px; margin-bottom: 12px; overflow: hidden; }
+    .pred-card-header { padding: 18px 20px; border-bottom: 1px solid var(--border); display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; }
+    .pred-statement { font-size: 14px; color: var(--white); line-height: 1.5; font-weight: 500; flex: 1; }
+    .pred-badges { display: flex; flex-direction: column; align-items: flex-end; gap: 6px; white-space: nowrap; }
+    .conf-badge { font-size: 10px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.1em; padding: 2px 8px; border-radius: 4px; }
+    .conf-badge.high { background: var(--green-dim); color: var(--green); }
+    .conf-badge.medium { background: var(--yellow-dim); color: var(--yellow); }
+    .conf-badge.low { background: rgba(107,114,128,0.15); color: var(--grey2); }
+    .horizon-text { font-size: 11px; color: var(--grey); font-family: 'JetBrains Mono', monospace; }
+    .pred-card-body { padding: 16px 20px; }
+    .pred-reasoning { font-size: 12px; color: var(--grey2); line-height: 1.7; margin-bottom: 14px; }
+    .pred-signals { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+    .pred-signal-item { display: flex; align-items: flex-start; gap: 8px; font-size: 11px; color: var(--grey); line-height: 1.4; }
+    .pred-signal-dot { width: 5px; height: 5px; border-radius: 50%; background: var(--blue); flex-shrink: 0; margin-top: 4px; }
+
+    .sources-note { font-size: 11px; color: var(--grey); font-family: 'JetBrains Mono', monospace; margin-bottom: 24px; }
+  </style>
+</head>
+<body>
+<div class="app">
+  <aside class="sidebar">
+    <div class="sidebar-logo">
+      <div class="logo-mark">
+        <div class="logo-icon">O</div>
+        <div>
+          <div class="logo-text">ONYX AI</div>
+          <div class="logo-sub">Intelligence</div>
+        </div>
+      </div>
+    </div>
+    <nav class="sidebar-nav">
+      <div class="nav-section-label">Main</div>
+      <a class="nav-item" href="/">
+        <svg class="nav-icon" viewBox="0 0 16 16" fill="currentColor"><path d="M2 2h5v5H2V2zm0 7h5v5H2V9zm7-7h5v5H9V2zm0 7h5v5H9V9z"/></svg>
+        Dashboard
+      </a>
+      <a class="nav-item active" href="/search">
+        <svg class="nav-icon" viewBox="0 0 16 16" fill="currentColor"><path d="M11.742 10.344a6.5 6.5 0 1 0-1.397 1.398h-.001c.03.04.062.078.098.115l3.85 3.85a1 1 0 0 0 1.415-1.414l-3.85-3.85a1.007 1.007 0 0 0-.115-.099zm-5.242 1.656a5.5 5.5 0 1 1 0-11 5.5 5.5 0 0 1 0 11z"/></svg>
+        Search & Predict
+      </a>
+      <div class="nav-section-label" style="margin-top:16px">Coming Soon</div>
+      <div class="nav-item" style="opacity:0.4;cursor:not-allowed">
+        <svg class="nav-icon" viewBox="0 0 16 16" fill="currentColor"><path d="M8 1a2 2 0 0 1 2 2v4H6V3a2 2 0 0 1 2-2zm3 6V3a3 3 0 0 0-6 0v4a2 2 0 0 0-2 2v5a2 2 0 0 0 2 2h6a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2z"/></svg>
+        Trading
+        <span class="nav-badge">Soon</span>
+      </div>
+    </nav>
+    <div class="sidebar-footer">
+      <div class="market-status">
+        <div class="status-dot" id="marketDot"></div>
+        <span id="marketStatusText">Checking...</span>
+      </div>
+    </div>
+  </aside>
+
+  <header class="topbar">
+    <div class="topbar-title">Search & Predict</div>
+  </header>
+
+  <main class="main">
+
+    <!-- Mode tabs -->
+    <div class="mode-tabs">
+      <button class="mode-tab active" id="tabStock" onclick="setMode('stock')">Stock / Crypto Signal</button>
+      <button class="mode-tab" id="tabPredict" onclick="setMode('predict')">Market Prediction</button>
+    </div>
+
+    <!-- Stock mode search -->
+    <div id="stockMode">
+      <div class="search-box">
+        <div class="search-label">Analyse a Stock or Crypto</div>
+        <div class="search-row">
+          <input class="search-input" type="text" id="tickerInput" placeholder="Enter ticker e.g. AAPL, NVDA, BTC-USD" style="text-transform:uppercase"/>
+          <select class="select-input" id="assetType">
+            <option value="stock">Stock</option>
+            <option value="crypto">Crypto</option>
+          </select>
+          <button class="btn btn-primary" id="stockBtn" onclick="runStockScan()">Analyse →</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Predict mode search -->
+    <div id="predictMode" style="display:none">
+      <div class="search-box">
+        <div class="search-label">Predict a Market Topic</div>
+        <div class="search-row">
+          <input class="search-input" type="text" id="topicInput" placeholder="e.g. Federal Reserve rate decision, AI regulation, oil prices"/>
+          <select class="select-input" id="domainSelect">
+            <option value="markets">Markets</option>
+            <option value="tech">Tech</option>
+            <option value="geopolitics">Geopolitics</option>
+          </select>
+          <select class="select-input" id="horizonSelect">
+            <option value="1-2 weeks">1-2 weeks</option>
+            <option value="1-7 days">1-7 days</option>
+            <option value="3-4 weeks">3-4 weeks</option>
+          </select>
+          <button class="btn btn-primary" id="predictBtn" onclick="runPrediction()">Predict →</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Loading -->
+    <div class="loading" id="loadingState">
+      <div class="loading-spinner"></div>
+      <div class="loading-text" id="loadingText">Scanning signals...</div>
+    </div>
+
+    <!-- Error -->
+    <div class="error-box" id="errorBox"></div>
+
+    <!-- Stock Results -->
+    <div class="results" id="stockResults">
+      <div class="stock-hero">
+        <div class="stock-hero-top">
+          <div>
+            <div class="stock-ticker-large" id="resTicker"></div>
+            <div class="stock-name" id="resName"></div>
+          </div>
+          <div class="signal-big">
+            <div class="signal-badge-large pending" id="resBadge">—</div>
+            <div style="margin-top:10px">
+              <div class="score-display">
+                <div class="score-big" id="resScore">—</div>
+                <div class="score-details">
+                  <div class="score-out-of">/ 10</div>
+                  <div class="conf-bar-wrap">
+                    <div class="conf-label">AI Confidence</div>
+                    <div class="conf-track"><div class="conf-fill" id="resConfBar" style="width:0%"></div></div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="meta-row">
+          <div class="meta-item"><div class="meta-label">Confidence</div><div class="meta-value" id="resConf">—</div></div>
+          <div class="meta-item"><div class="meta-label">Time Horizon</div><div class="meta-value" id="resHorizon">—</div></div>
+          <div class="meta-item"><div class="meta-label">Type</div><div class="meta-value" id="resType">—</div></div>
+        </div>
+      </div>
+
+      <div class="summary-text" id="resSummary"></div>
+
+      <div class="two-col">
+        <div class="result-card">
+          <div class="card-title green">↑ Catalysts</div>
+          <ul class="bullet-list" id="resCatalysts"></ul>
+        </div>
+        <div class="result-card">
+          <div class="card-title red">↓ Risk Factors</div>
+          <ul class="bullet-list" id="resRisks"></ul>
+        </div>
+      </div>
+
+      <div class="signals-grid" id="resSignals"></div>
+
+      <button class="btn btn-primary" style="margin-bottom:24px" onclick="addToWatchlist()">+ Add to Watchlist</button>
+    </div>
+
+    <!-- Prediction Results -->
+    <div class="results" id="predictResults">
+      <div style="margin-bottom:8px">
+        <span style="font-size:11px;color:var(--grey);text-transform:uppercase;letter-spacing:0.1em;font-weight:600" id="predDomain"></span>
+        <span style="font-size:11px;color:var(--grey)"> · </span>
+        <span style="font-size:11px;color:var(--grey)" id="predHorizon"></span>
+      </div>
+      <div style="font-size:20px;font-weight:600;color:var(--white);margin-bottom:16px" id="predTopic"></div>
+      <div class="pred-summary-box" id="predSummary"></div>
+      <div class="sources-note" id="predSources"></div>
+      <div id="predList"></div>
+    </div>
+
+  </main>
+</div>
+
+<script>
+const API = 'https://prediction-api-production-ad66.up.railway.app';
+let currentMode = 'stock';
+let lastStockResult = null;
+
+// Market status
+const now = new Date();
+const h = now.getUTCHours();
+const d = now.getUTCDay();
+const open = (d > 0 && d < 6) && (h >= 13 && h < 21);
+document.getElementById('marketDot').className = 'status-dot' + (open ? '' : ' closed');
+document.getElementById('marketStatusText').textContent = open ? 'Market Open' : 'Market Closed';
+
+document.getElementById('tickerInput').addEventListener('keydown', e => { if (e.key === 'Enter') runStockScan(); });
+document.getElementById('topicInput').addEventListener('keydown', e => { if (e.key === 'Enter') runPrediction(); });
+
+function setMode(mode) {
+  currentMode = mode;
+  document.getElementById('stockMode').style.display = mode === 'stock' ? 'block' : 'none';
+  document.getElementById('predictMode').style.display = mode === 'predict' ? 'block' : 'none';
+  document.getElementById('tabStock').className = 'mode-tab' + (mode === 'stock' ? ' active' : '');
+  document.getElementById('tabPredict').className = 'mode-tab' + (mode === 'predict' ? ' active' : '');
+  document.getElementById('stockResults').classList.remove('active');
+  document.getElementById('predictResults').classList.remove('active');
+  document.getElementById('errorBox').classList.remove('active');
+}
+
+async function runStockScan() {
+  const ticker = document.getElementById('tickerInput').value.trim().toUpperCase();
+  const assetType = document.getElementById('assetType').value;
+  if (!ticker) { document.getElementById('tickerInput').focus(); return; }
+
+  const btn = document.getElementById('stockBtn');
+  btn.disabled = true;
+  document.getElementById('loadingState').classList.add('active');
+  document.getElementById('stockResults').classList.remove('active');
+  document.getElementById('errorBox').classList.remove('active');
+  document.getElementById('loadingText').textContent = `Analysing ${ticker}...`;
+
+  try {
+    const res = await fetch(`${API}/invest`, {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ ticker, asset_type: assetType })
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.detail || 'Error');
+    lastStockResult = { ticker, assetType, data };
+    renderStockResult(data, ticker, assetType);
+  } catch(e) {
+    const eb = document.getElementById('errorBox');
+    eb.textContent = `Error: ${e.message}`;
+    eb.classList.add('active');
+  } finally {
+    document.getElementById('loadingState').classList.remove('active');
+    btn.disabled = false;
+  }
+}
+
+function renderStockResult(data, ticker, assetType) {
+  const scoreMap = { BUY: { High:8.5,Medium:7.0,Low:6.0 }, WATCH:{High:6.0,Medium:5.5,Low:4.5}, HOLD:{High:5.0,Medium:4.5,Low:4.0}, SELL:{High:2.0,Medium:3.0,Low:3.5} };
+  const score = scoreMap[data.signal]?.[data.confidence] ?? 5.0;
+  const scoreColor = score >= 7 ? 'high' : score >= 5 ? 'mid' : 'low';
+  const confPct = data.confidence === 'High' ? 85 : data.confidence === 'Medium' ? 60 : 35;
+  const sigClass = data.signal.toLowerCase();
+
+  document.getElementById('resTicker').textContent = ticker;
+  document.getElementById('resName').textContent = data.asset_name || '';
+  const badge = document.getElementById('resBadge');
+  badge.textContent = data.signal;
+  badge.className = `signal-badge-large ${sigClass}`;
+  document.getElementById('resScore').textContent = score.toFixed(1);
+  document.getElementById('resScore').className = `score-big ${scoreColor}`;
+  document.getElementById('resConfBar').style.width = `${confPct}%`;
+  document.getElementById('resConf').textContent = data.confidence;
+  document.getElementById('resHorizon').textContent = data.time_horizon;
+  document.getElementById('resType').textContent = assetType === 'stock' ? 'Equity' : 'Crypto';
+  document.getElementById('resSummary').textContent = data.summary;
+
+  document.getElementById('resCatalysts').innerHTML = (data.catalysts || []).map(c => `<li class="bullet-item up">${c}</li>`).join('');
+  document.getElementById('resRisks').innerHTML = (data.risks || []).map(r => `<li class="bullet-item down">${r}</li>`).join('');
+
+  document.getElementById('resSignals').innerHTML = (data.supporting_signals || []).map(s => {
+    const link = s.url ? `<a class="signal-source-link" href="${s.url}" target="_blank" rel="noopener">${s.source} ↗</a>`
+      : s.source ? `<a class="signal-source-link" href="https://news.google.com/search?q=${encodeURIComponent(s.source+' '+ticker)}" target="_blank">${s.source} ↗</a>` : '';
+    return `<div class="signal-card">
+      <div class="signal-type">${s.type}</div>
+      <div class="signal-desc">${s.description}</div>
+      ${link}
+    </div>`;
+  }).join('');
+
+  document.getElementById('stockResults').classList.add('active');
+  document.getElementById('stockResults').scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+
+function addToWatchlist() {
+  if (!lastStockResult) return;
+  const wl = JSON.parse(localStorage.getItem('onyx_wl_v3') || '[]');
+  const { ticker, assetType } = lastStockResult;
+  if (!wl.find(w => w.ticker === ticker)) {
+    wl.push({ ticker, type: assetType, signal: null, score: null, confidence: null, scannedAt: null, note: '', prevSignal: null, catalysts: [], risks: [] });
+    localStorage.setItem('onyx_wl_v3', JSON.stringify(wl));
+    alert(`${ticker} added to your Dashboard watchlist!`);
+  } else {
+    alert(`${ticker} is already in your watchlist.`);
+  }
+}
+
+async function runPrediction() {
+  const topic = document.getElementById('topicInput').value.trim();
+  const domain = document.getElementById('domainSelect').value;
+  const horizon = document.getElementById('horizonSelect').value;
+  if (!topic) { document.getElementById('topicInput').focus(); return; }
+
+  const btn = document.getElementById('predictBtn');
+  btn.disabled = true;
+  document.getElementById('loadingState').classList.add('active');
+  document.getElementById('predictResults').classList.remove('active');
+  document.getElementById('errorBox').classList.remove('active');
+  document.getElementById('loadingText').textContent = `Scanning signals for "${topic}"...`;
+
+  try {
+    const res = await fetch(`${API}/predict`, {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ topic, domain, time_horizon: horizon })
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.detail || 'Error');
+    renderPrediction(data, topic, domain, horizon);
+  } catch(e) {
+    const eb = document.getElementById('errorBox');
+    eb.textContent = `Error: ${e.message}`;
+    eb.classList.add('active');
+  } finally {
+    document.getElementById('loadingState').classList.remove('active');
+    btn.disabled = false;
+  }
+}
+
+function renderPrediction(data, topic, domain, horizon) {
+  document.getElementById('predDomain').textContent = domain.toUpperCase();
+  document.getElementById('predHorizon').textContent = horizon;
+  document.getElementById('predTopic').textContent = topic;
+  document.getElementById('predSummary').textContent = data.news_summary;
+  document.getElementById('predSources').textContent = `Sources searched: ${(data.sources_searched || []).join(' · ')}`;
+
+  document.getElementById('predList').innerHTML = (data.predictions || []).map(p => {
+    const confClass = p.confidence.toLowerCase();
+    const signals = (p.supporting_signals || []).map(s => `
+      <div class="pred-signal-item"><div class="pred-signal-dot"></div><div>${s.description} ${s.source ? `<em style="color:var(--grey)">(${s.source})</em>` : ''}</div></div>
+    `).join('');
+
+    return `<div class="pred-card">
+      <div class="pred-card-header">
+        <div class="pred-statement">${p.statement}</div>
+        <div class="pred-badges">
+          <span class="conf-badge ${confClass}">${p.confidence}</span>
+          <span class="horizon-text">${p.time_horizon}</span>
+        </div>
+      </div>
+      <div class="pred-card-body">
+        <div class="pred-reasoning">${p.reasoning}</div>
+        <div class="pred-signals">${signals}</div>
+      </div>
+    </div>`;
+  }).join('');
+
+  document.getElementById('predictResults').classList.add('active');
+  document.getElementById('predictResults').scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+</script>
+</body>
+</html>
