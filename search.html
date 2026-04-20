@@ -19,7 +19,7 @@
     }
     html, body { height: 100%; background: var(--bg); color: var(--text); font-family: 'Inter', sans-serif; font-size: 13px; overflow-x: hidden; }
 
-    .app { display: grid; grid-template-columns: 220px 1fr; grid-template-rows: auto 1fr; min-height: 100vh; }
+    .app { display: flex; min-height: 100vh; }
 
     /* Sidebar (same as dashboard) */
     .sidebar { grid-row: 1/3; background: var(--surface); border-right: 1px solid var(--border); display: flex; flex-direction: column; }
@@ -41,10 +41,10 @@
     .status-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--green); box-shadow: 0 0 6px var(--green); }
     .status-dot.closed { background: var(--red); box-shadow: 0 0 6px var(--red); }
 
-    .topbar { background: var(--surface); border-bottom: 1px solid var(--border); padding: 0 28px; display: flex; align-items: center; justify-content: space-between; height: 56px; }
+    .topbar { display: none; }
     .topbar-title { font-size: 15px; font-weight: 600; color: var(--white); }
 
-    .main { padding: 32px 28px; overflow-y: auto; max-width: 900px; }
+    .main { margin-left: 200px; padding: 24px; max-width: 900px; flex: 1; }
 
     /* Search modes */
     .mode-tabs { display: flex; gap: 4px; background: var(--surface); border: 1px solid var(--border); border-radius: 8px; padding: 4px; margin-bottom: 28px; width: fit-content; }
@@ -196,7 +196,7 @@
     </div>
   </aside>
 
-  <header class="topbar">
+  <header style="display:none" class="topbar">
     <div class="topbar-title">Search & Predict</div>
   </header>
 
