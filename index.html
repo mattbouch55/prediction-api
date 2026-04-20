@@ -141,8 +141,8 @@
     .scan-sm { font-size: 10px; background: transparent; border: 1px solid var(--border2); color: var(--text2); padding: 3px 8px; border-radius: 4px; cursor: pointer; font-family: 'Inter', sans-serif; transition: all 0.12s; }
     .scan-sm:hover { border-color: var(--blue); color: var(--blue); background: var(--blue-soft); }
     .scan-sm:disabled { opacity: 0.35; cursor: not-allowed; }
-    .del-btn { background: none; border: none; color: var(--border2); cursor: pointer; font-size: 14px; padding: 2px 4px; transition: color 0.12s; border-radius: 3px; }
-    .del-btn:hover { color: var(--red); }
+    .del-btn { background: none; border: none; color: var(--grey); cursor: pointer; font-size: 16px; font-weight: 400; padding: 4px 8px; transition: color 0.12s; border-radius: 4px; line-height: 1; }
+    .del-btn:hover { color: var(--red); background: var(--red-dim); }
 
     
 
@@ -638,7 +638,7 @@ function renderTable() {
             </div>
           </div>
         </td>
-        <td style="text-align:right"><button class="del-btn" onclick="event.stopPropagation();removeTicker('${w.ticker}')" title="Remove">&times;</button></td>
+        <td style="text-align:right;padding-right:16px"><button class="del-btn" data-ticker="${w.ticker}" onclick="event.stopPropagation();removeTicker(this.dataset.ticker)" title="Remove">&times;</button></td>
       </tr>`;
   });
 
