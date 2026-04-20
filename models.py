@@ -75,6 +75,7 @@ class AssetType(str, Enum):
 class InvestmentRequest(BaseModel):
     ticker: str = Field(..., min_length=1, max_length=20, example="NVDA")
     asset_type: AssetType = Field(default=AssetType.stock, example="stock")
+    custom_source: Optional[str] = Field(default=None, example="https://reuters.com/article/...")
 
     class Config:
         use_enum_values = True
