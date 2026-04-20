@@ -43,6 +43,11 @@ def serve_frontend():
     return FileResponse("index.html")
 
 
+@app.get("/watchlist")
+def serve_watchlist():
+    return FileResponse("watchlist.html")
+
+
 @app.get("/invest")
 def serve_invest():
     return FileResponse("invest.html")
