@@ -187,8 +187,9 @@ Based on your research, return ONLY a valid JSON object (no markdown) in this ex
 
 Signal definitions:
 - BUY: Strong positive catalysts, good risk/reward, positive momentum
-- WATCH: Interesting but wait for better entry or more clarity
-- HOLD: No clear directional catalyst, risks outweigh upside near-term
+- WATCH: Interesting but wait for better entry or more clarity  
+- HOLD: No clear directional catalyst, roughly balanced risks
+- SELL: Strong negative catalysts, price expected to decline, risks significantly outweigh upside
 
 Return ONLY the JSON object.
 """
