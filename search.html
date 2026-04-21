@@ -230,6 +230,26 @@
     .effect-factors { display: flex; flex-wrap: wrap; gap: 5px; }
     .effect-factor { font-size: 10px; background: var(--surface); border: 1px solid var(--border); color: var(--text2); padding: 2px 8px; border-radius: 10px; }
     .add-to-notes-btn { font-size: 11px; color: var(--blue); background: none; border: none; cursor: pointer; font-family: 'Inter', sans-serif; text-decoration: underline; margin-top: 8px; display: block; }
+
+    /* Saved stock effect cards */
+    .stock-cards-list { display: flex; flex-direction: column; gap: 6px; margin-bottom: 8px; }
+    .stock-card { border: 1px solid var(--border); border-radius: 7px; overflow: hidden; background: var(--surface); }
+    .stock-card-header { display: flex; align-items: center; gap: 8px; padding: 7px 10px; cursor: pointer; transition: background 0.1s; user-select: none; }
+    .stock-card-header:hover { background: var(--surface2); }
+    .stock-card-arrow { font-size: 10px; color: var(--grey); transition: transform 0.2s; flex-shrink: 0; }
+    .stock-card.open .stock-card-arrow { transform: rotate(90deg); }
+    .stock-card-ticker { font-family: 'JetBrains Mono', monospace; font-size: 12px; font-weight: 700; color: var(--text); }
+    .stock-card-dir { font-size: 10px; font-weight: 700; padding: 2px 7px; border-radius: 10px; flex-shrink: 0; }
+    .stock-card-dir.Bullish { background: var(--green-dim); color: var(--green); }
+    .stock-card-dir.Bearish { background: var(--red-dim); color: var(--red); }
+    .stock-card-dir.Neutral { background: var(--surface2); color: var(--grey2); border: 1px solid var(--border); }
+    .stock-card-dir.Mixed { background: var(--yellow-dim); color: var(--yellow); }
+    .stock-card-impact { font-size: 10px; color: var(--grey); font-family: 'JetBrains Mono', monospace; }
+    .stock-card-del { margin-left: auto; background: none; border: none; color: var(--grey); cursor: pointer; font-size: 15px; line-height: 1; padding: 0 2px; transition: color 0.12s; flex-shrink: 0; }
+    .stock-card-del:hover { color: var(--red); }
+    .stock-card-body { display: none; border-top: 1px solid var(--border); }
+    .stock-card.open .stock-card-body { display: block; }
+    .stock-card-inner { padding: 10px 12px; }
   </style>
 </head>
 <body>
@@ -583,6 +603,7 @@ function renderResults(data, topic, domain, horizon) {
             '<button class="pred-add-notes" style="color:var(--text);border:1px solid var(--border2);padding:2px 9px;border-radius:4px;text-decoration:none" onclick="toggleStockEffect('+i+')">📈 Stock Effect</button>' +
           '</div>' +
           '<div class="stock-effect-wrap" id="se-wrap-'+i+'" style="display:none">' +
+            '<div class="stock-cards-list" id="se-cards-'+i+'"></div>' +
             '<div class="stock-effect-input-row">' +
               '<input class="stock-ticker-input" id="se-ticker-'+i+'" placeholder="Ticker e.g. TSLA" maxlength="10"/>' +
               '<button class="analyse-btn" id="se-btn-'+i+'" onclick="runStockEffect('+i+')">Analyse →</button>' +
@@ -746,7 +767,23 @@ async function runStockEffect(i) {
   }
 }
 
+// Store saved stock analyses per prediction
+var savedEffects = {};
+
 function renderStockEffect(i, ticker, d) {
+  // Save to list
+  if (!savedEffects[i]) savedEffects[i] = [];
+  // Remove duplicate if same ticker
+  savedEffects[i] = savedEffects[i].filter(function(e) { return e.ticker !== ticker; });
+  savedEffects[i].push({ ticker: ticker, data: d });
+
+  // Re-render saved cards list
+  renderSavedEffects(i);
+
+  // Clear result area and ticker input
+  document.getElementById('se-result-'+i).classList.remove('active');
+  document.getElementById('se-ticker-'+i).value = '';
+
   var result = document.getElementById('se-result-'+i);
   var score = d.impact_score || 0;
   var pct = Math.abs(score) / 10 * 100;
@@ -799,13 +836,112 @@ function renderStockEffect(i, ticker, d) {
       '<button class="add-to-notes-btn" style="margin:0" data-eff-idx="'+i+'" data-eff-ticker="'+ticker+'">+ Add to notes</button>' +
     '</div>';
 
-  result.classList.add('active');
+  // Don't show inline - card was saved above
   // Attach add-to-notes listener
   var nb = result.querySelector('.add-to-notes-btn');
   if (nb) {
     nb.onclick = function() { addEffectToNotes(ticker, d); };
   }
 }
+
+function renderSavedEffects(i) {
+  var listEl = document.getElementById('se-cards-'+i);
+  if (!listEl) return;
+  var effects = savedEffects[i] || [];
+
+  if (!effects.length) {
+    listEl.innerHTML = '';
+    return;
+  }
+
+  listEl.innerHTML = effects.map(function(e, ei) {
+    var d = e.data;
+    var ticker = e.ticker;
+    var score = d.impact_score || 0;
+    var fillColor = score > 0 ? 'var(--green)' : score < 0 ? 'var(--red)' : 'var(--grey)';
+    var scoreStr = (score > 0 ? '+' : '') + score;
+
+    var bullDir = d.bull_price_direction === 'Increase' ? '▲' : '▼';
+    var bearDir = d.bear_price_direction === 'Decrease' ? '▼' : '▲';
+    var bullColor = d.bull_price_direction === 'Increase' ? 'var(--green)' : 'var(--red)';
+    var bearColor = d.bear_price_direction === 'Decrease' ? 'var(--red)' : 'var(--green)';
+
+    var factors = (d.key_factors||[]).map(function(f) {
+      return '<span class="effect-factor">'+f+'</span>';
+    }).join('');
+
+    var cardId = 'sc-'+i+'-'+ei;
+    return '<div class="stock-card" id="'+cardId+'">' +
+      '<div class="stock-card-header" data-cardid="'+cardId+'">' +
+        '<div class="stock-card-arrow">▶</div>' +
+        '<div class="stock-card-ticker">' + ticker + '</div>' +
+        '<span class="stock-card-dir '+(d.direction||'Neutral')+'">' + (d.direction||'Neutral') + '</span>' +
+        '<span class="stock-card-impact">' + (d.impact||'') + ' · <span style="color:'+fillColor+';font-weight:700">'+scoreStr+'/10</span></span>' +
+        '<button class="stock-card-del" data-pred="'+i+'" data-ei="'+ei+'" title="Remove">×</button>' +
+      '</div>' +
+      '<div class="stock-card-body">' +
+        '<div class="stock-card-inner">' +
+          '<div class="effect-summary" style="margin-bottom:8px">' + (d.summary||'') + '</div>' +
+          '<div class="effect-scenarios">' +
+            '<div class="effect-scenario bull">' +
+              '<div class="effect-scenario-label">✓ If correct</div>' +
+              '<div style="display:flex;align-items:center;gap:5px;margin-bottom:4px">' +
+                '<span style="font-size:13px;font-weight:800;color:'+bullColor+'">' + bullDir + '</span>' +
+                '<span style="font-size:12px;font-weight:700;color:'+bullColor+'">' + (d.bull_price_magnitude||'') + '</span>' +
+              '</div>' +
+              '<div style="font-size:11px;color:var(--text2);line-height:1.5">' + (d.bull_scenario||'') + '</div>' +
+            '</div>' +
+            '<div class="effect-scenario bear">' +
+              '<div class="effect-scenario-label">✗ If wrong</div>' +
+              '<div style="display:flex;align-items:center;gap:5px;margin-bottom:4px">' +
+                '<span style="font-size:13px;font-weight:800;color:'+bearColor+'">' + bearDir + '</span>' +
+                '<span style="font-size:12px;font-weight:700;color:'+bearColor+'">' + (d.bear_price_magnitude||'') + '</span>' +
+              '</div>' +
+              '<div style="font-size:11px;color:var(--text2);line-height:1.5">' + (d.bear_scenario||'') + '</div>' +
+            '</div>' +
+          '</div>' +
+          (factors ? '<div class="effect-factors" style="margin-top:8px">'+factors+'</div>' : '') +
+          '<div style="display:flex;justify-content:space-between;align-items:center;margin-top:8px">' +
+            '<span style="font-size:10px;color:var(--grey);font-family:JetBrains Mono,monospace">Horizon: '+(d.time_horizon||'—')+' · Confidence: '+(d.confidence||'—')+'</span>' +
+            '<button class="add-to-notes-btn" style="margin:0" id="eff-notes-btn-'+i+'-'+ei+'">+ Add to notes</button>' +
+          '</div>' +
+        '</div>' +
+      '</div>' +
+    '</div>';
+  }).join('');
+
+  // Attach notes listeners and card interactions via delegation
+  effects.forEach(function(e, ei) {
+    var nb = document.getElementById('eff-notes-btn-'+i+'-'+ei);
+    if (nb) nb.onclick = function() { addEffectToNotes(e.ticker, e.data); };
+  });
+
+  // Attach header click (toggle) and delete click
+  listEl.querySelectorAll('.stock-card-header').forEach(function(hdr) {
+    hdr.addEventListener('click', function() {
+      var id = hdr.dataset.cardid;
+      if (id) document.getElementById(id).classList.toggle('open');
+    });
+  });
+  listEl.querySelectorAll('.stock-card-del').forEach(function(btn) {
+    btn.addEventListener('click', function(e) {
+      e.stopPropagation();
+      deleteStockEffect(parseInt(btn.dataset.pred), parseInt(btn.dataset.ei));
+    });
+  });
+}
+
+function toggleStockCard(id) {
+  document.getElementById(id).classList.toggle('open');
+}
+
+function deleteStockEffect(i, ei) {
+  if (savedEffects[i]) {
+    savedEffects[i].splice(ei, 1);
+    renderSavedEffects(i);
+  }
+}
+
 
 function addEffectToNotes(ticker, d) {
   var editor = document.getElementById('notesArea');
