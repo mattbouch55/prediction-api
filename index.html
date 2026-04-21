@@ -776,47 +776,44 @@ function totalValueCell(ticker) {
 }
 
 function buyStock(ticker) {
-  const currentPrice = getStockCurrentPrice(ticker);
-  if (!currentPrice) {
-    alert('No price data for ' + ticker + ' yet. Click Scan first or wait for prices to load.');
+  // Get current price
+  var price = prices[ticker] && prices[ticker].price ? prices[ticker].price : null;
+  if (!price) {
+    alert(ticker + ': No price loaded yet. Wait for prices to refresh or click Scan All first.');
     return;
   }
 
-  const existing = portfolio.find(p => p.ticker === ticker);
-  
-  // Show share input dialog
-  const sharesInput = prompt(`How many shares of ${ticker} would you like to buy?
-Current price: $${currentPrice}`, '1');
-  if (sharesInput === null) return; // cancelled
-  const shares = parseFloat(sharesInput);
-  if (isNaN(shares) || shares <= 0) {
-    alert('Please enter a valid number of shares.');
-    return;
-  }
+  // Ask how many shares
+  var input = prompt('Buy ' + ticker + ' @ $' + price + ' — How many shares?', '1');
+  if (input === null) return;
+  var shares = parseFloat(input);
+  if (isNaN(shares) || shares <= 0) { alert('Enter a valid number of shares.'); return; }
 
+  // Add to portfolio
+  var existing = portfolio.find(function(p) { return p.ticker === ticker; });
   if (existing) {
-    // Add more shares to existing position
     existing.shares = (existing.shares || 0) + shares;
-    existing.points.push({ t: Date.now(), p: currentPrice });
+    existing.buyPrice = existing.buyPrice || price;
+    existing.points.push({ t: Date.now(), p: price });
   } else {
-    const color = CHART_COLORS[portfolio.length % CHART_COLORS.length];
     portfolio.push({
-      ticker,
-      color,
-      shares,
-      buyPrice: currentPrice,
-      points: [{ t: Date.now(), p: currentPrice }]
+      ticker: ticker,
+      color: CHART_COLORS[portfolio.length % CHART_COLORS.length],
+      shares: shares,
+      buyPrice: price,
+      points: [{ t: Date.now(), p: price }]
     });
   }
 
   savePortfolio();
+  renderTable();
   updateChartLegend();
   drawChart();
-  renderTable(); // refresh shares column
-  const subtitle = document.getElementById('chartSubtitle');
-  if (subtitle) subtitle.textContent = portfolio.length + ' stock' + (portfolio.length !== 1 ? 's' : '') + ' tracked';
-}
 
+  var sub = document.getElementById('chartSubtitle');
+  if (sub) sub.textContent = portfolio.length + ' stock' + (portfolio.length !== 1 ? 's' : '') + ' tracked';
+  alert('Bought ' + shares + ' shares of ' + ticker + ' @ $' + price + '. Total: $' + (shares * price).toFixed(2));
+}
 function sellStock(ticker) {
   portfolio = portfolio.filter(p => p.ticker !== ticker);
   savePortfolio();
@@ -1373,40 +1370,34 @@ new ResizeObserver(() => drawChart()).observe(document.getElementById('portfolio
 
 // Update portfolio stock prices every 60 seconds only
 async function autoUpdatePortfolioPrices() {
-  if (portfolio.length === 0) return;
-  const tickers = portfolio.map(p => p.ticker).join(',');
+  if (!portfolio || portfolio.length === 0) return;
+  var tickers = portfolio.map(function(p) { return p.ticker; }).join(',');
   try {
-    const res = await fetch(`${API}/prices?tickers=${encodeURIComponent(tickers)}`);
+    var res = await fetch(API + '/prices?tickers=' + encodeURIComponent(tickers));
     if (!res.ok) return;
-    const fresh = await res.json();
+    var fresh = await res.json();
+    // Update global prices
     Object.assign(prices, fresh);
-    renderTable();
-
-    const now = Date.now();
-    let updated = false;
-    portfolio.forEach(p => {
-      const price = fresh[p.ticker]?.price;
-      if (price) {
-        p.points.push({ t: now, p: price });
+    // Add new data points to chart
+    var now = Date.now();
+    portfolio.forEach(function(p) {
+      var newPrice = fresh[p.ticker] && fresh[p.ticker].price;
+      if (newPrice) {
+        p.points.push({ t: now, p: newPrice });
         if (p.points.length > 1440) p.points = p.points.slice(-1440);
-        updated = true;
       }
     });
-
-    if (updated) {
-      savePortfolio();
-      updateChartLegend();
-      drawChart();
-      _timerSecs = 120; // reset countdown after successful update
-      const subtitle = document.getElementById('chartSubtitle');
-      if (subtitle && portfolio.length > 0) {
-        const t = new Date().toLocaleTimeString('en-US', { hour:'numeric', minute:'2-digit' });
-        subtitle.textContent = portfolio.length + ' stock' + (portfolio.length !== 1 ? 's' : '') + ' tracked · ' + t;
-      }
+    savePortfolio();
+    renderTable();
+    updateChartLegend();
+    drawChart();
+    var sub = document.getElementById('chartSubtitle');
+    if (sub && portfolio.length > 0) {
+      var t = new Date().toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' });
+      sub.textContent = portfolio.length + ' stock' + (portfolio.length !== 1 ? 's' : '') + ' tracked · Updated ' + t;
     }
-  } catch(e) {}
+  } catch(e) { console.log('Price update failed:', e); }
 }
-
 // 2-minute countdown timer - runs always, ticks every second
 
 
