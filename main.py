@@ -1,1087 +1,230 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8"/>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Onyx AI — Dashboard</title>
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@300;400;500&display=swap" rel="stylesheet">
-  <style>
-    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-    :root {
-      --bg: #f7f7f6;
-      --surface: #ffffff;
-      --surface2: #f3f3f2;
-      --border: #e5e4e2;
-      --border2: #d1d0cd;
-      --blue: #1565ff;
-      --blue-soft: #eff3ff;
-      --blue-glow: rgba(21,101,255,0.08);
-      --text: #111827;
-      --text2: #4b5563;
-      --grey: #9ca3af;
-      --grey2: #6b7280;
-      --green: #16a34a;
-      --green-dim: rgba(22,163,74,0.08);
-      --red: #dc2626;
-      --red-dim: rgba(220,38,38,0.08);
-      --yellow: #d97706;
-      --yellow-dim: rgba(217,119,6,0.08);
-      --sidebar-w: 300px;
-      --panel-w: 0;
-      --shadow: 0 1px 3px rgba(0,0,0,0.06), 0 1px 2px rgba(0,0,0,0.04);
+import os
+import json
+import time
+import asyncio
+import requests
+import anthropic
+
+from fastapi import FastAPI
+from fastapi.responses import HTMLResponse
+from fastapi.middleware.cors import CORSMiddleware
+
+from models import PredictionRequest, InvestmentRequest
+from agent import PredictionAgent, InvestmentAgent
+from database import Database
+
+# ── App ────────────────────────────────────────────────────────
+app = FastAPI(title="Onyx AI")
+app.add_middleware(CORSMiddleware, allow_origins=["*"], allow_methods=["*"], allow_headers=["*"])
+
+db = Database()
+db.initialize()
+predict_agent = PredictionAgent()
+invest_agent  = InvestmentAgent()
+
+ANTHROPIC_KEY = os.environ.get("ANTHROPIC_API_KEY", "")
+FINNHUB_KEY   = os.environ.get("FINNHUB_API_KEY", "")
+HEADERS       = {"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36"}
+
+# ── Pages ──────────────────────────────────────────────────────
+@app.get("/", response_class=HTMLResponse)
+def dashboard():
+    return open("index.html").read()
+
+@app.get("/search", response_class=HTMLResponse)
+def research():
+    return open("search.html").read()
+
+# ── Prices ─────────────────────────────────────────────────────
+@app.get("/prices")
+def get_prices(tickers: str):
+    ticker_list = [t.strip().upper() for t in tickers.split(",") if t.strip()]
+    result = {}
+    for ticker in ticker_list:
+        price, prev = None, None
+
+        # Finnhub (primary)
+        if FINNHUB_KEY:
+            try:
+                r = requests.get(
+                    f"https://finnhub.io/api/v1/quote?symbol={ticker}&token={FINNHUB_KEY}",
+                    timeout=5, headers=HEADERS
+                )
+                if r.status_code == 200:
+                    d = r.json()
+                    c, pc = d.get("c", 0), d.get("pc", 0)
+                    best = c if (c and float(c) > 0) else pc
+                    if best and float(best) > 0:
+                        price = round(float(best), 2)
+                        prev  = round(float(pc), 2) if pc else price
+            except Exception:
+                pass
+
+        # Yahoo Finance v8 (fallback)
+        if not price:
+            try:
+                r = requests.get(
+                    f"https://query1.finance.yahoo.com/v8/finance/chart/{ticker}?interval=1m&range=1d",
+                    timeout=5, headers=HEADERS
+                )
+                if r.status_code == 200:
+                    res = r.json().get("chart", {}).get("result", [])
+                    if res:
+                        meta = res[0].get("meta", {})
+                        p  = meta.get("regularMarketPrice") or meta.get("previousClose")
+                        pc = meta.get("previousClose") or p
+                        if p and float(p) > 0:
+                            price = round(float(p), 2)
+                            prev  = round(float(pc), 2) if pc else price
+            except Exception:
+                pass
+
+        if price:
+            chg = round(((price - prev) / prev) * 100, 2) if prev and prev > 0 else 0
+            result[ticker] = {"price": price, "prev_close": prev, "change_pct": chg}
+        else:
+            result[ticker] = {"price": None, "change_pct": None, "error": "No data"}
+
+    return result
+
+# ── Chart ──────────────────────────────────────────────────────
+@app.get("/chart")
+def get_chart(ticker: str, from_ts: int = None, to_ts: int = None, resolution: str = "5"):
+    now = int(time.time())
+    try:
+        r = requests.get(
+            f"https://finnhub.io/api/v1/stock/candle"
+            f"?symbol={ticker}&resolution={resolution}"
+            f"&from={from_ts or now-86400}&to={to_ts or now}&token={FINNHUB_KEY}",
+            timeout=8
+        )
+        d = r.json()
+        if d.get("s") == "ok":
+            return {"ticker": ticker, "prices": [{"t": t, "p": c} for t, c in zip(d["t"], d["c"])]}
+    except Exception:
+        pass
+    return {"ticker": ticker, "prices": []}
+
+# ── AI: Predict ────────────────────────────────────────────────
+@app.post("/predict")
+async def predict(request: PredictionRequest):
+    result = await predict_agent.run(
+        topic=request.topic,
+        domain=request.domain,
+        time_horizon=request.time_horizon,
+        custom_source=getattr(request, "custom_source", None)
+    )
+    try:
+        db.save_prediction(result)
+    except Exception:
+        pass
+    return result
+
+# ── AI: Invest ─────────────────────────────────────────────────
+@app.post("/invest")
+async def invest(request: InvestmentRequest):
+    return await invest_agent.run(
+        ticker=request.ticker,
+        asset_type=request.asset_type,
+        custom_source=getattr(request, "custom_source", None)
+    )
+
+# ── AI: Stock Effect ───────────────────────────────────────────
+@app.post("/stock-effect")
+async def stock_effect(request: dict):
+    prediction = (request.get("prediction") or "").strip()
+    ticker     = (request.get("ticker") or "").upper().strip()
+    confidence = request.get("confidence") or ""
+    topic      = request.get("topic") or prediction
+
+    if not prediction or not ticker:
+        return {"error": "prediction and ticker required"}
+
+    client = anthropic.Anthropic(api_key=ANTHROPIC_KEY)
+    prompt = f"""You are a senior equity analyst.
+
+TOPIC: {topic}
+PREDICTION: {prediction}
+CONFIDENCE: {confidence}
+
+Analyse how this prediction affects {ticker}. Search the web for current data.
+
+Return ONLY valid JSON:
+{{
+  "ticker": "{ticker}",
+  "company_name": "Full name",
+  "impact": "High|Medium|Low|Minimal",
+  "direction": "Bullish|Bearish|Neutral|Mixed",
+  "impact_score": 0,
+  "summary": "2-3 sentence explanation",
+  "bull_scenario": "If prediction correct",
+  "bull_price_direction": "Increase|Decrease",
+  "bull_price_magnitude": "+5-10%",
+  "bear_scenario": "If prediction wrong",
+  "bear_price_direction": "Increase|Decrease",
+  "bear_price_magnitude": "-3-7%",
+  "key_factors": ["factor1","factor2","factor3"],
+  "time_horizon": "2-4 weeks",
+  "confidence": "High|Medium|Low"
+}}"""
+
+    defaults = {
+        "ticker": ticker, "company_name": ticker, "impact": "Medium",
+        "direction": "Neutral", "impact_score": 0,
+        "summary": "Analysis unavailable.", "bull_scenario": "N/A",
+        "bull_price_direction": "Increase", "bull_price_magnitude": "Unknown",
+        "bear_scenario": "N/A", "bear_price_direction": "Decrease",
+        "bear_price_magnitude": "Unknown", "key_factors": [],
+        "time_horizon": "Unknown", "confidence": "Low"
     }
 
-    body { background: var(--bg); color: var(--text); font-family: 'Inter', sans-serif; font-size: 13px; }
-
-    /* ── LAYOUT ─────────────────────────────────────────────── */
-    .layout { display: flex; min-height: 100vh; }
-
-    /* ── SIDEBAR ────────────────────────────────────────────── */
-    .sidebar { width: var(--sidebar-w); background: var(--surface); border-right: 1px solid var(--border); display: flex; flex-direction: column; position: fixed; top: 0; left: 0; height: 100vh; z-index: 50; }
-
-    .sidebar-logo { padding: 20px 16px 16px; border-bottom: 1px solid var(--border); }
-    .logo-row { display: flex; align-items: center; gap: 9px; }
-    .logo-icon { width: 34px; height: 34px; background: var(--blue); border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 16px; font-weight: 700; color: white; font-family: 'JetBrains Mono', monospace; flex-shrink: 0; }
-    .logo-name { font-size: 14px; font-weight: 700; color: var(--text); letter-spacing: -0.01em; }
-    .logo-sub { font-size: 11px; color: var(--grey); letter-spacing: 0.06em; text-transform: uppercase; margin-top: 2px; }
-
-    .sidebar-nav { padding: 12px 10px; flex: 1; overflow-y: auto; }
-    .nav-section { font-size: 10px; font-weight: 600; letter-spacing: 0.1em; text-transform: uppercase; color: var(--grey); padding: 10px 8px 5px; }
-    .nav-item { display: flex; align-items: center; gap: 9px; padding: 8px 10px; border-radius: 6px; color: var(--text2); text-decoration: none; font-size: 12px; font-weight: 500; transition: all 0.12s; margin-bottom: 1px; cursor: pointer; }
-    .nav-item:hover { background: var(--surface2); color: var(--text); }
-    .nav-item.active { background: var(--blue-soft); color: var(--blue); }
-    .nav-item svg { flex-shrink: 0; opacity: 0.65; }
-    .nav-item.active svg { opacity: 1; }
-    .nav-chip { font-size: 9px; background: var(--surface2); color: var(--grey); padding: 1px 5px; border-radius: 8px; margin-left: auto; border: 1px solid var(--border); }
-    .nav-disabled { display: flex; align-items: center; gap: 9px; padding: 8px 10px; color: var(--grey); font-size: 12px; font-weight: 500; opacity: 0.5; cursor: not-allowed; }
-
-    .sidebar-footer { padding: 14px 16px; border-top: 1px solid var(--border); }
-    .market-pill { display: flex; align-items: center; gap: 7px; font-size: 11px; color: var(--text2); }
-    .dot { width: 6px; height: 6px; border-radius: 50%; flex-shrink: 0; }
-    .dot.open { background: var(--green); }
-    .dot.closed { background: var(--red); }
-    .market-time { font-size: 10px; color: var(--grey); margin-top: 2px; font-family: 'JetBrains Mono', monospace; }
-
-    /* ── MAIN ───────────────────────────────────────────────── */
-    .main { margin-left: var(--sidebar-w); flex: 1; padding: 24px; display: flex; gap: 16px; align-items: flex-start; }
-
-    /* ── WATCHLIST CARD ─────────────────────────────────────── */
-    .watchlist-card { flex: 3; min-width: 0; background: var(--surface); border: 1px solid var(--border); border-radius: 10px; box-shadow: var(--shadow); overflow: hidden; }
-
-    .card-header { padding: 14px 20px; border-bottom: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; gap: 12px; }
-    .card-title { font-size: 13px; font-weight: 600; color: var(--text); }
-    .card-subtitle { font-size: 11px; color: var(--grey); margin-top: 1px; }
-    .card-actions { display: flex; align-items: center; gap: 6px; }
-
-    /* Add ticker inputs */
-    .add-group { display: flex; align-items: center; gap: 5px; }
-    .input-ticker { background: var(--bg); border: 1px solid var(--border2); color: var(--text); font-family: 'JetBrains Mono', monospace; font-size: 12px; font-weight: 500; padding: 5px 10px; border-radius: 6px; outline: none; width: 105px; text-transform: uppercase; transition: border-color 0.15s, box-shadow 0.15s; }
-    .input-ticker::placeholder { color: var(--grey); text-transform: none; font-family: 'Inter', sans-serif; font-weight: 400; }
-    .input-ticker:focus { border-color: var(--blue); box-shadow: 0 0 0 2px var(--blue-glow); }
-    .select-type { background: var(--bg); border: 1px solid var(--border2); color: var(--text2); font-family: 'Inter', sans-serif; font-size: 11px; padding: 5px 8px; border-radius: 6px; outline: none; appearance: none; cursor: pointer; }
-
-    .btn { border: none; font-family: 'Inter', sans-serif; font-size: 11px; font-weight: 500; padding: 5px 12px; border-radius: 6px; cursor: pointer; transition: all 0.12s; white-space: nowrap; display: inline-flex; align-items: center; gap: 4px; }
-    .btn-secondary { background: var(--surface2); color: var(--text2); border: 1px solid var(--border); }
-    .btn-secondary:hover { background: var(--border); color: var(--text); }
-    .btn-primary { background: var(--blue); color: white; }
-    .btn-primary:hover { background: #1a6fff; }
-    .btn-primary:disabled { background: var(--border2); color: var(--grey); cursor: not-allowed; }
-
-    /* Progress */
-    .progress-wrap { display: none; padding: 8px 20px; border-bottom: 1px solid var(--border); background: var(--blue-soft); }
-    .progress-wrap.active { display: block; }
-    .progress-track { background: rgba(21,101,255,0.15); height: 3px; border-radius: 2px; overflow: hidden; margin-bottom: 5px; }
-    .progress-fill { background: var(--blue); height: 3px; width: 0%; transition: width 0.4s; border-radius: 2px; }
-    .progress-txt { font-size: 10px; color: var(--blue); font-family: 'JetBrains Mono', monospace; }
-
-    /* Table */
-    .tbl { width: 100%; border-collapse: collapse; }
-    .tbl th { font-size: 10px; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; color: var(--grey); padding: 9px 12px; text-align: left; border-bottom: 1px solid var(--border); background: var(--surface); white-space: nowrap; }
-    .tbl td { padding: 8px 12px; border-bottom: 1px solid var(--border); vertical-align: middle; overflow: hidden; max-height: 52px; }
-    .tbl tbody tr.main-row { cursor: pointer; transition: background 0.1s; }
-    .tbl tbody tr.main-row:hover { background: var(--surface2); }
-    .tbl tbody tr.main-row.selected { background: var(--blue-soft); }
-    .tbl tbody tr.hist-row { background: #fafaf9; cursor: default; }
-    .tbl tbody tr:last-child td { border-bottom: none; }
-
-    /* Cells */
-    .ticker-name { font-family: 'JetBrains Mono', monospace; font-size: 13px; font-weight: 500; color: var(--text); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; line-height: 1.3; }
-    .ticker-sub { font-size: 10px; color: var(--grey); margin-top: 1px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 100%; line-height: 1.3; }
-    .alert-pill { font-size: 9px; background: var(--blue-soft); color: var(--blue); border: 1px solid rgba(21,101,255,0.2); padding: 1px 5px; border-radius: 8px; margin-left: 5px; vertical-align: middle; }
-    .price-cell { font-family: 'JetBrains Mono', monospace; font-size: 13px; color: var(--text); }
-    .pos { color: var(--green); } .neg { color: var(--red); } .neu { color: var(--grey); }
-
-    /* Score */
-    .score-wrap { display: flex; align-items: center; gap: 8px; }
-    .score-n { font-family: 'JetBrains Mono', monospace; font-size: 15px; font-weight: 600; min-width: 30px; }
-    .score-n.hi { color: var(--green); } .score-n.mi { color: var(--yellow); } .score-n.lo { color: var(--red); } .score-n.nd { color: var(--grey); font-size: 11px; }
-    .score-bar { width: 36px; height: 3px; background: var(--border); border-radius: 2px; overflow: hidden; }
-    .score-fill { height: 3px; border-radius: 2px; }
-
-    /* Signal badge */
-    .sig { font-size: 10px; font-weight: 600; letter-spacing: 0.07em; text-transform: uppercase; padding: 3px 7px; border-radius: 4px; display: inline-block; white-space: nowrap; }
-    .sig.buy { background: var(--green-dim); color: var(--green); }
-    .sig.watch { background: var(--yellow-dim); color: var(--yellow); }
-    .sig.hold { background: var(--surface2); color: var(--text2); }
-    .sig.sell { background: var(--red-dim); color: var(--red); }
-    .sig.pending { background: var(--surface2); color: var(--grey); }
-
-    /* Action buttons */
-    .act-wrap { display: flex; gap: 4px; align-items: center; }
-    .act-btn { font-size: 10px; font-weight: 600; padding: 3px 9px; border-radius: 4px; border: 1px solid; cursor: pointer; font-family: 'Inter', sans-serif; transition: all 0.12s; background: transparent; }
-    .act-btn.buy { color: var(--green); border-color: rgba(22,163,74,0.3); }
-    .act-btn.buy:hover { background: var(--green-dim); }
-    .act-btn.sell { color: var(--red); border-color: rgba(220,38,38,0.3); }
-    .act-btn.sell:hover { background: var(--red-dim); }
-
-    /* Row controls */
-    .ctrl-wrap { display: flex; align-items: center; gap: 4px; justify-content: flex-end; }
-
-    .scan-sm { font-size: 10px; background: transparent; border: 1px solid var(--border2); color: var(--text2); padding: 3px 8px; border-radius: 4px; cursor: pointer; font-family: 'Inter', sans-serif; transition: all 0.12s; }
-    .scan-sm:hover { border-color: var(--blue); color: var(--blue); background: var(--blue-soft); }
-    .scan-sm:disabled { opacity: 0.35; cursor: not-allowed; }
-    .del-btn { background: none; border: none; color: var(--grey); cursor: pointer; font-size: 16px; font-weight: 400; padding: 4px 8px; transition: color 0.12s; border-radius: 4px; line-height: 1; }
-    .del-btn:hover { color: var(--red); background: var(--red-dim); }
-
-    
-
-    /* Detail panel sections */
-    .panel-section { margin-bottom: 16px; }
-    .panel-section-label { font-size: 10px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.1em; color: var(--grey); margin-bottom: 8px; }
-    .panel-hist-notes { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 16px; }
-    .panel-hist-scroll { max-height: 240px; overflow-y: auto; padding-right: 6px; }
-    .panel-hist-scroll::-webkit-scrollbar { width: 4px; }
-    .panel-hist-scroll::-webkit-scrollbar-track { background: var(--surface2); border-radius: 2px; }
-    .panel-hist-scroll::-webkit-scrollbar-thumb { background: var(--border2); border-radius: 2px; }
-    .panel-hist-scroll::-webkit-scrollbar-thumb:hover { background: var(--grey); }
-    .phist-entry { padding: 9px 0; border-bottom: 1px solid var(--border); }
-    .phist-entry:last-child { border-bottom: none; }
-    .phist-top { display: flex; align-items: center; gap: 7px; margin-bottom: 4px; }
-    .phist-sig { font-weight: 700; text-transform: uppercase; font-size: 10px; letter-spacing: 0.06em; }
-    .phist-score { font-family: "JetBrains Mono", monospace; font-size: 10px; color: var(--text2); background: var(--surface2); padding: 1px 5px; border-radius: 3px; border: 1px solid var(--border); }
-    .phist-time { font-size: 10px; color: var(--grey); font-family: "JetBrains Mono", monospace; margin-left: auto; }
-    .phist-sum { font-size: 11px; color: var(--text2); line-height: 1.6; }
-    .no-phist { font-size: 11px; color: var(--grey); font-style: italic; padding: 8px 0; }
-    .notes-col { display: flex; flex-direction: column; gap: 10px; }
-    .notes-url-input { width: 100%; background: var(--bg); border: 1px solid var(--border2); border-radius: 6px; color: var(--text); font-family: "Inter", sans-serif; font-size: 11px; padding: 7px 10px; outline: none; transition: border-color 0.15s, box-shadow 0.15s; }
-    .notes-url-input:focus { border-color: var(--blue); box-shadow: 0 0 0 2px var(--blue-glow); }
-    .notes-url-input::placeholder { color: var(--grey); }
-    .notes-url-hint { font-size: 10px; color: var(--grey); margin-top: 3px; }
-    .notes-textarea { width: 100%; background: var(--bg); border: 1px solid var(--border2); border-radius: 6px; color: var(--text); font-family: "Inter", sans-serif; font-size: 12px; padding: 10px 12px; resize: none; outline: none; line-height: 1.6; flex: 1; min-height: 100px; transition: border-color 0.15s, box-shadow 0.15s; box-shadow: inset 0 1px 2px rgba(0,0,0,0.04); }
-    .notes-textarea:focus { border-color: var(--blue); box-shadow: 0 0 0 2px var(--blue-glow), inset 0 1px 2px rgba(0,0,0,0.04); }
-    .notes-textarea::placeholder { color: var(--grey); }
-    .notes-save-btn { background: var(--blue); border: none; color: white; font-family: "Inter", sans-serif; font-size: 11px; font-weight: 500; padding: 6px 14px; border-radius: 5px; cursor: pointer; transition: background 0.12s; align-self: flex-end; }
-    .notes-save-btn:hover { background: #1a6fff; }
-    .panel-two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 14px; }
-    .panel-list-card { background: var(--surface2); border: 1px solid var(--border); border-radius: 6px; padding: 12px 14px; }
-    .panel-list-title { font-size: 10px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 8px; }
-    .panel-list-title.green { color: var(--green); }
-    .panel-list-title.red { color: var(--red); }
-    .panel-ul { list-style: none; }
-    .panel-li { font-size: 11px; color: var(--text2); padding: 5px 0 5px 13px; border-bottom: 1px solid var(--border); position: relative; line-height: 1.5; }
-    .panel-li:last-child { border-bottom: none; }
-    .panel-li.up::before { content:"↑"; position:absolute; left:0; color:var(--green); font-weight:700; }
-    .panel-li.dn::before { content:"↓"; position:absolute; left:0; color:var(--red); font-weight:700; }
-
-        /* Empty state */
-    .empty-cell { padding: 56px 20px !important; text-align: center; }
-    .empty-icon { font-size: 28px; margin-bottom: 10px; opacity: 0.2; }
-    .empty-text { font-size: 13px; color: var(--text2); margin-bottom: 4px; }
-    .empty-sub { font-size: 11px; color: var(--grey); }
-
-    /* ── RIGHT PANEL ────────────────────────────────────────── */
-    .right-panel { flex: 3; min-width: 320px; }
-    .panel-card { width: 100%; background: var(--surface); border: 1px solid var(--border); border-radius: 10px; box-shadow: var(--shadow); overflow: hidden; height: calc(100vh - 48px); display: flex; flex-direction: column; position: sticky; top: 24px; }
-    .panel-head { padding: 14px 16px; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; flex-shrink: 0; }
-    .panel-ticker { font-family: 'JetBrains Mono', monospace; font-size: 20px; font-weight: 600; color: var(--text); }
-    .panel-name { font-size: 11px; color: var(--grey); margin-top: 2px; }
-    .panel-close { background: none; border: none; color: var(--grey); cursor: pointer; font-size: 18px; padding: 0; transition: color 0.12s; line-height: 1; }
-    .panel-close:hover { color: var(--text); }
-    .panel-body { padding: 16px; flex: 1; overflow-y: auto; }
-    .panel-sec { margin-bottom: 18px; }
-    .panel-sec-label { font-size: 10px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.1em; color: var(--grey); margin-bottom: 8px; }
-    .panel-score-big { font-family: 'JetBrains Mono', monospace; font-size: 40px; font-weight: 700; line-height: 1; }
-    .panel-score-big.hi { color: var(--green); } .panel-score-big.mi { color: var(--yellow); } .panel-score-big.lo { color: var(--red); } .panel-score-big.nd { color: var(--grey); }
-    .panel-signal-row { display: flex; align-items: flex-start; justify-content: space-between; margin-bottom: 12px; }
-    .conf-track { background: var(--border); height: 3px; border-radius: 2px; width: 100%; margin-top: 8px; }
-    .conf-fill { height: 3px; border-radius: 2px; background: var(--blue); }
-    .conf-label { font-size: 10px; color: var(--grey); margin-top: 4px; }
-    .panel-summary { font-size: 12px; color: var(--text2); line-height: 1.7; }
-    .panel-list { list-style: none; }
-    .panel-li { font-size: 11px; color: var(--text2); padding: 6px 0 6px 14px; border-bottom: 1px solid var(--border); position: relative; line-height: 1.5; }
-    .panel-li:last-child { border-bottom: none; }
-    .panel-li.up::before { content:'↑'; position:absolute; left:0; color:var(--green); font-weight:600; }
-    .panel-li.dn::before { content:'↓'; position:absolute; left:0; color:var(--red); font-weight:600; }
-    .panel-divider { border: none; border-top: 1px solid var(--border); margin: 14px 0; }
-    .comment-area { width: 100%; background: var(--bg); border: 1px solid var(--border2); border-radius: 6px; color: var(--text); font-family: 'Inter', sans-serif; font-size: 12px; padding: 10px; resize: none; outline: none; line-height: 1.6; transition: border-color 0.15s, box-shadow 0.15s; }
-    .comment-area:focus { border-color: var(--blue); box-shadow: 0 0 0 2px var(--blue-glow); }
-    .comment-area::placeholder { color: var(--border2); }
-    .save-btn { margin-top: 6px; width: 100%; background: var(--surface2); border: 1px solid var(--border); color: var(--text2); font-family: 'Inter', sans-serif; font-size: 11px; padding: 7px; border-radius: 6px; cursor: pointer; transition: all 0.12s; }
-    .save-btn:hover { border-color: var(--blue); color: var(--blue); background: var(--blue-soft); }
-    .panel-placeholder { display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100%; color: var(--grey); text-align: center; padding: 24px; }
-    .panel-action-row { display: flex; gap: 8px; margin-bottom: 16px; }
-    .panel-scan-btn { background: var(--blue); color: white; border: none; font-family: "Inter", sans-serif; font-size: 12px; font-weight: 500; padding: 7px 18px; border-radius: 6px; cursor: pointer; transition: background 0.12s; white-space: nowrap; flex-shrink: 0; }
-    .panel-scan-btn:hover { background: #1a6fff; }
-    .panel-scan-btn:disabled { background: var(--border2); color: var(--grey); cursor: not-allowed; }
-    .panel-trade-btn { background: white; color: var(--text); border: 1.5px solid var(--text); font-family: "Inter", sans-serif; font-size: 12px; font-weight: 600; padding: 7px 18px; border-radius: 6px; cursor: pointer; transition: background 0.12s; white-space: nowrap; }
-    .panel-trade-btn:hover { background: var(--surface2); }
-
-    @keyframes pulse { 0%,100%{opacity:0.3} 50%{opacity:1} }
-    .scanning { animation: pulse 0.9s ease-in-out infinite; color: var(--blue); }
-
-    /* ── PORTFOLIO CHART ─────────────────────────────────────── */
-    .chart-card { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; box-shadow: var(--shadow); overflow: hidden;  }
-    .chart-header { padding: 16px 20px 12px; border-bottom: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; }
-    .chart-title { font-size: 13px; font-weight: 600; color: var(--text); }
-    .chart-subtitle { font-size: 11px; color: var(--grey); margin-top: 1px; }
-    .chart-legend { display: flex; flex-wrap: wrap; gap: 12px; }
-    .chart-legend-item { display: flex; align-items: center; gap: 5px; font-size: 11px; color: var(--text2); cursor: pointer; transition: opacity 0.15s; }
-    .chart-legend-item.hidden { opacity: 0.35; }
-    .chart-legend-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
-    .chart-range-tabs { display: flex; gap: 2px; }
-    .chart-range-btn { background: none; border: none; font-family: "Inter", sans-serif; font-size: 11px; font-weight: 500; color: var(--grey); padding: 4px 8px; border-radius: 4px; cursor: pointer; transition: all 0.12s; }
-    .chart-range-btn:hover { color: var(--text); background: var(--surface2); }
-    .chart-range-btn.active { color: var(--blue); background: var(--blue-soft); }
-    .chart-body { padding: 8px 20px 16px; position: relative; }
-    .chart-canvas-wrap { position: relative; width: 100%; }
-    canvas#portfolioChart { width: 100%; height: 200px; display: block; }
-    .chart-empty { padding: 48px 20px; text-align: center; color: var(--grey); font-size: 12px; }
-    .chart-tooltip { position: absolute; background: var(--text); color: var(--surface); border-radius: 6px; padding: 6px 10px; font-size: 11px; font-family: "JetBrains Mono", monospace; pointer-events: none; opacity: 0; transition: opacity 0.1s; white-space: nowrap; z-index: 10; transform: translate(-50%, -120%); }
-
-    /* Buy Modal */
-    .modal-overlay { display:none; position:fixed; inset:0; background:rgba(0,0,0,0.3); z-index:1000; align-items:center; justify-content:center; }
-    .modal-overlay.active { display:flex; }
-    .modal-box { background:var(--surface); border:1px solid var(--border); border-radius:12px; box-shadow:0 8px 32px rgba(0,0,0,0.12); padding:24px; width:320px; }
-    .modal-title { font-size:15px; font-weight:600; color:var(--text); margin-bottom:4px; }
-    .modal-sub { font-size:12px; color:var(--grey); margin-bottom:20px; }
-    .modal-label { font-size:11px; font-weight:600; text-transform:uppercase; letter-spacing:0.08em; color:var(--grey); margin-bottom:6px; }
-    .modal-input { width:100%; background:var(--bg); border:1px solid var(--border2); border-radius:6px; color:var(--text); font-family:"Inter",sans-serif; font-size:16px; font-weight:600; padding:10px 14px; outline:none; margin-bottom:8px; transition:border-color 0.15s; }
-    .modal-input:focus { border-color:var(--blue); box-shadow:0 0 0 2px var(--blue-glow); }
-    .modal-total { font-size:12px; color:var(--grey2); margin-bottom:20px; height:18px; }
-    .modal-total strong { color:var(--text); }
-    .modal-btns { display:flex; gap:8px; }
-    .modal-cancel { flex:1; background:var(--surface2); border:1px solid var(--border); color:var(--text2); font-family:"Inter",sans-serif; font-size:13px; font-weight:500; padding:9px; border-radius:6px; cursor:pointer; }
-    .modal-confirm { flex:1; background:var(--blue); border:none; color:white; font-family:"Inter",sans-serif; font-size:13px; font-weight:600; padding:9px; border-radius:6px; cursor:pointer; transition:background 0.12s; }
-    .modal-confirm:hover { background:#1a6fff; }
-
-    .shares-input { width:70px; background:var(--bg); border:1px solid var(--border2); border-radius:6px; color:var(--text); font-family:"Inter",sans-serif; font-size:12px; font-weight:600; padding:6px 8px; outline:none; text-align:center; transition:border-color 0.15s; }
-    .shares-input:focus { border-color:var(--blue); box-shadow:0 0 0 2px var(--blue-glow); }
-    .shares-input::placeholder { color:var(--grey); font-weight:400; }
-    .shares-label { font-size:10px; color:var(--grey); text-align:center; margin-top:2px; }
-
-    /* Dev Price Tester */
-    .dev-panel { position:fixed; bottom:20px; right:20px; background:var(--text); color:var(--surface); border-radius:10px; padding:14px 16px; z-index:9999; width:220px; box-shadow:0 4px 20px rgba(0,0,0,0.3); font-size:12px; }
-    .dev-panel-title { font-size:10px; font-weight:700; text-transform:uppercase; letter-spacing:0.1em; color:#666; margin-bottom:10px; display:flex; justify-content:space-between; align-items:center; }
-    .dev-panel-close { background:none; border:none; color:#666; cursor:pointer; font-size:16px; line-height:1; }
-    .dev-panel-close:hover { color:#fff; }
-    .dev-row { display:flex; gap:6px; margin-bottom:6px; }
-    .dev-select { flex:1; background:#222; border:1px solid #444; color:#fff; font-family:"Inter",sans-serif; font-size:11px; padding:5px 8px; border-radius:5px; outline:none; }
-    .dev-input { width:80px; background:#222; border:1px solid #444; color:#fff; font-family:"JetBrains Mono",monospace; font-size:12px; padding:5px 8px; border-radius:5px; outline:none; text-align:right; }
-    .dev-btn { background:#1565ff; color:#fff; border:none; font-family:"Inter",sans-serif; font-size:11px; font-weight:600; padding:5px 10px; border-radius:5px; cursor:pointer; width:100%; margin-top:4px; }
-    .dev-btn:hover { background:#1a6fff; }
-    .dev-hint { font-size:10px; color:#555; margin-top:8px; line-height:1.5; }
-
-    
-    /* ── AI AGENT TOP BAR ── */
-    .ai-topbar { position: fixed; top: 0; left: var(--sidebar-w); right: 0; height: 42px; background: var(--surface); border-bottom: 1px solid var(--border); display: flex; align-items: center; gap: 10px; padding: 0 20px; z-index: 100; }
-    .ai-topbar-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--blue); flex-shrink: 0; animation: aipulse 2s ease-in-out infinite; }
-    @keyframes aipulse { 0%,100%{opacity:0.3;transform:scale(1)} 50%{opacity:1;transform:scale(1.25)} }
-    .ai-topbar-label { font-size: 10px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.1em; color: var(--grey); white-space: nowrap; flex-shrink: 0; }
-    .ai-topbar-input { flex: 1; background: var(--surface2); border: 1px solid transparent; border-radius: 20px; outline: none; font-family: 'Inter', sans-serif; font-size: 12px; color: var(--text); padding: 5px 14px; transition: border-color 0.15s, box-shadow 0.15s; max-width: 600px; }
-    .ai-topbar-input:focus { border-color: var(--blue); box-shadow: 0 0 0 2px var(--blue-glow); background: var(--surface); }
-    .ai-topbar-input::placeholder { color: var(--grey); }
-    .ai-topbar-send { background: var(--blue); border: none; border-radius: 50%; width: 26px; height: 26px; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: background 0.12s; flex-shrink: 0; }
-    .ai-topbar-send:hover { background: #1a6fff; }
-    .ai-topbar-send:disabled { background: var(--border2); cursor: not-allowed; }
-    .ai-topbar-response { flex: 1; font-size: 11px; color: var(--text2); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; padding-left: 8px; border-left: 2px solid var(--blue); display: none; max-width: 700px; }
-    .ai-topbar-response.active { display: block; }
-    .ai-topbar-clear { background: none; border: none; color: var(--grey); cursor: pointer; font-size: 13px; line-height: 1; padding: 2px; transition: color 0.12s; flex-shrink: 0; }
-    .ai-topbar-clear:hover { color: var(--red); }
-    .ai-topbar-thinking { color: var(--grey); font-style: italic; }
-  </style>
-</head>
-<body>
-<div class="layout">
-
-  <!-- ── SIDEBAR ── -->
-  <aside class="sidebar">
-    <div class="sidebar-logo">
-      <div class="logo-row">
-        <div class="logo-icon">O</div>
-        <div>
-          <div class="logo-name">Onyx AI</div>
-          <div class="logo-sub">Intelligence</div>
-        </div>
-      </div>
-    </div>
-
-    <nav class="sidebar-nav">
-      <div class="nav-section">Main</div>
-      <a class="nav-item active" href="/">
-        <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor"><path d="M2 2h5v5H2V2zm0 7h5v5H2V9zm7-7h5v5H9V2zm0 7h5v5H9V9z"/></svg>
-        Dashboard
-      </a>
-      <a class="nav-item" href="/search">
-        <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor"><path d="M11.742 10.344a6.5 6.5 0 1 0-1.397 1.398h-.001l3.85 3.85a1 1 0 0 0 1.415-1.414l-3.85-3.85a1.007 1.007 0 0 0-.115-.099zm-5.242 1.656a5.5 5.5 0 1 1 0-11 5.5 5.5 0 0 1 0 11z"/></svg>
-        Search & Predict
-      </a>
-
-      <div class="nav-section" style="margin-top:16px">Coming Soon</div>
-      <div class="nav-disabled">
-        <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor"><path d="M8 1a2 2 0 0 1 2 2v4H6V3a2 2 0 0 1 2-2zm3 6V3a3 3 0 0 0-6 0v4a2 2 0 0 0-2 2v5a2 2 0 0 0 2 2h6a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2z"/></svg>
-        Trading
-        <span class="nav-chip">Soon</span>
-      </div>
-    </nav>
-
-    <div class="sidebar-footer">
-      <div class="market-pill">
-        <div class="dot" id="mktDot"></div>
-        <div>
-          <div id="mktTxt">Checking...</div>
-          <div class="market-time" id="mktTime"></div>
-        </div>
-      </div>
-    </div>
-  </aside>
-
-  <!-- ── MAIN ── -->
-  <main class="main">
-
-    <!-- Left Column -->
-    <div style="flex:3;min-width:0;display:flex;flex-direction:column;gap:16px">
-
-    <!-- Watchlist Card -->
-    <div class="watchlist-card">
-
-      <div class="card-header">
-        <div>
-          <div class="card-title">Watchlist</div>
-          <div class="card-subtitle" id="cardSubtitle">0 tickers</div>
-        </div>
-        <div class="card-actions">
-          <div class="add-group">
-            <input class="input-ticker" type="text" id="tickerInput" placeholder="Add ticker…" maxlength="10"/>
-            <select class="select-type" id="assetType">
-              <option value="stock">Stock</option>
-              <option value="crypto">Crypto</option>
-            </select>
-            <button class="btn btn-secondary" onclick="addTicker()">+ Add</button>
-          </div>
-          <button class="btn btn-primary" id="scanAllBtn" onclick="scanAll()">Scan All</button>
-        </div>
-      </div>
-
-      <!-- Progress -->
-      <div class="progress-wrap" id="progressWrap">
-        <div class="progress-track"><div class="progress-fill" id="progressFill"></div></div>
-        <div class="progress-txt" id="progressTxt">Preparing...</div>
-      </div>
-
-      <!-- Table -->
-      <table class="tbl">
-        <thead>
-          <tr>
-            <th style="width:30%">Ticker</th>
-            <th style="width:16%">
-              <span style="display:flex;align-items:center;gap:5px">
-                Price
-                <button onclick="manualRefreshPrices()" title="Refresh prices now" style="background:none;border:none;cursor:pointer;color:var(--blue);font-size:13px;line-height:1;padding:0 2px;opacity:0.7" onmouseover="this.style.opacity=1" onmouseout="this.style.opacity=0.7">↻</button>
-                <span id="priceTimer" title="Next auto-refresh" style="font-size:9px;color:var(--blue);font-weight:500;font-family:'JetBrains Mono',monospace;background:var(--blue-soft);padding:1px 5px;border-radius:3px;border:1px solid rgba(21,101,255,0.2)">2:00</span>
-              </span>
-            </th>
-            <th style="width:15%">Score</th>
-            <th style="width:14%">Shares</th>
-            <th style="width:15%">Total Value</th>
-            <th style="width:10%"></th>
-          </tr>
-        </thead>
-        <tbody id="tableBody">
-          <tr><td class="empty-cell" colspan="6">
-            <div class="empty-icon">📊</div>
-            <div class="empty-text">Your watchlist is empty</div>
-            <div class="empty-sub">Type a ticker above and click + Add to get started</div>
-          </td></tr>
-        </tbody>
-      </table>
-
-    </div>
-
-      <!-- Portfolio Chart -->
-      <div class="chart-card" id="chartCard">
-        <div class="chart-header">
-          <div>
-            <div class="chart-title">Portfolio Price Tracker</div>
-            <div class="chart-subtitle" id="chartSubtitle">Add stocks to your portfolio using the Buy button</div>
-          </div>
-          <div style="display:flex;align-items:center;gap:16px">
-            <div class="chart-legend" id="chartLegend"></div>
-            <div class="chart-range-tabs">
-              <button class="chart-range-btn active" onclick="filterChart(this,'1D')">1D</button>
-              <button class="chart-range-btn" onclick="filterChart(this,'1W')">1W</button>
-              <button class="chart-range-btn" onclick="filterChart(this,'1M')">1M</button>
-              <button class="chart-range-btn" onclick="filterChart(this,'3M')">3M</button>
-            </div>
-          </div>
-        </div>
-        <div class="chart-body">
-          <div class="chart-canvas-wrap">
-            <canvas id="portfolioChart"></canvas>
-            <div class="chart-tooltip" id="chartTooltip"></div>
-          </div>
-          <div class="chart-empty" id="chartEmpty">Click <strong>Buy</strong> on any stock to start tracking it here</div>
-        </div>
-      </div>
-
-    </div><!-- end left column -->
-
-    <!-- Right Panel -->
-    <div class="right-panel" id="rightPanel">
-      <div class="panel-card">
-        <div class="panel-head" id="panelHead">
-          <div>
-            <div style="font-size:11px;font-weight:600;color:var(--grey);text-transform:uppercase;letter-spacing:0.1em">Stock Detail</div>
-          </div>
-        </div>
-        <div class="panel-body" id="panelBody">
-          <div class="panel-placeholder">
-            <div style="font-size:32px;margin-bottom:14px;opacity:0.15">📋</div>
-            <div style="font-size:13px;font-weight:500;color:var(--text2);margin-bottom:6px">No stock selected</div>
-            <div style="font-size:12px;line-height:1.6;color:var(--grey)">Click any row in the watchlist to view AI analysis, scan history, and add notes</div>
-          </div>
-        </div>
-      </div>
-    </div>
-
-  </main>
-</div>
-
-<script>
-// ── STATE ─────────────────────────────────────────────────────
-var _timerSecs = 120;
-var CHART_COLORS = ["#1565ff","#16a34a","#d97706","#dc2626","#7c3aed","#0891b2","#be185d","#65a30d"];
-
-let watchlist   = JSON.parse(localStorage.getItem('onyx_wl_v3')    || '[]');
-let portfolio   = JSON.parse(localStorage.getItem('onyx_portfolio') || '[]');
-let scanHistory = JSON.parse(localStorage.getItem('onyx_hist_v3')  || '[]');
-let comments    = JSON.parse(localStorage.getItem('onyx_comments') || '{}');
-let prices      = {};
-let selectedTicker = null;
-
-const API = 'https://prediction-api-production-ad66.up.railway.app';
-
-// ── 2-MIN PRICE TIMER ─────────────────────────────────────────
-setInterval(function() {
-  _timerSecs--;
-  var el = document.getElementById('priceTimer');
-  if (el) {
-    var m = Math.floor(_timerSecs / 60);
-    var s = _timerSecs % 60;
-    el.textContent = m + ':' + (s < 10 ? '0' : '') + s;
-    el.style.opacity = portfolio.length > 0 ? '1' : '0.4';
-    el.style.color   = _timerSecs <= 15 ? '#dc2626' : '#1565ff';
-  }
-  if (_timerSecs <= 0) {
-    _timerSecs = 120;
-    // Refresh ALL watchlist prices every 2 minutes
-    refreshPrices().then(function() {
-      // Then update portfolio chart points if any stocks owned
-      if (portfolio.length > 0) autoUpdatePortfolioPrices();
-    });
-  }
-}, 1000);
-
-// ── PERSIST ───────────────────────────────────────────────────
-function save() {
-  localStorage.setItem('onyx_wl_v3',    JSON.stringify(watchlist));
-  localStorage.setItem('onyx_hist_v3',  JSON.stringify(scanHistory));
-  localStorage.setItem('onyx_comments', JSON.stringify(comments));
-}
-function savePortfolio() {
-  localStorage.setItem('onyx_portfolio', JSON.stringify(portfolio));
-}
-
-// ── MARKET STATUS ─────────────────────────────────────────────
-(function() {
-  var now = new Date(), h = now.getUTCHours(), d = now.getUTCDay();
-  var open = d > 0 && d < 6 && h >= 13 && h < 21;
-  var dot = document.getElementById('mktDot');
-  var txt = document.getElementById('mktTxt');
-  if (dot) dot.className = 'dot ' + (open ? 'open' : 'closed');
-  if (txt) txt.textContent = open ? 'Market Open' : 'Market Closed';
-})();
-
-// ── KEYBOARD ──────────────────────────────────────────────────
-document.getElementById('tickerInput').addEventListener('keydown', function(e) {
-  if (e.key === 'Enter') addTicker();
-});
-
-// ── WATCHLIST ─────────────────────────────────────────────────
-function addTicker() {
-  var ticker = document.getElementById('tickerInput').value.trim().toUpperCase();
-  var type   = document.getElementById('assetType').value;
-  if (!ticker || watchlist.find(function(w) { return w.ticker === ticker; })) {
-    document.getElementById('tickerInput').value = '';
-    return;
-  }
-  watchlist.push({ ticker:ticker, type:type, signal:null, score:null, confidence:null,
-                   scannedAt:null, prevSignal:null, catalysts:[], risks:[], signals:[], assetName:'' });
-  save();
-  renderTable();
-  document.getElementById('tickerInput').value = '';
-  refreshSinglePrice(ticker);
-}
-
-function removeTicker(ticker) {
-  if (selectedTicker === ticker) closePanel();
-  watchlist = watchlist.filter(function(w) { return w.ticker !== ticker; });
-  save();
-  renderTable();
-}
-
-// ── PRICES ────────────────────────────────────────────────────
-async function refreshPrices() {
-  if (!watchlist.length) return;
-  try {
-    var tickers = watchlist.map(function(w) { return w.ticker; }).join(',');
-    var res = await fetch(API + '/prices?tickers=' + encodeURIComponent(tickers));
-    if (res.ok) {
-      var fresh = await res.json();
-      Object.keys(fresh).forEach(function(t) {
-        if (fresh[t] && fresh[t].price) {
-          if (!prices[t]) prices[t] = {};
-          prices[t].price = fresh[t].price;
-          prices[t].change_pct = fresh[t].change_pct;
-        }
-      });
-      renderTable();
-    }
-  } catch(e) {}
-}
-
-async function refreshSinglePrice(ticker) {
-  try {
-    var res = await fetch(API + '/prices?tickers=' + encodeURIComponent(ticker));
-    if (res.ok) {
-      var data = await res.json();
-      if (data[ticker] && data[ticker].price) {
-        if (!prices[ticker]) prices[ticker] = {};
-        prices[ticker].price = data[ticker].price;
-        prices[ticker].change_pct = data[ticker].change_pct;
-        renderTable();
-      }
-    }
-  } catch(e) {}
-}
-
-async function manualRefreshPrices() {
-  await refreshPrices();
-  if (portfolio.length > 0) await autoUpdatePortfolioPrices();
-}
-
-async function autoUpdatePortfolioPrices() {
-  if (!portfolio.length) return;
-  try {
-    var tickers = portfolio.map(function(p) { return p.ticker; }).join(',');
-    var res = await fetch(API + '/prices?tickers=' + encodeURIComponent(tickers));
-    if (!res.ok) return;
-    var fresh = await res.json();
-    var now = Date.now(), updated = false;
-    portfolio.forEach(function(p) {
-      var d = fresh[p.ticker];
-      var price = d && d.price ? parseFloat(d.price) : null;
-      if (price) {
-        if (!prices[p.ticker]) prices[p.ticker] = {};
-        prices[p.ticker].price = price;
-        p.points.push({ t:now, p:price });
-        if (p.points.length > 1440) p.points = p.points.slice(-1440);
-        updated = true;
-      }
-    });
-    if (updated) {
-      savePortfolio();
-      renderTable();
-      updateChartLegend();
-      drawChart();
-      var sub = document.getElementById('chartSubtitle');
-      if (sub) {
-        var t = new Date().toLocaleTimeString('en-US',{hour:'numeric',minute:'2-digit'});
-        sub.textContent = portfolio.length + ' stock' + (portfolio.length!==1?'s':'') + ' tracked · ' + t;
-      }
-    }
-  } catch(e) {}
-  _timerSecs = 120;
-}
-
-// ── SCAN ──────────────────────────────────────────────────────
-async function scanAll() {
-  if (!watchlist.length) return;
-  var btn = document.getElementById('scanAllBtn');
-  btn.disabled = true;
-  document.getElementById('progressWrap').classList.add('active');
-  await refreshPrices();
-  for (var i = 0; i < watchlist.length; i++) {
-    document.getElementById('progressFill').style.width = Math.round((i/watchlist.length)*100)+'%';
-    document.getElementById('progressTxt').textContent = 'Analysing ' + watchlist[i].ticker + ' ('+(i+1)+'/'+watchlist.length+')';
-    await scanTicker(watchlist[i].ticker, false);
-    if (i < watchlist.length-1) await sleep(3000);
-  }
-  document.getElementById('progressFill').style.width = '100%';
-  document.getElementById('progressTxt').textContent = 'Scan complete';
-  setTimeout(function(){document.getElementById('progressWrap').classList.remove('active');},1500);
-  btn.disabled = false;
-  renderTable();
-  if (selectedTicker) renderPanel(selectedTicker);
-}
-
-async function scanTicker(ticker, rerender) {
-  if (rerender === undefined) rerender = true;
-  var w = watchlist.find(function(w){return w.ticker===ticker;});
-  if (!w) return;
-  var prev = w.signal;
-  w.scanning = true;
-  if (rerender) renderTable();
-  try {
-    var res = await fetch(API+'/invest', {
-      method:'POST', headers:{'Content-Type':'application/json'},
-      body: JSON.stringify({ticker:ticker, asset_type:w.type, custom_source:comments[ticker+'_url']||undefined})
-    });
-    var data = await res.json();
-    if (res.ok) {
-      w.signal=data.signal; w.assetName=data.asset_name||''; w.summary=data.summary;
-      w.scannedAt=new Date().toISOString(); w.prevSignal=prev;
-      w.catalysts=data.catalysts||[]; w.risks=data.risks||[];
-      w.signals=data.supporting_signals||[]; w.confidence=data.confidence;
-      var sm={BUY:{High:8.5,Medium:7.0,Low:6.0},WATCH:{High:6.0,Medium:5.5,Low:4.5},HOLD:{High:5.0,Medium:4.5,Low:4.0},SELL:{High:2.0,Medium:3.0,Low:3.5}};
-      w.score=sm[data.signal]&&sm[data.signal][data.confidence]?sm[data.signal][data.confidence]:5.0;
-      scanHistory.unshift({ticker:ticker,signal:data.signal,score:w.score,summary:data.summary,prevSignal:prev,time:new Date().toISOString()});
-      if (scanHistory.length>100) scanHistory=scanHistory.slice(0,100);
-    }
-  } catch(e){}
-  w.scanning=false;
-  save();
-  if (rerender){renderTable(); if(selectedTicker===ticker) renderPanel(ticker);}
-}
-
-// ── PORTFOLIO: BUY / SELL ─────────────────────────────────────
-function getOwnedShares(ticker) {
-  var p = portfolio.find(function(p){return p.ticker===ticker;});
-  return p ? (p.shares||0) : 0;
-}
-
-function sharesCell(ticker) {
-  var sh = getOwnedShares(ticker);
-  if (sh > 0) {
-    var str = Number.isInteger(sh) ? String(sh) : sh.toFixed(4).replace(/\.?0+$/,'');
-    return '<span style="font-family:JetBrains Mono,monospace;font-size:12px;color:var(--blue);font-weight:600">'+str+' sh</span>';
-  }
-  return '<span style="font-size:11px;color:var(--grey)">—</span>';
-}
-
-function totalValueCell(ticker) {
-  var sh = getOwnedShares(ticker);
-  if (sh <= 0) return '<span style="font-size:11px;color:var(--grey)">—</span>';
-  var entry = portfolio.find(function(p){return p.ticker===ticker;});
-  var pd = prices[ticker];
-  var price = pd ? parseFloat(pd.price) : (entry ? entry.buyPrice : null);
-  if (!price) return '<span style="font-size:11px;color:var(--grey)">—</span>';
-  var total = sh * price;
-  var totalStr = total.toLocaleString('en-US',{style:'currency',currency:'USD',minimumFractionDigits:2,maximumFractionDigits:2});
-  if (!entry || !entry.buyPrice) return '<span style="font-family:JetBrains Mono,monospace;font-size:12px;font-weight:600">'+totalStr+'</span>';
-  var pnl = (price - entry.buyPrice) * sh;
-  var pnlColor = pnl>=0 ? 'var(--green)' : 'var(--red)';
-  var pnlStr = (pnl>=0?'+':'')+pnl.toLocaleString('en-US',{style:'currency',currency:'USD',minimumFractionDigits:2,maximumFractionDigits:2});
-  return '<div style="line-height:1.4"><span style="font-family:JetBrains Mono,monospace;font-size:12px;font-weight:600">'+totalStr+'</span><br><span style="font-size:10px;color:'+pnlColor+';font-weight:600">'+pnlStr+'</span></div>';
-}
-
-function buyFromPanel(ticker) {
-  var input = document.getElementById('buyInput-'+ticker);
-  var shares = input ? parseFloat(input.value) : NaN;
-  if (isNaN(shares)||shares<=0) {
-    if(input){input.focus();input.style.borderColor='var(--red)';setTimeout(function(){input.style.borderColor='';},1500);}
-    return;
-  }
-  var pd = prices[ticker];
-  var price = pd ? parseFloat(pd.price) : null;
-  if (!price){alert(ticker+': Price not loaded yet. Click ↻ to refresh prices.');return;}
-  var existing = portfolio.find(function(p){return p.ticker===ticker;});
-  if (existing) {
-    existing.shares = (existing.shares||0) + shares;
-    existing.buyPrice = existing.buyPrice || price;
-    existing.points.push({t:Date.now(),p:price});
-  } else {
-    portfolio.push({ticker:ticker, color:CHART_COLORS[portfolio.length%CHART_COLORS.length], shares:shares, buyPrice:price, points:[{t:Date.now(),p:price}]});
-  }
-  savePortfolio();
-  if(input) input.value='';
-  renderTable();
-  updateChartLegend();
-  drawChart();
-  renderPanel(ticker);
-}
-
-function sellFromPanel(ticker) {
-  var input = document.getElementById('sellInput-'+ticker);
-  var shares = input ? parseFloat(input.value) : NaN;
-  if (isNaN(shares)||shares<=0) {
-    if(input){input.focus();input.style.borderColor='var(--red)';setTimeout(function(){input.style.borderColor='';},1500);}
-    return;
-  }
-  var existing = portfolio.find(function(p){return p.ticker===ticker;});
-  if (!existing||existing.shares<=0){alert(ticker+' not in portfolio.');return;}
-  if (shares>=existing.shares) {
-    portfolio = portfolio.filter(function(p){return p.ticker!==ticker;});
-  } else {
-    existing.shares = Math.round((existing.shares-shares)*10000)/10000;
-  }
-  savePortfolio();
-  if(input) input.value='';
-  renderTable();
-  updateChartLegend();
-  drawChart();
-  renderPanel(ticker);
-}
-
-// ── PANEL ─────────────────────────────────────────────────────
-function selectStock(ticker) {
-  if (selectedTicker===ticker) {
-    selectedTicker=null;
-    document.querySelectorAll('tr.main-row').forEach(function(r){r.classList.remove('selected');});
-    document.getElementById('panelHead').innerHTML='<div><div style="font-size:11px;font-weight:600;color:var(--grey);text-transform:uppercase;letter-spacing:0.1em">Stock Detail</div></div>';
-    document.getElementById('panelBody').innerHTML='<div class="panel-placeholder"><div style="font-size:32px;margin-bottom:14px;opacity:0.15">📋</div><div style="font-size:13px;font-weight:500;color:var(--text2);margin-bottom:6px">No stock selected</div><div style="font-size:12px;line-height:1.6;color:var(--grey)">Click any row in the watchlist to view AI analysis, scan history, and add notes</div></div>';
-    return;
-  }
-  selectedTicker=ticker;
-  renderPanel(ticker);
-  document.querySelectorAll('tr.main-row').forEach(function(r){r.classList.remove('selected');});
-  var row=document.getElementById('row-'+ticker);
-  if(row) row.classList.add('selected');
-}
-
-function closePanel() {
-  selectedTicker=null;
-  document.querySelectorAll('tr.main-row').forEach(function(r){r.classList.remove('selected');});
-}
-
-function renderPanel(ticker) {
-  var w=watchlist.find(function(w){return w.ticker===ticker;});
-  if(!w) return;
-  var sigCls=w.signal?w.signal.toLowerCase():'pending';
-  var sc=!w.score?'nd':w.score>=7?'hi':w.score>=5?'mi':'lo';
-  var confPct=w.confidence==='High'?85:w.confidence==='Medium'?60:w.confidence==='Low'?35:0;
-  var comment=comments[ticker]||'';
-  var srcUrl=comments[ticker+'_url']||'';
-  var hist=scanHistory.filter(function(h){return h.ticker===ticker;});
-
-  // Build header with DOM
-  var head=document.getElementById('panelHead');
-  head.innerHTML='';
-  var row=document.createElement('div');
-  row.style.cssText='display:flex;align-items:center;justify-content:space-between;width:100%;gap:8px';
-
-  var left=document.createElement('div');
-  left.style.cssText='display:flex;align-items:center;gap:12px;min-width:0;flex:1';
-  var nameDiv=document.createElement('div');
-  var tickerEl=document.createElement('div'); tickerEl.className='panel-ticker'; tickerEl.textContent=ticker;
-  var nameEl=document.createElement('div'); nameEl.className='panel-name'; nameEl.textContent=w.assetName||w.type;
-  nameDiv.appendChild(tickerEl); nameDiv.appendChild(nameEl);
-  var scanBtn=document.createElement('button'); scanBtn.className='panel-scan-btn'; scanBtn.textContent='Scan'; scanBtn.disabled=!!w.scanning;
-  scanBtn.onclick=function(){scanTicker(ticker);};
-  left.appendChild(nameDiv); left.appendChild(scanBtn);
-
-  var right=document.createElement('div');
-  right.style.cssText='display:flex;align-items:flex-start;gap:6px;flex-shrink:0';
-  function mkQty(id,lbl){
-    var wrap=document.createElement('div');
-    var inp=document.createElement('input');
-    inp.className='shares-input'; inp.type='number'; inp.min='0.01'; inp.step='any'; inp.placeholder='qty'; inp.id=id;
-    var lb=document.createElement('div'); lb.className='shares-label'; lb.textContent=lbl;
-    wrap.appendChild(inp); wrap.appendChild(lb); return wrap;
-  }
-  var buyQty=mkQty('buyInput-'+ticker,'buy qty');
-  var buyBtn=document.createElement('button'); buyBtn.className='panel-trade-btn'; buyBtn.textContent='Buy';
-  buyBtn.onclick=function(){buyFromPanel(ticker);};
-  var sellQty=mkQty('sellInput-'+ticker,'sell qty');
-  var sellBtn=document.createElement('button'); sellBtn.className='panel-trade-btn'; sellBtn.textContent='Sell';
-  sellBtn.onclick=function(){sellFromPanel(ticker);};
-  right.appendChild(buyQty); right.appendChild(buyBtn); right.appendChild(sellQty); right.appendChild(sellBtn);
-  row.appendChild(left); row.appendChild(right); head.appendChild(row);
-
-  // Build body HTML
-  var histHTML=hist.length?hist.slice(0,30).map(function(h){
-    var col=h.signal==='BUY'?'var(--green)':h.signal==='SELL'?'var(--red)':h.signal==='WATCH'?'var(--yellow)':'var(--grey2)';
-    return '<div class="phist-entry"><div class="phist-top"><span class="phist-sig" style="color:'+col+'">'+h.signal+'</span><span class="phist-score">'+(h.score?h.score.toFixed(1):'—')+'/10</span><span class="phist-time">'+timeAgo(h.time)+'</span></div><div class="phist-sum">'+(h.summary||'')+'</div></div>';
-  }).join(''):'<div class="no-phist">No scan history yet</div>';
-
-  var scoreHTML=w.signal?
-    '<div class="panel-section"><div style="display:flex;align-items:flex-start;gap:10px;margin-bottom:10px"><div class="panel-score-big '+sc+'">'+(w.score?w.score.toFixed(1):'—')+'</div><span class="sig '+sigCls+'" style="font-size:12px;padding:5px 12px;margin-top:6px">'+w.signal+'</span></div><div style="font-size:10px;color:var(--grey);margin-bottom:6px">/ 10 AI Score</div><div class="conf-track" style="width:120px"><div class="conf-fill" style="width:'+confPct+'%"></div></div><div class="conf-label">Confidence: '+(w.confidence||'—')+'</div>'+(w.summary?'<div class="panel-summary" style="margin-top:12px">'+w.summary+'</div>':'')+'</div>'+
-    ((w.catalysts&&w.catalysts.length)||(w.risks&&w.risks.length)?'<div class="panel-two-col">'+
-      (w.catalysts&&w.catalysts.length?'<div class="panel-list-card"><div class="panel-list-title green">↑ Catalysts</div><ul class="panel-ul">'+w.catalysts.map(function(c){return '<li class="panel-li up">'+c+'</li>';}).join('')+'</ul></div>':'')+
-      (w.risks&&w.risks.length?'<div class="panel-list-card"><div class="panel-list-title red">↓ Risks</div><ul class="panel-ul">'+w.risks.map(function(r){return '<li class="panel-li dn">'+r+'</li>';}).join('')+'</ul></div>':'')+
-    '</div>':'')
-    :'<div style="font-size:12px;color:var(--grey2);margin-bottom:16px;padding:12px;background:var(--surface2);border-radius:6px">No scan data yet — click <strong>Scan</strong> to analyse.</div>';
-
-  document.getElementById('panelBody').innerHTML=scoreHTML+
-    '<hr class="panel-divider"/>'+
-    '<div class="panel-hist-notes">'+
-      '<div><div class="panel-section-label">Scan History</div><div class="panel-hist-scroll">'+histHTML+'</div></div>'+
-      '<div class="notes-col">'+
-        '<div><div class="panel-section-label">Custom Source</div>'+
-          '<input class="notes-url-input" type="url" id="srcUrl-'+ticker+'" value="'+srcUrl+'" placeholder="Paste URL for AI to consider..."/>'+
-          '<div class="notes-url-hint">AI factors this into next scan</div></div>'+
-        '<div style="display:flex;flex-direction:column;flex:1;gap:6px">'+
-          '<div class="panel-section-label">Notes</div>'+
-          '<textarea class="notes-textarea" id="cmt-'+ticker+'" placeholder="Your notes, thesis, trade plan...">'+comment+'</textarea>'+
-          '<button class="notes-save-btn" id="saveNotesBtn-'+ticker+'">Save</button>'+
-        '</div>'+
-      '</div>'+
-    '</div>';
-
-  var saveBtn=document.getElementById('saveNotesBtn-'+ticker);
-  if(saveBtn) saveBtn.onclick=function(){saveNotes(ticker);};
-}
-
-function saveNotes(ticker) {
-  var note=document.getElementById('cmt-'+ticker)?document.getElementById('cmt-'+ticker).value:'';
-  var url=document.getElementById('srcUrl-'+ticker)?document.getElementById('srcUrl-'+ticker).value:'';
-  comments[ticker]=note; comments[ticker+'_url']=url; save();
-  var btn=event.target; var orig=btn.textContent;
-  btn.textContent='Saved ✓'; btn.style.background='var(--green)';
-  setTimeout(function(){btn.textContent=orig;btn.style.background='';},1500);
-}
-
-// ── TABLE ─────────────────────────────────────────────────────
-function renderTable() {
-  var body=document.getElementById('tableBody');
-  document.getElementById('cardSubtitle').textContent=watchlist.length+' ticker'+(watchlist.length!==1?'s':'');
-  if (!watchlist.length) {
-    body.innerHTML='<tr><td class="empty-cell" colspan="6"><div class="empty-icon">📊</div><div class="empty-text">Your watchlist is empty</div><div class="empty-sub">Type a ticker above and click + Add to get started</div></td></tr>';
-    return;
-  }
-  var order={SELL:0,BUY:1,WATCH:2,HOLD:3};
-  var sorted=watchlist.slice().sort(function(a,b){
-    if(a.signal&&b.signal) return (order[a.signal]||4)-(order[b.signal]||4);
-    if(a.signal) return -1; if(b.signal) return 1; return 0;
-  });
-  var rows='';
-  sorted.forEach(function(w){
-    var pd=prices[w.ticker];
-    var price=pd&&pd.price?'$'+parseFloat(pd.price).toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2}):'—';
-    var sigCls=w.signal?w.signal.toLowerCase():'pending';
-    var sc=!w.score?'nd':w.score>=7?'hi':w.score>=5?'mi':'lo';
-    var sbColor=!w.score?'#e5e4e2':w.score>=7?'#16a34a':w.score>=5?'#d97706':'#dc2626';
-    var sbWidth=w.score?(w.score*10)+'%':'0%';
-    var scoreTxt=w.scanning?'...':(w.score?w.score.toFixed(1):'—');
-    var isSel=selectedTicker===w.ticker;
-    var alertHtml=(w.signal&&w.prevSignal&&w.prevSignal!==w.signal)?'<span class="alert-pill">⚡ '+w.prevSignal+'→'+w.signal+'</span>':'';
-    rows+=
-      '<tr class="main-row'+(isSel?' selected':'')+'" id="row-'+w.ticker+'" data-ticker="'+w.ticker+'">'+
-      '<td><div class="ticker-name">'+w.ticker+alertHtml+'</div><div class="ticker-sub">'+(w.assetName||w.type).substring(0,20)+(w.scannedAt?' · '+timeAgo(w.scannedAt):'')+' </div></td>'+
-      '<td class="price-cell'+(w.scanning?' scanning':'')+'">'+( w.scanning?'...':price)+'</td>'+
-      '<td><div class="score-wrap"><div class="score-n '+sc+'">'+scoreTxt+'</div><div><div class="score-bar"><div class="score-fill" style="width:'+sbWidth+';background:'+sbColor+'"></div></div>'+(w.signal?'<span class="sig '+sigCls+'" style="margin-top:4px;display:inline-block">'+w.signal+'</span>':'')+'</div></div></td>'+
-      '<td style="text-align:center">'+sharesCell(w.ticker)+'</td>'+
-      '<td style="text-align:center">'+totalValueCell(w.ticker)+'</td>'+
-      '<td style="text-align:right;padding-right:12px"><button class="del-btn" data-ticker="'+w.ticker+'" title="Remove">&times;</button></td>'+
-      '</tr>';
-  });
-  body.innerHTML=rows;
-  body.querySelectorAll('tr.main-row').forEach(function(row){
-    var t=row.dataset.ticker;
-    row.addEventListener('click',function(){selectStock(t);});
-  });
-  body.querySelectorAll('.del-btn').forEach(function(btn){
-    var t=btn.dataset.ticker;
-    btn.addEventListener('click',function(e){e.stopPropagation();removeTicker(t);});
-  });
-}
-
-// ── CHART ─────────────────────────────────────────────────────
-function updateChartLegend() {
-  var legend=document.getElementById('chartLegend');
-  var empty=document.getElementById('chartEmpty');
-  var sub=document.getElementById('chartSubtitle');
-  if(!legend) return;
-  if(!portfolio.length){
-    legend.innerHTML='';
-    if(empty) empty.style.display='block';
-    return;
-  }
-  if(empty) empty.style.display='none';
-  legend.innerHTML=portfolio.map(function(p){
-    var pts=p.points, first=pts[0]&&pts[0].p, last=pts[pts.length-1]&&pts[pts.length-1].p;
-    var pnl=first&&last?((last-first)*(p.shares||1)):null;
-    var pnlColor=pnl===null?'':pnl>=0?'color:var(--green)':'color:var(--red)';
-    var pnlStr=pnl!==null?' <span style="'+pnlColor+';font-weight:600">'+(pnl>=0?'+':'')+'$'+Math.abs(pnl).toFixed(2)+'</span>':'';
-    return '<div class="chart-legend-item"><div class="chart-legend-dot" style="background:'+p.color+'"></div><span>'+p.ticker+pnlStr+'</span></div>';
-  }).join('');
-}
-
-function drawChart() {
-  var canvas=document.getElementById('portfolioChart');
-  if(!canvas) return;
-  var wrap=canvas.parentElement;
-  var W=wrap.clientWidth||600, H=200;
-  canvas.width=W*window.devicePixelRatio; canvas.height=H*window.devicePixelRatio;
-  canvas.style.width=W+'px'; canvas.style.height=H+'px';
-  var ctx=canvas.getContext('2d');
-  ctx.scale(window.devicePixelRatio,window.devicePixelRatio);
-  ctx.clearRect(0,0,W,H);
-  var pad={top:16,right:20,bottom:32,left:52};
-  var plotW=W-pad.left-pad.right, plotH=H-pad.top-pad.bottom;
-  ctx.strokeStyle='#e5e4e2'; ctx.lineWidth=1;
-  for(var i=0;i<=4;i++){var y=pad.top+(i/4)*plotH;ctx.beginPath();ctx.moveTo(pad.left,y);ctx.lineTo(W-pad.right,y);ctx.stroke();}
-  var vis=portfolio.filter(function(p){return p.points&&p.points.length>=2;});
-  if(!vis.length) return;
-  var allPnl=[];
-  vis.forEach(function(p){var base=p.points[0].p,sh=p.shares||1;p.points.forEach(function(pt){allPnl.push((pt.p-base)*sh);});});
-  var minV=Math.min.apply(null,allPnl.concat([-0.5])), maxV=Math.max.apply(null,allPnl.concat([0.5])), range=maxV-minV||1;
-  var allT=[];vis.forEach(function(p){p.points.forEach(function(pt){allT.push(pt.t);});});
-  var tMin=Math.min.apply(null,allT), tMax=Math.max.apply(null,allT), tRange=tMax-tMin||1;
-  function toX(t){return pad.left+((t-tMin)/tRange)*plotW;}
-  function toY(v){return pad.top+((maxV-v)/range)*plotH;}
-  ctx.fillStyle='#9ca3af'; ctx.font='10px Inter,sans-serif'; ctx.textAlign='right';
-  for(var i=0;i<=4;i++){
-    var v=maxV-(i/4)*range;
-    var lbl=Math.abs(v)>=1000?(v>=0?'+':'')+'$'+(v/1000).toFixed(1)+'k':(v>=0?'+':'')+'$'+v.toFixed(0);
-    ctx.fillText(lbl,pad.left-4,pad.top+(i/4)*plotH+3);
-  }
-  var zeroY=toY(0);
-  if(zeroY>=pad.top&&zeroY<=pad.top+plotH){
-    ctx.setLineDash([4,4]);ctx.strokeStyle='#d1d0cd';ctx.lineWidth=1;
-    ctx.beginPath();ctx.moveTo(pad.left,zeroY);ctx.lineTo(W-pad.right,zeroY);ctx.stroke();ctx.setLineDash([]);
-  }
-  vis.forEach(function(p){
-    var base=p.points[0].p,sh=p.shares||1;
-    var pts=p.points.map(function(pt){return{x:toX(pt.t),y:toY((pt.p-base)*sh)};});
-    var grad=ctx.createLinearGradient(0,pad.top,0,pad.top+plotH);
-    grad.addColorStop(0,p.color+'28'); grad.addColorStop(1,p.color+'00');
-    ctx.beginPath();ctx.moveTo(pts[0].x,pts[0].y);pts.forEach(function(pt){ctx.lineTo(pt.x,pt.y);});
-    ctx.lineTo(pts[pts.length-1].x,toY(0));ctx.lineTo(pts[0].x,toY(0));ctx.closePath();ctx.fillStyle=grad;ctx.fill();
-    ctx.beginPath();ctx.moveTo(pts[0].x,pts[0].y);pts.forEach(function(pt){ctx.lineTo(pt.x,pt.y);});
-    ctx.strokeStyle=p.color;ctx.lineWidth=2;ctx.lineJoin='round';ctx.stroke();
-    var last=pts[pts.length-1];
-    ctx.beginPath();ctx.arc(last.x,last.y,4,0,Math.PI*2);ctx.fillStyle=p.color;ctx.fill();
-    ctx.strokeStyle='#fff';ctx.lineWidth=1.5;ctx.stroke();
-  });
-  ctx.fillStyle='#9ca3af';ctx.font='10px Inter,sans-serif';ctx.textAlign='center';
-  for(var i=0;i<=4;i++){
-    var t=tMin+(i/4)*(tMax-tMin),x=pad.left+(i/4)*plotW;
-    var d=new Date(t);
-    ctx.fillText(d.toLocaleTimeString('en-US',{hour:'numeric',minute:'2-digit',hour12:true}),x,H-8);
-  }
-}
-
-function filterChart(btn, range) {
-  document.querySelectorAll('.chart-range-btn').forEach(function(b){b.classList.remove('active');});
-  btn.classList.add('active');
-  var ms={'1D':86400000,'1W':604800000,'1M':2592000000,'3M':7776000000};
-  var cutoff=Date.now()-ms[range];
-  var orig=portfolio;
-  portfolio=portfolio.map(function(p){return Object.assign({},p,{points:p.points.filter(function(pt){return pt.t>=cutoff;})});});
-  updateChartLegend(); drawChart();
-  portfolio=orig;
-}
-
-// ── DEV TESTER ────────────────────────────────────────────────
-function devPopulateSelect() {
-  var sel=document.getElementById('devTicker');
-  if(!sel) return;
-  sel.innerHTML='<option value="">Select stock...</option>';
-  portfolio.forEach(function(p){var o=document.createElement('option');o.value=p.ticker;o.textContent=p.ticker+' ('+p.shares+' sh)';sel.appendChild(o);});
-  watchlist.forEach(function(w){if(!portfolio.find(function(p){return p.ticker===w.ticker;})){var o=document.createElement('option');o.value=w.ticker;o.textContent=w.ticker+' (watchlist)';sel.appendChild(o);}});
-}
-
-function devSetPrice() {
-  var ticker=document.getElementById('devTicker').value;
-  var price=parseFloat(document.getElementById('devPrice').value);
-  if(!ticker){alert('Select a stock');return;}
-  if(isNaN(price)||price<=0){alert('Enter valid price');return;}
-  if(!prices[ticker]) prices[ticker]={};
-  prices[ticker].price=price;
-  var p=portfolio.find(function(p){return p.ticker===ticker;});
-  if(p){p.points.push({t:Date.now(),p:price});savePortfolio();}
-  renderTable(); updateChartLegend(); drawChart(); _timerSecs=120;
-  var btn=document.querySelector('.dev-btn');
-  btn.textContent='✓ $'+price+' for '+ticker;
-  setTimeout(function(){btn.textContent='Inject Price & Update Chart';},2000);
-  devPopulateSelect();
-}
-
-// ── UTILS ─────────────────────────────────────────────────────
-function timeAgo(iso) {
-  var s=Math.floor((Date.now()-new Date(iso))/1000);
-  if(s<60) return s+'s ago'; if(s<3600) return Math.floor(s/60)+'m ago';
-  if(s<86400) return Math.floor(s/3600)+'h ago'; return Math.floor(s/86400)+'d ago';
-}
-function sleep(ms){return new Promise(function(r){setTimeout(r,ms);});}
-
-// ── INIT ──────────────────────────────────────────────────────
-renderTable();
-updateChartLegend();
-drawChart();
-devPopulateSelect();
-if(watchlist.length>0) refreshPrices();
-if(portfolio.length>0) setTimeout(autoUpdatePortfolioPrices,500);
-new ResizeObserver(function(){drawChart();}).observe(document.querySelector('.chart-card')||document.body);
-
-
-
-// ── AI AGENT TOP BAR ──────────────────────────────────────────
-document.getElementById('aiBarInput').addEventListener('keydown', function(e) {
-  if (e.key === 'Enter') askAI();
-  if (e.key === 'Escape') clearAI();
-});
-
-async function askAI() {
-  var q = document.getElementById('aiBarInput').value.trim();
-  if (!q) return;
-  var send = document.getElementById('aiBarSend');
-  var resp = document.getElementById('aiBarResponse');
-  var clr  = document.getElementById('aiBarClear');
-  send.disabled = true;
-  resp.innerHTML = '<span class="ai-topbar-thinking">Searching...</span>';
-  resp.classList.add('active');
-  clr.style.display = 'flex';
-  try {
-    var res = await fetch('https://prediction-api-production-ad66.up.railway.app/ask', {
-      method: 'POST', headers: {'Content-Type': 'application/json'},
-      body: JSON.stringify({ question: q })
-    });
-    var data = await res.json();
-    resp.textContent = data.answer || 'No answer found.';
-  } catch(e) {
-    resp.textContent = 'Error: ' + e.message;
-  } finally {
-    send.disabled = false;
-  }
-}
-
-function clearAI() {
-  document.getElementById('aiBarInput').value = '';
-  document.getElementById('aiBarResponse').classList.remove('active');
-  document.getElementById('aiBarResponse').textContent = '';
-  document.getElementById('aiBarClear').style.display = 'none';
-}
-
-</script>
-
-  <!-- Dev Price Tester (remove before production) -->
-  <div class="dev-panel" id="devPanel">
-    <div class="dev-panel-title">
-      🧪 Price Tester
-      <button class="dev-panel-close" onclick="document.getElementById('devPanel').style.display='none'">×</button>
-    </div>
-    <div class="dev-row">
-      <select class="dev-select" id="devTicker">
-        <option value="">Select stock...</option>
-      </select>
-    </div>
-    <div class="dev-row">
-      <input class="dev-input" type="number" id="devPrice" placeholder="Price" step="0.01"/>
-    </div>
-    <button class="dev-btn" onclick="devSetPrice()">Inject Price & Update Chart</button>
-    <div class="dev-hint">Simulates a price update as if the 2-min timer fired. Adds a chart data point.</div>
-  </div>
-</body>
-</html>
+    try:
+        resp = client.messages.create(
+            model="claude-sonnet-4-5", max_tokens=800,
+            tools=[{"type": "web_search_20250305", "name": "web_search"}],
+            messages=[{"role": "user", "content": prompt}]
+        )
+        text = "".join(b.text for b in resp.content if hasattr(b, "text") and b.text)
+        s, e = text.find("{"), text.rfind("}") + 1
+        if s >= 0 and e > s:
+            result = json.loads(text[s:e])
+            for k, v in defaults.items():
+                if result.get(k) is None:
+                    result[k] = v
+            return result
+    except Exception as ex:
+        return {"error": str(ex)}
+
+    return {"error": "Could not parse response"}
+
+# ── AI: Ask ────────────────────────────────────────────────────
+@app.post("/ask")
+async def ask(request: dict):
+    question = (request.get("question") or "").strip()
+    if not question:
+        return {"answer": "Please ask a question."}
+
+    client = anthropic.Anthropic(api_key=ANTHROPIC_KEY)
+    try:
+        resp = client.messages.create(
+            model="claude-sonnet-4-5", max_tokens=300,
+            tools=[{"type": "web_search_20250305", "name": "web_search"}],
+            messages=[{"role": "user", "content":
+                f"Answer in 1-3 sentences, be direct and concise. Question: {question}"}]
+        )
+        text = "".join(b.text for b in resp.content if hasattr(b, "text") and b.text)
+        return {"answer": text.strip() or "No answer found."}
+    except Exception as ex:
+        return {"answer": f"Error: {str(ex)}"}
+
+# ── History ────────────────────────────────────────────────────
+@app.get("/predictions")
+def get_predictions(limit: int = 10):
+    try:
+        return db.get_predictions(limit=limit)
+    except Exception:
+        return []
+
+@app.get("/health")
+def health():
+    return {"status": "ok"}
