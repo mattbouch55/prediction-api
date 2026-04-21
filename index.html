@@ -1114,40 +1114,6 @@ function totalValueCell(ticker) {
   return '<span style="font-family:JetBrains Mono,monospace;font-size:11px;font-weight:600">' + total + pnlStr + '</span>';
 }
 
-function buyStock(ticker) {
-  // Remove if already owned (toggle off)
-  if (portfolio.find(p => p.ticker === ticker)) {
-    const btn = event?.target;
-    if (btn) { btn.textContent = 'Already tracking'; setTimeout(() => btn.textContent = 'Buy', 1500); }
-    return;
-  }
-
-  // Add to portfolio
-  const color = CHART_COLORS[portfolio.length % CHART_COLORS.length];
-  portfolio.push({ ticker, color, boughtAt: Date.now() });
-
-  // Record first price point NOW
-  recordPricePoint(ticker);
-
-  savePortfolio();
-  updateChartLegend();
-  drawChart();
-
-  // Visual feedback on button
-  const btn = event?.target;
-  if (btn) {
-    btn.textContent = 'Tracking ✓';
-    btn.style.background = '#16a34a';
-    btn.style.color = 'white';
-    btn.style.border = 'none';
-    setTimeout(() => {
-      btn.textContent = 'Buy';
-      btn.style.background = '';
-      btn.style.color = '';
-      btn.style.border = '';
-    }, 2000);
-  }
-}
 
 function sellStock(ticker) {
   portfolio = portfolio.filter(p => p.ticker !== ticker);
