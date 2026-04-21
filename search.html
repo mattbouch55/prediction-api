@@ -106,10 +106,13 @@
     .pred-card { background: var(--surface); border: 1px solid var(--border); border-radius: 8px; margin-bottom: 7px; overflow: hidden; box-shadow: var(--shadow); }
     .pred-top { padding: 10px 14px; display: flex; align-items: flex-start; gap: 10px; cursor: pointer; transition: background 0.1s; }
     .pred-top:hover { background: var(--surface2); }
-    .conf-badge { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.07em; padding: 3px 8px; border-radius: 4px; flex-shrink: 0; }
+    .conf-badge { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.07em; padding: 3px 8px; border-radius: 4px; flex-shrink: 0; cursor: help; }
     .conf-badge.high { background: var(--green-dim); color: var(--green); }
     .conf-badge.medium { background: var(--yellow-dim); color: var(--yellow); }
     .conf-badge.low { background: var(--surface2); color: var(--grey2); }
+    .pred-legend { font-size: 10px; color: var(--grey); margin-bottom: 8px; display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+    .pred-legend-item { display: flex; align-items: center; gap: 4px; }
+    .pred-legend-dot { width: 7px; height: 7px; border-radius: 50%; }
     .pred-stmt { font-size: 12px; font-weight: 500; color: var(--text); line-height: 1.4; flex: 1; }
     .pred-arrow { font-size: 11px; color: var(--grey); transition: transform 0.2s; flex-shrink: 0; margin-top: 2px; }
     .pred-card.open .pred-arrow { transform: rotate(90deg); }
@@ -567,7 +570,7 @@ function renderResults(data, topic, domain, horizon) {
       }).join('');
       return '<div class="pred-card" id="pred-'+i+'">' +
         '<div class="pred-top" onclick="togglePred('+i+')">' +
-          '<span class="conf-badge '+cc+'">'+p.confidence+'</span>' +
+          '<span class="conf-badge '+cc+'" title="AI Confidence Level — High: strong evidence · Medium: mixed signals · Low: limited data">'+p.confidence+'</span>' +
           '<div class="pred-stmt">'+p.statement+'</div>' +
           '<div class="pred-arrow">▶</div>' +
         '</div>' +
