@@ -333,7 +333,7 @@
         <thead>
           <tr>
             <th style="width:30%">Ticker</th>
-            <th style="width:16%">Price <span id="priceTimer" style="font-size:9px;color:var(--blue);font-weight:400;margin-left:4px;font-family:'JetBrains Mono',monospace"></span></th>
+            <th style="width:16%">Price <span id="priceTimer" title="Next price update" style="font-size:9px;color:var(--blue);font-weight:400;margin-left:4px;font-family:'JetBrains Mono',monospace"></span></th>
             <th style="width:15%">Score</th>
             <th style="width:14%">Shares</th>
             <th style="width:15%">Total Value</th>
@@ -1407,10 +1407,17 @@ function startPriceTimer() {
 function updateTimerDisplay() {
   const el = document.getElementById('priceTimer');
   if (!el) return;
-  if (portfolio.length === 0) { el.textContent = ''; return; }
+  if (portfolio.length === 0) {
+    el.textContent = '2:00';
+    el.style.opacity = '0.35';
+    return;
+  }
+  el.style.opacity = '1';
   const m = Math.floor(priceTimerSeconds / 60);
   const s = priceTimerSeconds % 60;
   el.textContent = m + ':' + String(s).padStart(2, '0');
+  // Flash blue when under 10 seconds
+  el.style.color = priceTimerSeconds <= 10 ? 'var(--red)' : 'var(--blue)';
 }
 
 // Start timer and run immediately if stocks owned
