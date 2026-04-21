@@ -63,8 +63,10 @@ def get_prices(tickers: str):
                     data = r.json()
                     c  = data.get("c", 0)
                     pc = data.get("pc", 0)
-                    if c and float(c) > 0:
-                        price = round(float(c), 2)
+                    # Use current price if available, else previous close (market closed)
+                    best = c if (c and float(c) > 0) else pc
+                    if best and float(best) > 0:
+                        price = round(float(best), 2)
                         prev  = round(float(pc), 2) if pc else price
             except Exception:
                 pass
