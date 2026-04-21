@@ -419,9 +419,8 @@ document.getElementById('mktTime').textContent = now.toLocaleDateString('en-US',
 document.getElementById('tickerInput').addEventListener('keydown', e => { if (e.key === 'Enter') addTicker(); });
 
 renderTable();
-if (watchlist.length > 0) {
-  refreshPrices(); // fires immediately on page load
-}
+// Load prices for watchlist stocks immediately
+if (watchlist.length > 0) refreshPrices();
 
 function save() {
   localStorage.setItem('onyx_wl_v3', JSON.stringify(watchlist));
@@ -1323,28 +1322,45 @@ function drawChart() {
 // Resize observer to redraw on layout change
 new ResizeObserver(() => drawChart()).observe(document.getElementById('portfolioChart').parentElement);
 
-// Auto price refresh every 5 minutes
-async function autoRefreshPrices() {
-  await refreshPrices();
+// Update portfolio stock prices every 60 seconds only
+async function autoUpdatePortfolioPrices() {
+  if (portfolio.length === 0) return;
+  const tickers = portfolio.map(p => p.ticker).join(',');
+  try {
+    const res = await fetch(`${API}/prices?tickers=${encodeURIComponent(tickers)}`);
+    if (!res.ok) return;
+    const fresh = await res.json();
+    Object.assign(prices, fresh);
+    renderTable();
 
-  // Record new price points for all tracked portfolio stocks
-  let updated = false;
-  portfolio.forEach(p => {
-    const before = (priceHistory[p.ticker] || []).length;
-    recordPricePoint(p.ticker);
-    if ((priceHistory[p.ticker] || []).length > before) updated = true;
-  });
+    const now = Date.now();
+    let updated = false;
+    portfolio.forEach(p => {
+      const price = fresh[p.ticker]?.price;
+      if (price) {
+        p.points.push({ t: now, p: price });
+        if (p.points.length > 1440) p.points = p.points.slice(-1440);
+        updated = true;
+      }
+    });
 
-  if (updated) {
-    savePortfolio();
-    drawChart();
-  }
-
-  updateChartLegend();
+    if (updated) {
+      savePortfolio();
+      updateChartLegend();
+      drawChart();
+      const subtitle = document.getElementById('chartSubtitle');
+      if (subtitle && portfolio.length > 0) {
+        const t = new Date().toLocaleTimeString('en-US', { hour:'numeric', minute:'2-digit' });
+        subtitle.textContent = portfolio.length + ' stock' + (portfolio.length !== 1 ? 's' : '') + ' tracked · ' + t;
+      }
+    }
+  } catch(e) {}
 }
 
-// Run immediately then every 5 minutes
-setInterval(autoRefreshPrices, 5 * 60 * 1000);
+// Run every 60 seconds - portfolio stocks only
+setInterval(autoUpdatePortfolioPrices, 60 * 1000);
+// Also run immediately on load if stocks are owned
+if (portfolio.length > 0) setTimeout(autoUpdatePortfolioPrices, 1000);
 
 </script>
 </body>
