@@ -203,8 +203,12 @@ Return ONLY a valid JSON object (no markdown, no extra text):
   "direction": "Bullish",
   "impact_score": 5,
   "summary": "2-3 sentence explanation",
-  "bull_scenario": "What happens if prediction is correct",
-  "bear_scenario": "What happens if prediction is wrong",
+  "bull_scenario": "What happens to the stock if prediction is correct",
+  "bull_price_direction": "Increase" or "Decrease",
+  "bull_price_magnitude": "e.g. +5-10% upside",
+  "bear_scenario": "What happens to the stock if prediction is wrong",
+  "bear_price_direction": "Increase" or "Decrease",
+  "bear_price_magnitude": "e.g. -3-7% downside",
   "key_factors": ["factor 1", "factor 2", "factor 3"],
   "time_horizon": "2-4 weeks",
   "confidence": "Medium"
@@ -232,7 +236,8 @@ Return ONLY a valid JSON object (no markdown, no extra text):
                 "ticker": ticker, "company_name": ticker,
                 "impact": "Medium", "direction": "Neutral",
                 "impact_score": 0, "summary": "Analysis unavailable.",
-                "bull_scenario": "N/A", "bear_scenario": "N/A",
+                "bull_scenario": "N/A", "bull_price_direction": "Increase", "bull_price_magnitude": "Unknown",
+                "bear_scenario": "N/A", "bear_price_direction": "Decrease", "bear_price_magnitude": "Unknown",
                 "key_factors": [], "time_horizon": "Unknown",
                 "confidence": "Low"
             }
