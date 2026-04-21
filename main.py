@@ -60,6 +60,33 @@ def serve_search():
 
 # ── API routes ───────────────────────────────────────────────────────────────
 
+@app.get("/chart")
+def get_chart_data(ticker: str, from_ts: int = None, to_ts: int = None, resolution: str = "5"):
+    """Get historical price data for charting using Finnhub."""
+    import requests as req, time
+    api_key = os.environ.get("FINNHUB_API_KEY", "")
+    now = int(time.time())
+    from_ts = from_ts or (now - 86400)
+    to_ts = to_ts or now
+    try:
+        url = f"https://finnhub.io/api/v1/stock/candle?symbol={ticker}&resolution={resolution}&from={from_ts}&to={to_ts}&token={api_key}"
+        r = req.get(url, timeout=10)
+        data = r.json()
+        if data.get("s") == "ok":
+            prices = [{"t": t, "p": c} for t, c in zip(data["t"], data["c"])]
+            return {"ticker": ticker, "prices": prices}
+        # Try crypto
+        url2 = f"https://finnhub.io/api/v1/crypto/candle?symbol=BINANCE:{ticker.replace('-USD','USDT')}&resolution={resolution}&from={from_ts}&to={to_ts}&token={api_key}"
+        r2 = req.get(url2, timeout=10)
+        data2 = r2.json()
+        if data2.get("s") == "ok":
+            prices = [{"t": t, "p": c} for t, c in zip(data2["t"], data2["c"])]
+            return {"ticker": ticker, "prices": prices}
+        return {"ticker": ticker, "prices": []}
+    except Exception as e:
+        return {"ticker": ticker, "prices": [], "error": str(e)}
+
+
 @app.get("/health")
 def health_check():
     return {"status": "ok", "version": "1.0.0"}
