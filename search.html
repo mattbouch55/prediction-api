@@ -779,10 +779,15 @@ function renderStockEffect(i, ticker, d) {
     (factors ? '<div class="effect-factors">' + factors + '</div>' : '') +
     '<div style="display:flex;justify-content:space-between;align-items:center;margin-top:8px">' +
       '<span style="font-size:10px;color:var(--grey);font-family:JetBrains Mono,monospace">Horizon: '+(d.time_horizon||'—')+' · Confidence: '+(d.confidence||'—')+'</span>' +
-      '<button class="add-to-notes-btn" style="margin:0" onclick="addEffectToNotes(''+ticker+'','+JSON.stringify(d).replace(/'/g,"\'")+')">+ Add to notes</button>' +
+      '<button class="add-to-notes-btn" style="margin:0" data-eff-idx="'+i+'" data-eff-ticker="'+ticker+'">+ Add to notes</button>' +
     '</div>';
 
   result.classList.add('active');
+  // Attach add-to-notes listener
+  var nb = result.querySelector('.add-to-notes-btn');
+  if (nb) {
+    nb.onclick = function() { addEffectToNotes(ticker, d); };
+  }
 }
 
 function addEffectToNotes(ticker, d) {
