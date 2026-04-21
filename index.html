@@ -796,8 +796,9 @@ function sharesCell(ticker) {
 function totalValueCell(ticker) {
   var sh = getOwnedShares(ticker);
   if (sh <= 0) return '<span style="font-size:11px;color:var(--grey)">—</span>';
+  var entry = portfolio.find(function(p) { return p.ticker === ticker; });
   var priceData = prices[ticker];
-  var price = priceData ? parseFloat(priceData.price) : null;
+  var price = priceData ? parseFloat(priceData.price) : (entry ? entry.buyPrice : null);
   if (!price) return '<span style="font-size:11px;color:var(--grey)">—</span>';
   var total = sh * price;
   var totalStr = total.toLocaleString('en-US', {style:'currency', currency:'USD', minimumFractionDigits:2, maximumFractionDigits:2});
@@ -842,79 +843,6 @@ function buyFromPanel(ticker) {
   updateChartLegend();
   drawChart();
   if (input) input.value = '';
-  var sub = document.getElementById('chartSubtitle');
-  if (sub) sub.textContent = portfolio.length + ' stock' + (portfolio.length !== 1 ? 's' : '') + ' tracked';
-}
-
-function buyStock(ticker) {
-  var price = prices[ticker] && prices[ticker].price ? parseFloat(prices[ticker].price) : null;
-  if (!price) {
-    alert(ticker + ': Price not loaded yet. Wait for the price refresh or hit Scan All.');
-    return;
-  }
-  // Store context for confirmBuy
-  window._buyTicker = ticker;
-  window._buyPrice = price;
-
-  // Show modal
-  document.getElementById('modalTitle').textContent = 'Buy ' + ticker;
-  document.getElementById('modalSub').textContent = 'Current price: $' + price.toFixed(2) + ' per share';
-  document.getElementById('modalShares').value = '';
-  document.getElementById('modalTotal').textContent = '';
-  document.getElementById('buyModal').classList.add('active');
-  setTimeout(function() { document.getElementById('modalShares').focus(); }, 100);
-}
-
-function updateModalTotal() {
-  var shares = parseFloat(document.getElementById('modalShares').value);
-  var total = document.getElementById('modalTotal');
-  if (!isNaN(shares) && shares > 0 && window._buyPrice) {
-    var t = (shares * window._buyPrice).toLocaleString('en-US', {style:'currency', currency:'USD'});
-    total.innerHTML = 'Total: <strong>' + t + '</strong>';
-  } else {
-    total.textContent = '';
-  }
-}
-
-function closeBuyModal() {
-  document.getElementById('buyModal').classList.remove('active');
-  window._buyTicker = null;
-  window._buyPrice = null;
-}
-
-function confirmBuy() {
-  var ticker = window._buyTicker;
-  var price = window._buyPrice;
-  var shares = parseFloat(document.getElementById('modalShares').value);
-
-  if (!ticker || !price) return;
-  if (isNaN(shares) || shares <= 0) {
-    document.getElementById('modalShares').focus();
-    return;
-  }
-
-  // Add to portfolio
-  var existing = portfolio.find(function(p) { return p.ticker === ticker; });
-  if (existing) {
-    existing.shares = (existing.shares || 0) + shares;
-    existing.buyPrice = existing.buyPrice || price;
-    existing.points.push({ t: Date.now(), p: price });
-  } else {
-    portfolio.push({
-      ticker: ticker,
-      color: CHART_COLORS[portfolio.length % CHART_COLORS.length],
-      shares: shares,
-      buyPrice: price,
-      points: [{ t: Date.now(), p: price }]
-    });
-  }
-
-  savePortfolio();
-  closeBuyModal();
-  renderTable();
-  updateChartLegend();
-  drawChart();
-
   var sub = document.getElementById('chartSubtitle');
   if (sub) sub.textContent = portfolio.length + ' stock' + (portfolio.length !== 1 ? 's' : '') + ' tracked';
 }
