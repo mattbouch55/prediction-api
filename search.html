@@ -448,6 +448,8 @@ document.addEventListener('keydown', function(e) {
   if ((e.ctrlKey || e.metaKey) && e.key === 's') { e.preventDefault(); saveNotes(); }
 });
 document.getElementById('notesArea').addEventListener('input', updateCharCount);
+document.getElementById('notesArea').addEventListener('keyup', saveSelection);
+document.getElementById('notesArea').addEventListener('mouseup', saveSelection);
 document.getElementById('notesArea').addEventListener('keydown', function(e) { if (e.key === 'b' && (e.ctrlKey||e.metaKey)) { e.preventDefault(); fmt('bold'); } if (e.key === 'i' && (e.ctrlKey||e.metaKey)) { e.preventDefault(); fmt('italic'); } if (e.key === 'u' && (e.ctrlKey||e.metaKey)) { e.preventDefault(); fmt('underline'); } });
 
 // ── DOMAIN ──
@@ -955,39 +957,89 @@ function addEffectToNotes(ticker, d) {
 }
 
 // ── FORMATTING ──
-function fmt(cmd) {
-  document.getElementById('notesArea').focus();
-  document.execCommand(cmd, false, null);
+var _savedSelection = null;
+
+function saveSelection() {
+  var sel = window.getSelection();
+  if (sel.rangeCount > 0) _savedSelection = sel.getRangeAt(0).cloneRange();
 }
+
+function restoreSelection() {
+  var editor = document.getElementById('notesArea');
+  editor.focus();
+  if (_savedSelection) {
+    var sel = window.getSelection();
+    sel.removeAllRanges();
+    sel.addRange(_savedSelection);
+  }
+}
+
+function fmt(cmd) {
+  restoreSelection();
+  document.execCommand(cmd, false, null);
+  document.getElementById('notesArea').focus();
+}
+
 function fmtBlock(tag) {
   if (!tag) return;
-  document.getElementById('notesArea').focus();
+  restoreSelection();
   document.execCommand('formatBlock', false, tag);
+  document.getElementById('notesArea').focus();
 }
+
 function fmtFontSize(size) {
   if (!size) return;
-  document.getElementById('notesArea').focus();
+  restoreSelection();
   document.execCommand('fontSize', false, size);
+  document.getElementById('notesArea').focus();
+}
+
+function fmtColor(color) {
+  restoreSelection();
+  document.execCommand('foreColor', false, color);
+  document.getElementById('notesArea').focus();
+}
+
+function fmtHighlight(color) {
+  restoreSelection();
+  document.execCommand('hiliteColor', false, color);
+  document.getElementById('notesArea').focus();
+}
+
+function fmtAlign(align) {
+  restoreSelection();
+  document.execCommand('justify' + align, false, null);
+  document.getElementById('notesArea').focus();
+}
+
+function fmtIndent(dir) {
+  restoreSelection();
+  document.execCommand(dir === 'in' ? 'indent' : 'outdent', false, null);
+  document.getElementById('notesArea').focus();
+}
+
+function fmtLink() {
+  restoreSelection();
+  var url = prompt('Enter URL:');
+  if (url) {
+    if (!url.startsWith('http')) url = 'https://' + url;
+    document.execCommand('createLink', false, url);
+  }
+  document.getElementById('notesArea').focus();
+}
+
+function fmtHr() {
+  restoreSelection();
+  document.execCommand('insertHorizontalRule', false, null);
+  document.getElementById('notesArea').focus();
 }
 
 // ── NOTES ──
 function insertLabel(label) {
+  restoreSelection();
   var editor = document.getElementById('notesArea');
   editor.focus();
-  var sel = window.getSelection();
-  if (sel.rangeCount) {
-    var range = sel.getRangeAt(0);
-    range.collapse(false);
-    var div = document.createElement('div');
-    div.innerHTML = '<br><strong>── ' + label + ' ──</strong><br>';
-    var frag = document.createDocumentFragment();
-    var child;
-    while ((child = div.firstChild)) frag.appendChild(child);
-    range.insertNode(frag);
-    range.collapse(false);
-    sel.removeAllRanges();
-    sel.addRange(range);
-  }
+  document.execCommand('insertHTML', false, '<br><strong style="color:var(--text)">── ' + label + ' ──</strong><br>&#8203;');
   updateCharCount();
 }
 
