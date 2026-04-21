@@ -333,7 +333,10 @@
         <thead>
           <tr>
             <th style="width:30%">Ticker</th>
-            <th style="width:16%">Price <span id="priceTimer" title="Next price update" style="font-size:9px;color:var(--blue);font-weight:400;margin-left:4px;font-family:'JetBrains Mono',monospace"></span></th>
+            <th style="width:16%">
+              Price
+              <span id="priceTimer" title="Next price update for owned stocks" style="font-size:9px;color:var(--blue);font-weight:500;margin-left:6px;font-family:'JetBrains Mono',monospace;background:var(--blue-soft);padding:1px 5px;border-radius:3px;border:1px solid rgba(21,101,255,0.2)">2:00</span>
+            </th>
             <th style="width:15%">Score</th>
             <th style="width:14%">Shares</th>
             <th style="width:15%">Total Value</th>
@@ -1376,7 +1379,7 @@ async function autoUpdatePortfolioPrices() {
       savePortfolio();
       updateChartLegend();
       drawChart();
-      priceTimerSeconds = 120; // reset countdown after successful update
+      _timerSecs = 120; // reset countdown after successful update
       const subtitle = document.getElementById('chartSubtitle');
       if (subtitle && portfolio.length > 0) {
         const t = new Date().toLocaleTimeString('en-US', { hour:'numeric', minute:'2-digit' });
@@ -1386,42 +1389,31 @@ async function autoUpdatePortfolioPrices() {
   } catch(e) {}
 }
 
-// 2-minute countdown timer displayed next to "Price"
-let priceTimerSeconds = 120;
-let priceTimerInterval = null;
+// 2-minute countdown timer - runs always, ticks every second
+let _timerSecs = 120;
 
-function startPriceTimer() {
-  if (priceTimerInterval) clearInterval(priceTimerInterval);
-  priceTimerSeconds = 120;
-  updateTimerDisplay();
-  priceTimerInterval = setInterval(() => {
-    priceTimerSeconds--;
-    updateTimerDisplay();
-    if (priceTimerSeconds <= 0) {
-      autoUpdatePortfolioPrices();
-      priceTimerSeconds = 120; // reset
-    }
-  }, 1000);
-}
-
-function updateTimerDisplay() {
+function _tickTimer() {
+  _timerSecs--;
   const el = document.getElementById('priceTimer');
-  if (!el) return;
-  if (portfolio.length === 0) {
-    el.textContent = '2:00';
-    el.style.opacity = '0.35';
-    return;
+  if (el) {
+    const m = Math.floor(_timerSecs / 60);
+    const s = _timerSecs % 60;
+    el.textContent = m + ':' + String(s).padStart(2, '0');
+    el.style.opacity = portfolio.length > 0 ? '1' : '0.4';
+    el.style.color = _timerSecs <= 15 ? '#dc2626' : '#1565ff';
+    el.style.borderColor = _timerSecs <= 15 ? 'rgba(220,38,38,0.3)' : 'rgba(21,101,255,0.2)';
+    el.style.background = _timerSecs <= 15 ? 'rgba(220,38,38,0.06)' : 'var(--blue-soft)';
   }
-  el.style.opacity = '1';
-  const m = Math.floor(priceTimerSeconds / 60);
-  const s = priceTimerSeconds % 60;
-  el.textContent = m + ':' + String(s).padStart(2, '0');
-  // Flash blue when under 10 seconds
-  el.style.color = priceTimerSeconds <= 10 ? 'var(--red)' : 'var(--blue)';
+  if (_timerSecs <= 0) {
+    _timerSecs = 120; // reset
+    if (portfolio.length > 0) autoUpdatePortfolioPrices();
+  }
 }
 
-// Start timer and run immediately if stocks owned
-startPriceTimer();
+// Start ticking immediately
+setInterval(_tickTimer, 1000);
+
+// Also trigger price update soon after load if portfolio exists
 if (portfolio.length > 0) setTimeout(autoUpdatePortfolioPrices, 500);
 
 </script>
