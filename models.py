@@ -21,6 +21,7 @@ class PredictionRequest(BaseModel):
     topic: str = Field(..., min_length=3, max_length=200, example="AI regulation in the EU")
     domain: Domain = Field(..., example="tech")
     time_horizon: TimeHorizon = Field(default=TimeHorizon.weeks, example="1-2 weeks")
+    custom_source: Optional[str] = Field(default=None)
 
     class Config:
         use_enum_values = True
