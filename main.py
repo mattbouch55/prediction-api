@@ -249,6 +249,36 @@ Return ONLY a valid JSON object (no markdown, no extra text):
     except Exception as e:
         return {"error": str(e)}
 
+
+@app.post("/ask")
+async def ask(request: dict):
+    """Simple AI agent — answers any question with web search."""
+    import anthropic as ant
+    question = (request.get("question") or "").strip()
+    if not question:
+        return {"answer": "Please ask a question."}
+
+    client = ant.Anthropic(api_key=os.environ.get("ANTHROPIC_API_KEY"))
+    try:
+        response = client.messages.create(
+            model="claude-sonnet-4-5",
+            max_tokens=400,
+            tools=[{"type": "web_search_20250305", "name": "web_search"}],
+            messages=[{
+                "role": "user",
+                "content": f"""Answer this question as concisely as possible — 1-3 sentences max. Be direct. Search the web if needed for current facts.
+
+Question: {question}"""
+            }]
+        )
+        text = ""
+        for block in response.content:
+            if hasattr(block, "text") and block.text:
+                text += block.text
+        return {"answer": text.strip() or "No answer found."}
+    except Exception as e:
+        return {"answer": f"Error: {str(e)}"}
+
 @app.get("/health")
 def health():
     return {"status": "ok"}
