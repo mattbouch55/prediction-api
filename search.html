@@ -250,6 +250,25 @@
     .stock-card-body { display: none; border-top: 1px solid var(--border); }
     .stock-card.open .stock-card-body { display: block; }
     .stock-card-inner { padding: 10px 12px; }
+
+    /* Custom Prediction Tester */
+    .custom-pred-section { margin-top: 20px; }
+    .custom-pred-header { font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.08em; color: var(--grey); margin-bottom: 10px; display: flex; align-items: center; justify-content: space-between; }
+    .custom-pred-card { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 14px; box-shadow: var(--shadow); }
+    .custom-pred-desc { font-size: 11px; color: var(--grey2); line-height: 1.6; margin-bottom: 12px; padding: 8px 10px; background: var(--surface2); border-radius: 6px; border-left: 3px solid var(--blue); }
+    .custom-pred-input { width: 100%; background: var(--bg); border: 1px solid var(--border2); border-radius: 7px; color: var(--text); font-family: 'Inter', sans-serif; font-size: 13px; padding: 10px 12px; outline: none; transition: border-color 0.15s, box-shadow 0.15s; resize: none; line-height: 1.5; margin-bottom: 10px; }
+    .custom-pred-input:focus { border-color: var(--blue); box-shadow: 0 0 0 3px var(--blue-glow); }
+    .custom-pred-input::placeholder { color: var(--grey); font-size: 12px; }
+    .custom-pred-row { display: flex; gap: 8px; align-items: center; }
+    .custom-pred-ticker { background: var(--bg); border: 1px solid var(--border2); border-radius: 6px; color: var(--text); font-family: 'JetBrains Mono', monospace; font-size: 13px; font-weight: 600; padding: 8px 12px; outline: none; width: 130px; text-transform: uppercase; transition: border-color 0.15s; flex-shrink: 0; }
+    .custom-pred-ticker:focus { border-color: var(--blue); box-shadow: 0 0 0 2px var(--blue-glow); }
+    .custom-pred-ticker::placeholder { text-transform: none; font-family: 'Inter', sans-serif; font-weight: 400; color: var(--grey); font-size: 11px; }
+    .custom-pred-btn { flex: 1; background: var(--text); color: var(--surface); border: none; font-family: 'Inter', sans-serif; font-size: 12px; font-weight: 600; padding: 8px; border-radius: 6px; cursor: pointer; transition: opacity 0.12s; }
+    .custom-pred-btn:hover { opacity: 0.8; }
+    .custom-pred-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+    .custom-pred-status { font-size: 11px; color: var(--blue); font-family: 'JetBrains Mono', monospace; display: none; align-items: center; gap: 6px; margin-top: 10px; }
+    .custom-pred-status.active { display: flex; }
+    .custom-results-list { margin-top: 12px; display: flex; flex-direction: column; gap: 6px; }
   </style>
 </head>
 <body>
@@ -357,6 +376,30 @@
         <div id="predSection" style="display:none">
           <div class="pred-section-label">Predictions</div>
           <div id="predList"></div>
+        </div>
+
+        <!-- Custom Prediction Tester -->
+        <div class="custom-pred-section" id="customPredSection" style="display:none">
+          <div class="custom-pred-header">
+            <span>Your Own Prediction</span>
+            <span style="font-size:10px;font-weight:400;text-transform:none;letter-spacing:0;color:var(--grey)">Test any statement against any stock</span>
+          </div>
+          <div class="custom-pred-card">
+            <div class="custom-pred-desc">
+              Write your own prediction — something you believe will or won't happen. The AI will tell you how that outcome would affect the stock you choose if you're <strong>correct</strong> or <strong>wrong</strong>.
+            </div>
+            <textarea class="custom-pred-input" id="customPredText" rows="2"
+              placeholder="e.g. Trump does NOT bomb Iran on Tuesday despite his tweet...&#10;e.g. Apple delays iPhone 17 launch by 3 months..."></textarea>
+            <div class="custom-pred-row">
+              <input class="custom-pred-ticker" type="text" id="customPredTicker" placeholder="Ticker e.g. TSLA" maxlength="10"/>
+              <button class="custom-pred-btn" id="customPredBtn" onclick="runCustomPrediction()">Analyse My Prediction →</button>
+            </div>
+            <div class="custom-pred-status" id="customPredStatus">
+              <div class="effect-mini-spin"></div>
+              <span id="customPredStatusText">Analysing your prediction...</span>
+            </div>
+            <div class="custom-results-list" id="customResultsList"></div>
+          </div>
         </div>
 
         <!-- Empty state -->
@@ -709,6 +752,138 @@ function renderSources() {
   }).join('');
 }
 
+
+
+// ── CUSTOM PREDICTION TESTER ──────────────────────────────────
+var customResults = [];
+
+document.addEventListener('keydown', function(e) {
+  if (e.key === 'Enter' && e.target.id === 'customPredTicker') {
+    runCustomPrediction();
+  }
+});
+
+async function runCustomPrediction() {
+  var predText = document.getElementById('customPredText').value.trim();
+  var ticker   = document.getElementById('customPredTicker').value.trim().toUpperCase();
+
+  if (!predText) { document.getElementById('customPredText').focus(); return; }
+  if (!ticker)   { document.getElementById('customPredTicker').focus(); return; }
+
+  var btn    = document.getElementById('customPredBtn');
+  var status = document.getElementById('customPredStatus');
+  var statusText = document.getElementById('customPredStatusText');
+
+  btn.disabled = true;
+  status.classList.add('active');
+  statusText.textContent = 'Analysing "' + predText.substring(0, 40) + '..." for ' + ticker;
+
+  try {
+    var res = await fetch(API + '/stock-effect', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        prediction: predText,
+        ticker: ticker,
+        confidence: 'Your Prediction',
+        topic: document.getElementById('topicInput').value.trim() || predText
+      })
+    });
+    var data = await res.json();
+    if (data.error) throw new Error(data.error);
+
+    // Save to list
+    customResults.unshift({ ticker: ticker, prediction: predText, data: data, id: Date.now() });
+    renderCustomResults();
+    document.getElementById('customPredTicker').value = '';
+
+  } catch(e) {
+    var li = document.createElement('div');
+    li.style.cssText = 'font-size:12px;color:var(--red);padding:8px';
+    li.textContent = 'Error: ' + e.message;
+    document.getElementById('customResultsList').prepend(li);
+  } finally {
+    btn.disabled = false;
+    status.classList.remove('active');
+  }
+}
+
+function renderCustomResults() {
+  var list = document.getElementById('customResultsList');
+  if (!customResults.length) { list.innerHTML = ''; return; }
+
+  list.innerHTML = customResults.map(function(cr, idx) {
+    var d = cr.data;
+    var score = d.impact_score || 0;
+    var scoreColor = score > 0 ? 'var(--green)' : score < 0 ? 'var(--red)' : 'var(--grey)';
+    var scoreStr = (score > 0 ? '+' : '') + score;
+    var bullDir = d.bull_price_direction === 'Increase' ? '▲' : '▼';
+    var bearDir = d.bear_price_direction === 'Decrease' ? '▼' : '▲';
+    var bullColor = d.bull_price_direction === 'Increase' ? 'var(--green)' : 'var(--red)';
+    var bearColor = d.bear_price_direction === 'Decrease' ? 'var(--red)' : 'var(--green)';
+    var cardId = 'cpr-'+cr.id;
+
+    return '<div class="stock-card" id="'+cardId+'">' +
+      '<div class="stock-card-header" data-cardid="'+cardId+'">' +
+        '<div class="stock-card-arrow">▶</div>' +
+        '<div class="stock-card-ticker">'+cr.ticker+'</div>' +
+        '<span class="stock-card-dir '+(d.direction||'Neutral')+'">'+(d.direction||'Neutral')+'</span>' +
+        '<span class="stock-card-impact" style="flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis" title="'+cr.prediction+'">'+cr.prediction.substring(0,35)+(cr.prediction.length>35?'...':'')+'</span>' +
+        '<span style="font-size:10px;font-family:JetBrains Mono,monospace;color:'+scoreColor+';font-weight:700;flex-shrink:0">'+scoreStr+'</span>' +
+        '<button class="stock-card-del" data-crid="'+cr.id+'" title="Remove">×</button>' +
+      '</div>' +
+      '<div class="stock-card-body">' +
+        '<div class="stock-card-inner">' +
+          '<div style="font-size:11px;color:var(--grey2);margin-bottom:8px;font-style:italic">"'+cr.prediction+'"</div>' +
+          '<div class="effect-summary" style="margin-bottom:8px">'+(d.summary||'')+'</div>' +
+          '<div class="effect-scenarios">' +
+            '<div class="effect-scenario bull">' +
+              '<div class="effect-scenario-label">✓ If you are correct</div>' +
+              '<div style="display:flex;align-items:center;gap:5px;margin-bottom:4px">' +
+                '<span style="font-size:13px;font-weight:800;color:'+bullColor+'">'+bullDir+'</span>' +
+                '<span style="font-size:12px;font-weight:700;color:'+bullColor+'">'+(d.bull_price_magnitude||'')+'</span>' +
+              '</div>' +
+              '<div style="font-size:11px;color:var(--text2);line-height:1.5">'+(d.bull_scenario||'')+'</div>' +
+            '</div>' +
+            '<div class="effect-scenario bear">' +
+              '<div class="effect-scenario-label">✗ If you are wrong</div>' +
+              '<div style="display:flex;align-items:center;gap:5px;margin-bottom:4px">' +
+                '<span style="font-size:13px;font-weight:800;color:'+bearColor+'">'+bearDir+'</span>' +
+                '<span style="font-size:12px;font-weight:700;color:'+bearColor+'">'+(d.bear_price_magnitude||'')+'</span>' +
+              '</div>' +
+              '<div style="font-size:11px;color:var(--text2);line-height:1.5">'+(d.bear_scenario||'')+'</div>' +
+            '</div>' +
+          '</div>' +
+          '<div style="display:flex;justify-content:space-between;align-items:center;margin-top:8px">' +
+            '<span style="font-size:10px;color:var(--grey);font-family:JetBrains Mono,monospace">Horizon: '+(d.time_horizon||'—')+' · Impact: '+(d.impact||'—')+'</span>' +
+            '<button class="add-to-notes-btn" style="margin:0" data-cr-idx="'+idx+'">+ Add to notes</button>' +
+          '</div>' +
+        '</div>' +
+      '</div>' +
+    '</div>';
+  }).join('');
+
+  // Attach listeners
+  list.querySelectorAll('.stock-card-header').forEach(function(hdr) {
+    hdr.addEventListener('click', function() {
+      var id = hdr.dataset.cardid;
+      if (id) document.getElementById(id).classList.toggle('open');
+    });
+  });
+  list.querySelectorAll('.stock-card-del').forEach(function(btn) {
+    btn.addEventListener('click', function(e) {
+      e.stopPropagation();
+      var id = parseInt(btn.dataset.crid);
+      customResults = customResults.filter(function(r) { return r.id !== id; });
+      renderCustomResults();
+    });
+  });
+  list.querySelectorAll('.add-to-notes-btn').forEach(function(btn) {
+    var idx = parseInt(btn.dataset.crIdx);
+    var cr = customResults[idx];
+    if (cr) btn.onclick = function() { addEffectToNotes(cr.ticker, cr.data); };
+  });
+}
 
 // ── STOCK EFFECT ──────────────────────────────────────────────
 var predData = []; // store prediction data globally for stock effect
