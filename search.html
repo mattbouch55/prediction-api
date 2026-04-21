@@ -176,7 +176,7 @@
     .ql-risk { color: var(--yellow); border-color: rgba(217,119,6,0.3); background: var(--yellow-dim); }
     .notes-body { flex: 1; display: flex; flex-direction: column; padding: 10px 14px; gap: 8px; overflow: hidden; }
     .notes-toolbar { display: flex; align-items: center; gap: 2px; padding: 5px 14px; border-bottom: 1px solid var(--border); flex-shrink: 0; flex-wrap: wrap; background: var(--surface); row-gap: 4px; }
-    .tb-btn { background: none; border: 1px solid transparent; color: var(--grey2); font-family: 'Inter', sans-serif; font-size: 11px; font-weight: 600; padding: 2px 7px; border-radius: 4px; cursor: pointer; transition: all 0.12s; line-height: 1.5; white-space: nowrap; }
+    .tb-btn { background: none; border: 1px solid transparent; color: var(--grey2); font-family: 'Inter', sans-serif; font-size: 11px; font-weight: 500; padding: 3px 7px; border-radius: 4px; cursor: pointer; transition: all 0.12s; line-height: 1; white-space: nowrap; display:inline-flex; align-items:center; gap:3px; }
     .tb-btn:hover { background: var(--surface2); border-color: var(--border); color: var(--text); }
     .tb-btn.bold { font-weight: 800; }
     .tb-btn.italic { font-style: italic; }
@@ -459,13 +459,137 @@
           <div class="panel-title">Research Notes</div>
           <span class="panel-sub" id="saveIndicator">Not saved</span>
         </div>
-        <div class="quick-labels">
-          <button class="ql-btn ql-bull" onclick="insertLabel('🟢 Bull Case')">🟢 Bull</button>
-          <button class="ql-btn ql-bear" onclick="insertLabel('🔴 Bear Case')">🔴 Bear</button>
-          <button class="ql-btn ql-catalyst" onclick="insertLabel('⚡ Catalyst')">⚡ Catalyst</button>
-          <button class="ql-btn ql-risk" onclick="insertLabel('⚠️ Risk')">⚠️ Risk</button>
-          <button class="ql-btn" onclick="insertLabel('❓ Question')">❓ Question</button>
-          <button class="ql-btn" onclick="insertLabel('✅ Decision')">✅ Decision</button>
+        <div class="notes-toolbar" id="notesToolbar">
+
+          <!-- Text style -->
+          <button class="tb-btn" onmousedown="event.preventDefault();fmt('bold')" title="Bold (Ctrl+B)">
+            <svg width="12" height="12" viewBox="0 0 12 12" fill="currentColor"><path d="M2 2h4.5a2.5 2.5 0 010 5H2V2zm0 5h5a2.5 2.5 0 010 5H2V7z" opacity=".15"/><path d="M3 2h3.5a2 2 0 110 4H3V2zm0 4h4a2 2 0 110 4H3V6z"/></svg>
+            <b style="font-size:11px">B</b>
+          </button>
+          <button class="tb-btn" onmousedown="event.preventDefault();fmt('italic')" title="Italic (Ctrl+I)">
+            <i style="font-size:11px;font-family:Georgia,serif">I</i>
+          </button>
+          <button class="tb-btn" onmousedown="event.preventDefault();fmt('underline')" title="Underline (Ctrl+U)">
+            <u style="font-size:11px">U</u>
+          </button>
+          <button class="tb-btn" onmousedown="event.preventDefault();fmt('strikeThrough')" title="Strikethrough">
+            <s style="font-size:11px">S</s>
+          </button>
+
+          <div class="tb-divider"></div>
+
+          <!-- Font size -->
+          <div style="display:flex;align-items:center;gap:3px">
+            <svg width="11" height="11" viewBox="0 0 16 16" fill="var(--grey2)"><path d="M1 3h6v2H5v8H3V5H1V3zm8 4h4v1.5h-2.5v6H9.5v-6H8V7z"/></svg>
+            <select class="tb-select" onmousedown="saveSelection()" onchange="fmtFontSize(this.value); this.value=''" title="Font size">
+              <option value="">Size</option>
+              <option value="1">XS</option>
+              <option value="2">Small</option>
+              <option value="3">Normal</option>
+              <option value="4">Large</option>
+              <option value="5">XL</option>
+              <option value="6">XXL</option>
+            </select>
+          </div>
+
+          <!-- Heading -->
+          <select class="tb-select" onmousedown="saveSelection()" onchange="fmtBlock(this.value); this.value=''" title="Paragraph style">
+            <option value="">¶ Style</option>
+            <option value="h1">H1</option>
+            <option value="h2">H2</option>
+            <option value="h3">H3</option>
+            <option value="p">Body</option>
+          </select>
+
+          <div class="tb-divider"></div>
+
+          <!-- Font color -->
+          <div class="tb-color-wrap">
+            <button class="tb-color-btn" onmousedown="event.preventDefault()" onclick="toggleColorPicker('fontColorPicker')" title="Font color">
+              <svg width="11" height="11" viewBox="0 0 16 16" fill="currentColor"><path d="M8 1L1 15h2.5l1.5-3h6l1.5 3H15L8 1zm-2 9l2-5 2 5H6z"/></svg>
+              A
+              <div class="tb-color-swatch" id="fontColorSwatch" style="background:#111827"></div>
+            </button>
+            <div class="tb-color-picker" id="fontColorPicker">
+              <div class="tb-color-dot" style="background:#111827" title="Black" onmousedown="event.preventDefault();applyFontColor('#111827')"></div>
+              <div class="tb-color-dot" style="background:#1565ff" title="Blue" onmousedown="event.preventDefault();applyFontColor('#1565ff')"></div>
+              <div class="tb-color-dot" style="background:#16a34a" title="Green" onmousedown="event.preventDefault();applyFontColor('#16a34a')"></div>
+              <div class="tb-color-dot" style="background:#dc2626" title="Red" onmousedown="event.preventDefault();applyFontColor('#dc2626')"></div>
+              <div class="tb-color-dot" style="background:#d97706" title="Amber" onmousedown="event.preventDefault();applyFontColor('#d97706')"></div>
+              <div class="tb-color-dot" style="background:#7c3aed" title="Purple" onmousedown="event.preventDefault();applyFontColor('#7c3aed')"></div>
+              <div class="tb-color-dot" style="background:#0891b2" title="Teal" onmousedown="event.preventDefault();applyFontColor('#0891b2')"></div>
+              <div class="tb-color-dot" style="background:#be185d" title="Pink" onmousedown="event.preventDefault();applyFontColor('#be185d')"></div>
+              <div class="tb-color-dot" style="background:#6b7280" title="Grey" onmousedown="event.preventDefault();applyFontColor('#6b7280')"></div>
+              <div class="tb-color-dot" style="background:#92400e" title="Brown" onmousedown="event.preventDefault();applyFontColor('#92400e')"></div>
+            </div>
+          </div>
+
+          <!-- Highlight -->
+          <div class="tb-color-wrap">
+            <button class="tb-color-btn" onmousedown="event.preventDefault()" onclick="toggleColorPicker('hlColorPicker')" title="Highlight">
+              <svg width="11" height="11" viewBox="0 0 16 16" fill="currentColor"><path d="M11 1l4 4-8 8H3V9l8-8zM2 14h12v1H2z"/></svg>
+              <div class="tb-color-swatch" id="hlColorSwatch" style="background:#fde68a"></div>
+            </button>
+            <div class="tb-color-picker" id="hlColorPicker">
+              <div class="tb-color-dot" style="background:#fde68a" title="Yellow" onmousedown="event.preventDefault();applyHighlight('#fde68a')"></div>
+              <div class="tb-color-dot" style="background:#bbf7d0" title="Green" onmousedown="event.preventDefault();applyHighlight('#bbf7d0')"></div>
+              <div class="tb-color-dot" style="background:#fecaca" title="Red" onmousedown="event.preventDefault();applyHighlight('#fecaca')"></div>
+              <div class="tb-color-dot" style="background:#bfdbfe" title="Blue" onmousedown="event.preventDefault();applyHighlight('#bfdbfe')"></div>
+              <div class="tb-color-dot" style="background:#e9d5ff" title="Purple" onmousedown="event.preventDefault();applyHighlight('#e9d5ff')"></div>
+              <div class="tb-color-dot" style="background:#fed7aa" title="Orange" onmousedown="event.preventDefault();applyHighlight('#fed7aa')"></div>
+              <div class="tb-color-dot" style="background:#f1f5f9" title="Light" onmousedown="event.preventDefault();applyHighlight('#f1f5f9')"></div>
+              <div class="tb-color-dot" style="background:transparent;border:2px dashed #9ca3af" title="Remove highlight" onmousedown="event.preventDefault();applyHighlight('transparent')"></div>
+            </div>
+          </div>
+
+          <div class="tb-divider"></div>
+
+          <!-- Alignment -->
+          <button class="tb-btn" onmousedown="event.preventDefault();fmtAlign('Left')" title="Align left">
+            <svg width="13" height="11" viewBox="0 0 14 12" fill="currentColor"><rect x="0" y="0" width="14" height="1.5" rx="1"/><rect x="0" y="3" width="10" height="1.5" rx="1"/><rect x="0" y="6" width="14" height="1.5" rx="1"/><rect x="0" y="9" width="8" height="1.5" rx="1"/></svg>
+          </button>
+          <button class="tb-btn" onmousedown="event.preventDefault();fmtAlign('Center')" title="Center">
+            <svg width="13" height="11" viewBox="0 0 14 12" fill="currentColor"><rect x="0" y="0" width="14" height="1.5" rx="1"/><rect x="2" y="3" width="10" height="1.5" rx="1"/><rect x="0" y="6" width="14" height="1.5" rx="1"/><rect x="3" y="9" width="8" height="1.5" rx="1"/></svg>
+          </button>
+          <button class="tb-btn" onmousedown="event.preventDefault();fmtAlign('Right')" title="Align right">
+            <svg width="13" height="11" viewBox="0 0 14 12" fill="currentColor"><rect x="0" y="0" width="14" height="1.5" rx="1"/><rect x="4" y="3" width="10" height="1.5" rx="1"/><rect x="0" y="6" width="14" height="1.5" rx="1"/><rect x="6" y="9" width="8" height="1.5" rx="1"/></svg>
+          </button>
+
+          <div class="tb-divider"></div>
+
+          <!-- Lists -->
+          <button class="tb-btn" onmousedown="event.preventDefault();fmt('insertUnorderedList')" title="Bullet list">
+            <svg width="13" height="11" viewBox="0 0 14 12" fill="currentColor"><circle cx="1.5" cy="1.5" r="1.5"/><circle cx="1.5" cy="6" r="1.5"/><circle cx="1.5" cy="10.5" r="1.5"/><rect x="4" y="0.75" width="10" height="1.5" rx="1"/><rect x="4" y="5.25" width="10" height="1.5" rx="1"/><rect x="4" y="9.75" width="10" height="1.5" rx="1"/></svg>
+          </button>
+          <button class="tb-btn" onmousedown="event.preventDefault();fmt('insertOrderedList')" title="Numbered list">
+            <svg width="13" height="11" viewBox="0 0 14 12" fill="currentColor"><text x="0" y="3.5" font-size="4" fill="currentColor">1.</text><text x="0" y="8" font-size="4" fill="currentColor">2.</text><text x="0" y="12" font-size="4" fill="currentColor">3.</text><rect x="4" y="0.75" width="10" height="1.5" rx="1"/><rect x="4" y="5.25" width="10" height="1.5" rx="1"/><rect x="4" y="9.75" width="10" height="1.5" rx="1"/></svg>
+          </button>
+          <button class="tb-btn" onmousedown="event.preventDefault();fmtLink()" title="Insert link">
+            <svg width="13" height="11" viewBox="0 0 16 14" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><path d="M7 9L4 12a3 3 0 01-4-4l3-3a3 3 0 014 0"/><path d="M9 5l3-3a3 3 0 014 4l-3 3a3 3 0 01-4 0"/><line x1="6" y1="10" x2="10" y2="6"/></svg>
+          </button>
+          <button class="tb-btn" onmousedown="event.preventDefault();fmt('removeFormat')" title="Clear formatting" style="font-size:10px;color:var(--grey2)">
+            <svg width="11" height="11" viewBox="0 0 16 16" fill="currentColor"><path d="M2 14l4-4-4-4h3l4 4-4 4H2zm6-8l4-4h3l-4 4-4 4H4l4-4z"/><line x1="1" y1="15" x2="15" y2="15" stroke="currentColor" stroke-width="1.5"/></svg>
+          </button>
+
+          <div class="tb-divider"></div>
+
+          <!-- Labels — color coded with small dot icon -->
+          <button class="tb-btn" onmousedown="event.preventDefault();insertLabel('Bull Case')" style="color:var(--green);border-color:rgba(22,163,74,0.3);background:var(--green-dim)" title="Insert Bull Case label">
+            <svg width="7" height="7" viewBox="0 0 8 8"><circle cx="4" cy="4" r="3.5" fill="var(--green)"/></svg> Bull
+          </button>
+          <button class="tb-btn" onmousedown="event.preventDefault();insertLabel('Bear Case')" style="color:var(--red);border-color:rgba(220,38,38,0.3);background:var(--red-dim)" title="Insert Bear Case label">
+            <svg width="7" height="7" viewBox="0 0 8 8"><circle cx="4" cy="4" r="3.5" fill="var(--red)"/></svg> Bear
+          </button>
+          <button class="tb-btn" onmousedown="event.preventDefault();insertLabel('Catalyst')" style="color:var(--blue);border-color:rgba(21,101,255,0.3);background:var(--blue-soft)" title="Insert Catalyst label">
+            <svg width="7" height="7" viewBox="0 0 8 8"><polygon points="4,0.5 7.5,7.5 0.5,7.5" fill="var(--blue)"/></svg> Catalyst
+          </button>
+          <button class="tb-btn" onmousedown="event.preventDefault();insertLabel('Risk')" style="color:var(--yellow);border-color:rgba(217,119,6,0.3);background:var(--yellow-dim)" title="Insert Risk label">
+            <svg width="7" height="7" viewBox="0 0 8 8"><polygon points="4,0.5 7.5,7.5 0.5,7.5" fill="var(--yellow)"/></svg> Risk
+          </button>
+          <button class="tb-btn" onmousedown="event.preventDefault();insertLabel('Decision')" style="color:var(--green);border-color:rgba(22,163,74,0.2)" title="Insert Decision label">
+            <svg width="7" height="7" viewBox="0 0 8 8"><rect x="0.5" y="0.5" width="7" height="7" rx="1.5" fill="var(--green)"/></svg> Decision
+          </button>
+
         </div>
         <div class="notes-body">
           <textarea class="notes-textarea" id="notesArea" placeholder="Organise your thoughts here...&#10;&#10;Use the quick labels above to structure your bull/bear case, key catalysts, risks and your final decision."></textarea>
