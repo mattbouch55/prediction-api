@@ -264,6 +264,11 @@
     .modal-cancel { flex:1; background:var(--surface2); border:1px solid var(--border); color:var(--text2); font-family:"Inter",sans-serif; font-size:13px; font-weight:500; padding:9px; border-radius:6px; cursor:pointer; }
     .modal-confirm { flex:1; background:var(--blue); border:none; color:white; font-family:"Inter",sans-serif; font-size:13px; font-weight:600; padding:9px; border-radius:6px; cursor:pointer; transition:background 0.12s; }
     .modal-confirm:hover { background:#1a6fff; }
+
+    .shares-input { width:70px; background:var(--bg); border:1px solid var(--border2); border-radius:6px; color:var(--text); font-family:"Inter",sans-serif; font-size:12px; font-weight:600; padding:6px 8px; outline:none; text-align:center; transition:border-color 0.15s; }
+    .shares-input:focus { border-color:var(--blue); box-shadow:0 0 0 2px var(--blue-glow); }
+    .shares-input::placeholder { color:var(--grey); font-weight:400; }
+    .shares-label { font-size:10px; color:var(--grey); text-align:center; margin-top:2px; }
   </style>
 </head>
 <body>
@@ -584,17 +589,21 @@ function renderPanel(ticker) {
   const hist = scanHistory.filter(h => h.ticker === ticker);
 
   document.getElementById('panelHead').innerHTML = `
-    <div style="display:flex;align-items:center;justify-content:space-between;width:100%">
-      <div style="display:flex;align-items:center;gap:14px">
-        <div>
+    <div style="display:flex;align-items:center;justify-content:space-between;width:100%;gap:8px">
+      <div style="display:flex;align-items:center;gap:12px;min-width:0">
+        <div style="min-width:0">
           <div class="panel-ticker">${ticker}</div>
           <div class="panel-name">${w.assetName || w.type}</div>
         </div>
         <button class="panel-scan-btn" onclick="scanTicker('${ticker}')" ${w.scanning?'disabled':''}>Scan</button>
       </div>
-      <div style="display:flex;gap:6px;flex-shrink:0">
-        <button class="panel-trade-btn panel-buy" onclick="buyStock('${ticker}')">Buy</button>
-        <button class="panel-trade-btn panel-sell" onclick="sellStock('${ticker}')">Sell</button>
+      <div style="display:flex;align-items:flex-start;gap:6px;flex-shrink:0">
+        <div>
+          <input class="shares-input" type="number" id="sharesInput-${ticker}" min="0.01" step="any" placeholder="Shares" title="Number of shares"/>
+          <div class="shares-label">qty</div>
+        </div>
+        <button class="panel-trade-btn" onclick="buyFromPanel('${ticker}')">Buy</button>
+        <button class="panel-trade-btn" onclick="sellStock('${ticker}')">Sell</button>
       </div>
     </div>
   `;
@@ -790,6 +799,40 @@ function totalValueCell(ticker) {
   const pnlColor = pnl === null ? '' : pnl >= 0 ? 'color:var(--green)' : 'color:var(--red)';
   const pnlStr = pnl !== null ? ' <span style="font-size:10px;' + pnlColor + '">' + (pnl >= 0 ? '+' : '') + '$' + Math.abs(pnl).toFixed(2) + '</span>' : '';
   return '<span style="font-family:JetBrains Mono,monospace;font-size:11px;font-weight:600">' + total + pnlStr + '</span>';
+}
+
+function buyFromPanel(ticker) {
+  var input = document.getElementById('sharesInput-' + ticker);
+  var shares = input ? parseFloat(input.value) : NaN;
+  if (isNaN(shares) || shares <= 0) {
+    if (input) { input.focus(); input.style.borderColor = 'var(--red)'; setTimeout(function() { input.style.borderColor = ''; }, 1500); }
+    return;
+  }
+  var price = prices[ticker] && prices[ticker].price ? parseFloat(prices[ticker].price) : null;
+  if (!price) { alert(ticker + ': Price not loaded yet.'); return; }
+
+  var existing = portfolio.find(function(p) { return p.ticker === ticker; });
+  if (existing) {
+    existing.shares = (existing.shares || 0) + shares;
+    existing.buyPrice = existing.buyPrice || price;
+    existing.points.push({ t: Date.now(), p: price });
+  } else {
+    portfolio.push({
+      ticker: ticker,
+      color: CHART_COLORS[portfolio.length % CHART_COLORS.length],
+      shares: shares,
+      buyPrice: price,
+      points: [{ t: Date.now(), p: price }]
+    });
+  }
+
+  savePortfolio();
+  renderTable();
+  updateChartLegend();
+  drawChart();
+  if (input) input.value = '';
+  var sub = document.getElementById('chartSubtitle');
+  if (sub) sub.textContent = portfolio.length + ' stock' + (portfolio.length !== 1 ? 's' : '') + ' tracked';
 }
 
 function buyStock(ticker) {
@@ -1444,20 +1487,5 @@ setInterval(_tickTimer, 1000);
 if (portfolio.length > 0) setTimeout(autoUpdatePortfolioPrices, 500);
 
 </script>
-
-  <!-- Buy Modal -->
-  <div class="modal-overlay" id="buyModal" onclick="if(event.target===this)closeBuyModal()">
-    <div class="modal-box">
-      <div class="modal-title" id="modalTitle">Buy Stock</div>
-      <div class="modal-sub" id="modalSub">Current price: —</div>
-      <div class="modal-label">Number of Shares</div>
-      <input class="modal-input" type="number" id="modalShares" min="0.01" step="any" placeholder="0" oninput="updateModalTotal()"/>
-      <div class="modal-total" id="modalTotal"></div>
-      <div class="modal-btns">
-        <button class="modal-cancel" onclick="closeBuyModal()">Cancel</button>
-        <button class="modal-confirm" onclick="confirmBuy()">Buy</button>
-      </div>
-    </div>
-  </div>
 </body>
 </html>
