@@ -392,7 +392,6 @@ function addTicker() {
 function removeTicker(ticker) {
   if (selectedTicker === ticker) closePanel();
   watchlist = watchlist.filter(w => w.ticker !== ticker);
-  expandedRows.delete(ticker);
   save();
   renderTable();
 }
