@@ -405,6 +405,7 @@
 
 <script>
 var _timerSecs = 120; // global timer countdown
+var CHART_COLORS = ["#1565ff","#16a34a","#d97706","#dc2626","#7c3aed","#0891b2","#be185d","#65a30d"];
 setInterval(function() {
   _timerSecs--;
   var el = document.getElementById("priceTimer");
@@ -1078,7 +1079,7 @@ function sleep(ms) { return new Promise(r=>setTimeout(r,ms)); }
 let hiddenTickers = new Set();
 let chartRange = '1D';
 
-const CHART_COLORS = ['#1565ff','#16a34a','#d97706','#dc2626','#7c3aed','#0891b2','#be185d','#65a30d'];
+var CHART_COLORS_OLD = ['#1565ff','#16a34a','#d97706','#dc2626','#7c3aed','#0891b2','#be185d','#65a30d'];
 
 function savePortfolio() {
   localStorage.setItem('onyx_portfolio', JSON.stringify(portfolio));
