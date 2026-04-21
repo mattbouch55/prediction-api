@@ -466,7 +466,11 @@ setInterval(function() {
   }
   if (_timerSecs <= 0) {
     _timerSecs = 120;
-    if (portfolio.length > 0) autoUpdatePortfolioPrices();
+    // Refresh ALL watchlist prices every 2 minutes
+    refreshPrices().then(function() {
+      // Then update portfolio chart points if any stocks owned
+      if (portfolio.length > 0) autoUpdatePortfolioPrices();
+    });
   }
 }, 1000);
 
@@ -855,7 +859,7 @@ function renderTable() {
     var alertHtml=(w.signal&&w.prevSignal&&w.prevSignal!==w.signal)?'<span class="alert-pill">⚡ '+w.prevSignal+'→'+w.signal+'</span>':'';
     rows+=
       '<tr class="main-row'+(isSel?' selected':'')+'" id="row-'+w.ticker+'" data-ticker="'+w.ticker+'">'+
-      '<td><div class="ticker-name">'+w.ticker+alertHtml+'</div><div class="ticker-sub">'+(w.assetName||w.type).substring(0,26)+(w.scannedAt?' · '+timeAgo(w.scannedAt):'')+' </div></td>'+
+      '<td><div class="ticker-name">'+w.ticker+alertHtml+'</div><div class="ticker-sub">'+(w.assetName||w.type).substring(0,22)+(w.scannedAt?' · '+timeAgo(w.scannedAt):'')+' </div></td>'+
       '<td class="price-cell'+(w.scanning?' scanning':'')+'">'+( w.scanning?'...':price)+'</td>'+
       '<td><div class="score-wrap"><div class="score-n '+sc+'">'+scoreTxt+'</div><div><div class="score-bar"><div class="score-fill" style="width:'+sbWidth+';background:'+sbColor+'"></div></div>'+(w.signal?'<span class="sig '+sigCls+'" style="margin-top:4px;display:inline-block">'+w.signal+'</span>':'')+'</div></div></td>'+
       '<td style="text-align:center">'+sharesCell(w.ticker)+'</td>'+
