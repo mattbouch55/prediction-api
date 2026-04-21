@@ -404,6 +404,7 @@
 </div>
 
 <script>
+var _timerSecs = 120; // global timer countdown
 const API = 'https://prediction-api-production-ad66.up.railway.app';
 let watchlist = JSON.parse(localStorage.getItem('onyx_wl_v3') || '[]');
 let portfolio = JSON.parse(localStorage.getItem('onyx_portfolio') || '[]');
@@ -1390,7 +1391,7 @@ async function autoUpdatePortfolioPrices() {
 }
 
 // 2-minute countdown timer - runs always, ticks every second
-let _timerSecs = 120;
+
 
 function _tickTimer() {
   _timerSecs--;
