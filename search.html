@@ -3,26 +3,40 @@
 <head>
   <meta charset="UTF-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Onyx AI — Search & Predict</title>
+  <title>Onyx AI — Research</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@300;400;500&display=swap" rel="stylesheet">
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
     :root {
-      --bg: #f7f7f6; --surface: #ffffff; --surface2: #f3f3f2;
-      --border: #e5e4e2; --border2: #d1d0cd;
-      --blue: #1565ff; --blue-soft: #eff3ff; --blue-glow: rgba(21,101,255,0.08);
-      --text: #111827; --text2: #4b5563; --grey: #9ca3af; --grey2: #6b7280;
-      --green: #16a34a; --green-dim: rgba(22,163,74,0.08);
-      --red: #dc2626; --red-dim: rgba(220,38,38,0.08);
-      --yellow: #d97706; --yellow-dim: rgba(217,119,6,0.08);
+      --bg: #f7f7f6;
+      --surface: #ffffff;
+      --surface2: #f3f3f2;
+      --border: #e5e4e2;
+      --border2: #d1d0cd;
+      --blue: #1565ff;
+      --blue-soft: #eff3ff;
+      --blue-glow: rgba(21,101,255,0.08);
+      --text: #111827;
+      --text2: #4b5563;
+      --grey: #9ca3af;
+      --grey2: #6b7280;
+      --green: #16a34a;
+      --green-dim: rgba(22,163,74,0.08);
+      --red: #dc2626;
+      --red-dim: rgba(220,38,38,0.08);
+      --yellow: #d97706;
+      --yellow-dim: rgba(217,119,6,0.08);
       --shadow: 0 1px 3px rgba(0,0,0,0.06), 0 1px 2px rgba(0,0,0,0.04);
       --sidebar-w: 200px;
     }
-    body { background: var(--bg); color: var(--text); font-family: 'Inter', sans-serif; font-size: 13px; min-height: 100vh; }
+    html, body { height: 100%; background: var(--bg); color: var(--text); font-family: 'Inter', sans-serif; font-size: 13px; overflow: hidden; }
 
-    /* Sidebar */
-    .sidebar { width: var(--sidebar-w); background: var(--surface); border-right: 1px solid var(--border); display: flex; flex-direction: column; position: fixed; top: 0; left: 0; height: 100vh; }
+    /* ── LAYOUT ── */
+    .app { display: flex; height: 100vh; }
+
+    /* ── SIDEBAR ── */
+    .sidebar { width: var(--sidebar-w); background: var(--surface); border-right: 1px solid var(--border); display: flex; flex-direction: column; flex-shrink: 0; }
     .sidebar-logo { padding: 20px 16px 16px; border-bottom: 1px solid var(--border); }
     .logo-row { display: flex; align-items: center; gap: 9px; }
     .logo-icon { width: 28px; height: 28px; background: var(--blue); border-radius: 6px; display: flex; align-items: center; justify-content: center; font-size: 13px; font-weight: 700; color: white; font-family: 'JetBrains Mono', monospace; flex-shrink: 0; }
@@ -37,455 +51,608 @@
     .nav-chip { font-size: 9px; background: var(--surface2); color: var(--grey); padding: 1px 5px; border-radius: 8px; margin-left: auto; border: 1px solid var(--border); }
     .sidebar-footer { padding: 14px 16px; border-top: 1px solid var(--border); }
     .market-pill { display: flex; align-items: center; gap: 7px; font-size: 11px; color: var(--text2); }
-    .dot { width: 6px; height: 6px; border-radius: 50%; }
+    .dot { width: 6px; height: 6px; border-radius: 50%; flex-shrink: 0; }
     .dot.open { background: var(--green); }
     .dot.closed { background: var(--red); }
 
-    /* Main */
-    .main { margin-left: var(--sidebar-w); padding: 28px; max-width: 860px; }
+    /* ── THREE COLUMN RESEARCH ── */
+    .research { flex: 1; display: grid; grid-template-columns: 35% 23% 1fr; min-width: 0; height: 100vh; overflow: hidden; }
 
-    /* Tabs */
-    .mode-tabs { display: flex; gap: 4px; background: var(--surface); border: 1px solid var(--border); border-radius: 8px; padding: 4px; margin-bottom: 24px; width: fit-content; box-shadow: var(--shadow); }
-    .mode-tab { padding: 7px 18px; border-radius: 6px; font-size: 12px; font-weight: 500; cursor: pointer; border: none; background: transparent; color: var(--grey2); transition: all 0.12s; font-family: 'Inter', sans-serif; }
-    .mode-tab.active { background: var(--blue); color: white; }
-    .mode-tab:hover:not(.active) { color: var(--text); background: var(--surface2); }
+    /* Column shared styles */
+    .col { display: flex; flex-direction: column; height: 100vh; overflow: hidden; border-right: 1px solid var(--border); }
+    .col:last-child { border-right: none; }
+    .col-header { padding: 16px 18px 14px; border-bottom: 1px solid var(--border); flex-shrink: 0; background: var(--surface); }
+    .col-title { font-size: 12px; font-weight: 600; color: var(--text); text-transform: uppercase; letter-spacing: 0.08em; }
+    .col-sub { font-size: 11px; color: var(--grey); margin-top: 2px; }
+    .col-body { flex: 1; overflow-y: auto; padding: 16px 18px; }
+    .col-body::-webkit-scrollbar { width: 4px; }
+    .col-body::-webkit-scrollbar-track { background: transparent; }
+    .col-body::-webkit-scrollbar-thumb { background: var(--border2); border-radius: 2px; }
 
-    /* Search card */
-    .search-card { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 20px; margin-bottom: 20px; box-shadow: var(--shadow); }
-    .search-label { font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.1em; color: var(--grey); margin-bottom: 12px; }
-    .search-row { display: flex; gap: 8px; margin-bottom: 12px; }
-    .search-row:last-child { margin-bottom: 0; }
-    .search-input { flex: 1; background: var(--bg); border: 1px solid var(--border2); color: var(--text); font-family: 'Inter', sans-serif; font-size: 13px; padding: 9px 14px; border-radius: 6px; outline: none; transition: border-color 0.15s, box-shadow 0.15s; }
-    .search-input:focus { border-color: var(--blue); box-shadow: 0 0 0 2px var(--blue-glow); }
+    /* ── COL 1: AI ENGINE ── */
+    .search-box { background: var(--surface); border: 1px solid var(--border2); border-radius: 10px; padding: 14px; margin-bottom: 14px; box-shadow: var(--shadow); }
+    .search-input-wrap { position: relative; margin-bottom: 12px; }
+    .search-input { width: 100%; background: var(--bg); border: 1px solid var(--border2); border-radius: 8px; color: var(--text); font-family: 'Inter', sans-serif; font-size: 14px; padding: 12px 14px; outline: none; transition: border-color 0.15s, box-shadow 0.15s; resize: none; line-height: 1.5; }
+    .search-input:focus { border-color: var(--blue); box-shadow: 0 0 0 3px var(--blue-glow); }
     .search-input::placeholder { color: var(--grey); }
-    .source-input { background: var(--bg); border: 1px solid var(--border2); color: var(--text); font-family: 'Inter', sans-serif; font-size: 12px; padding: 9px 14px; border-radius: 6px; outline: none; flex: 1; transition: border-color 0.15s, box-shadow 0.15s; }
-    .source-input:focus { border-color: var(--blue); box-shadow: 0 0 0 2px var(--blue-glow); }
-    .source-input::placeholder { color: var(--grey); }
-    .source-label { font-size: 11px; color: var(--grey2); white-space: nowrap; display: flex; align-items: center; gap: 5px; }
-    .source-label svg { opacity: 0.5; }
-    .select-input { background: var(--bg); border: 1px solid var(--border2); color: var(--text2); font-family: 'Inter', sans-serif; font-size: 12px; padding: 9px 12px; border-radius: 6px; outline: none; cursor: pointer; appearance: none; min-width: 110px; }
+    .domain-row { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 12px; }
+    .domain-pill { font-size: 11px; font-weight: 500; padding: 4px 10px; border-radius: 20px; border: 1px solid var(--border2); background: var(--surface2); color: var(--grey2); cursor: pointer; transition: all 0.12s; user-select: none; }
+    .domain-pill.active { background: var(--blue-soft); border-color: rgba(21,101,255,0.3); color: var(--blue); }
+    .domain-pill:hover:not(.active) { border-color: var(--border2); color: var(--text); background: var(--surface); }
+    .search-bottom { display: flex; gap: 8px; align-items: center; }
+    .horizon-select { background: var(--bg); border: 1px solid var(--border2); color: var(--text2); font-family: 'Inter', sans-serif; font-size: 11px; padding: 7px 10px; border-radius: 6px; outline: none; cursor: pointer; flex-shrink: 0; }
+    .research-btn { flex: 1; background: var(--blue); color: white; border: none; font-family: 'Inter', sans-serif; font-size: 13px; font-weight: 600; padding: 9px; border-radius: 6px; cursor: pointer; transition: background 0.12s; }
+    .research-btn:hover { background: #1a6fff; }
+    .research-btn:disabled { background: var(--border2); color: var(--grey); cursor: not-allowed; }
 
-    .btn { border: none; font-family: 'Inter', sans-serif; font-size: 12px; font-weight: 500; padding: 9px 18px; border-radius: 6px; cursor: pointer; transition: all 0.12s; white-space: nowrap; }
-    .btn-primary { background: var(--blue); color: white; }
-    .btn-primary:hover { background: #1a6fff; }
-    .btn-primary:disabled { background: var(--border2); color: var(--grey); cursor: not-allowed; }
-
-    /* Loading */
-    .loading { display: none; padding: 48px; text-align: center; }
-    .loading.active { display: block; }
-    .spinner { width: 32px; height: 32px; border: 2px solid var(--border); border-top-color: var(--blue); border-radius: 50%; animation: spin 0.8s linear infinite; margin: 0 auto 14px; }
+    /* Status bar */
+    .status-bar { display: none; align-items: center; gap: 10px; padding: 10px 14px; background: var(--blue-soft); border: 1px solid rgba(21,101,255,0.15); border-radius: 8px; margin-bottom: 14px; font-size: 11px; color: var(--blue); font-family: 'JetBrains Mono', monospace; }
+    .status-bar.active { display: flex; }
+    .status-spinner { width: 14px; height: 14px; border: 2px solid rgba(21,101,255,0.2); border-top-color: var(--blue); border-radius: 50%; animation: spin 0.7s linear infinite; flex-shrink: 0; }
     @keyframes spin { to { transform: rotate(360deg); } }
-    .loading-txt { font-size: 12px; color: var(--grey2); font-family: 'JetBrains Mono', monospace; }
 
-    /* Error */
-    .error-box { display: none; background: var(--red-dim); border: 1px solid rgba(220,38,38,0.2); border-radius: 8px; padding: 14px 18px; color: var(--red); font-size: 12px; margin-bottom: 16px; }
-    .error-box.active { display: block; }
+    /* Overview card */
+    .overview-card { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 16px; margin-bottom: 14px; box-shadow: var(--shadow); display: none; }
+    .overview-card.active { display: block; }
+    .overview-label { font-size: 10px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.1em; color: var(--grey); margin-bottom: 8px; }
+    .overview-topic { font-size: 16px; font-weight: 600; color: var(--text); margin-bottom: 10px; line-height: 1.3; }
+    .overview-tags { display: flex; gap: 6px; margin-bottom: 12px; flex-wrap: wrap; }
+    .overview-tag { font-size: 10px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.07em; background: var(--surface2); color: var(--grey2); padding: 3px 8px; border-radius: 4px; border: 1px solid var(--border); }
+    .overview-text { font-size: 12px; color: var(--text2); line-height: 1.7; padding: 12px; background: var(--blue-soft); border-left: 3px solid var(--blue); border-radius: 0 6px 6px 0; }
 
-    /* Results */
-    .results { display: none; }
-    .results.active { display: block; }
-
-    /* Stock hero */
-    .result-card { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 20px; margin-bottom: 14px; box-shadow: var(--shadow); }
-    .stock-top { display: flex; align-items: flex-start; justify-content: space-between; margin-bottom: 20px; }
-    .stock-ticker { font-family: 'JetBrains Mono', monospace; font-size: 32px; font-weight: 600; color: var(--text); line-height: 1; }
-    .stock-name { font-size: 12px; color: var(--grey); margin-top: 5px; }
-    .score-display { text-align: right; }
-    .score-big { font-family: 'JetBrains Mono', monospace; font-size: 44px; font-weight: 700; line-height: 1; }
-    .score-big.hi { color: var(--green); } .score-big.mi { color: var(--yellow); } .score-big.lo { color: var(--red); } .score-big.nd { color: var(--grey); }
-    .score-out { font-size: 13px; color: var(--grey); }
-    .sig-badge-lg { font-size: 12px; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; padding: 7px 18px; border-radius: 6px; display: inline-block; margin-top: 8px; }
-    .sig-badge-lg.buy { background: var(--green-dim); color: var(--green); }
-    .sig-badge-lg.watch { background: var(--yellow-dim); color: var(--yellow); }
-    .sig-badge-lg.hold { background: var(--surface2); color: var(--text2); }
-    .sig-badge-lg.sell { background: var(--red-dim); color: var(--red); }
-
-    .conf-row { display: flex; gap: 8px; align-items: center; margin-top: 8px; }
-    .conf-track { flex: 1; background: var(--border); height: 4px; border-radius: 2px; max-width: 120px; }
-    .conf-fill { height: 4px; border-radius: 2px; background: var(--blue); }
-    .conf-txt { font-size: 11px; color: var(--grey); }
-
-    .meta-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; }
-    .meta-item .meta-label { font-size: 10px; text-transform: uppercase; letter-spacing: 0.08em; color: var(--grey); margin-bottom: 3px; }
-    .meta-item .meta-val { font-size: 12px; color: var(--text); font-family: 'JetBrains Mono', monospace; }
-
-    .summary-bar { background: var(--blue-soft); border-left: 3px solid var(--blue); border-radius: 0 6px 6px 0; padding: 12px 16px; font-size: 12px; line-height: 1.7; color: var(--text2); margin-bottom: 14px; }
-
-    .two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 14px; }
-    .list-card { background: var(--surface); border: 1px solid var(--border); border-radius: 8px; padding: 16px; }
-    .list-title { font-size: 10px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 10px; }
-    .list-title.green { color: var(--green); } .list-title.red { color: var(--red); }
-    .bullet-list { list-style: none; }
-    .bullet-item { font-size: 12px; color: var(--text2); padding: 6px 0 6px 14px; border-bottom: 1px solid var(--border); position: relative; line-height: 1.5; }
-    .bullet-item:last-child { border-bottom: none; }
-    .bullet-item.up::before { content:'↑'; position:absolute; left:0; color:var(--green); font-weight:600; }
-    .bullet-item.dn::before { content:'↓'; position:absolute; left:0; color:var(--red); font-weight:600; }
-
-    .signals-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 14px; }
-    .sig-card { background: var(--surface); border: 1px solid var(--border); border-radius: 8px; padding: 14px; }
-    .sig-type { font-size: 10px; text-transform: uppercase; letter-spacing: 0.1em; color: var(--blue); margin-bottom: 5px; font-weight: 600; }
-    .sig-desc { font-size: 12px; color: var(--text2); line-height: 1.5; margin-bottom: 7px; }
-    .sig-src { font-size: 11px; color: var(--grey); text-decoration: none; }
-    .sig-src:hover { color: var(--blue); }
-
-    .add-btn { background: var(--blue); color: white; border: none; font-family: 'Inter', sans-serif; font-size: 12px; font-weight: 500; padding: 9px 18px; border-radius: 6px; cursor: pointer; transition: background 0.12s; }
-    .add-btn:hover { background: #1a6fff; }
-
-    /* Prediction results */
-    .pred-meta { margin-bottom: 12px; }
-    .pred-topic { font-size: 20px; font-weight: 600; color: var(--text); margin-bottom: 6px; }
-    .pred-tags { display: flex; gap: 8px; }
-    .pred-tag { font-size: 10px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.08em; background: var(--surface2); color: var(--grey2); padding: 3px 8px; border-radius: 4px; border: 1px solid var(--border); }
-
-    .pred-card { background: var(--surface); border: 1px solid var(--border); border-radius: 8px; margin-bottom: 10px; overflow: hidden; }
-    .pred-card-top { padding: 16px 20px; border-bottom: 1px solid var(--border); display: flex; align-items: flex-start; justify-content: space-between; gap: 14px; }
-    .pred-statement { font-size: 14px; font-weight: 500; color: var(--text); line-height: 1.5; flex: 1; }
-    .pred-right { display: flex; flex-direction: column; align-items: flex-end; gap: 5px; flex-shrink: 0; }
-    .conf-badge { font-size: 10px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.08em; padding: 2px 8px; border-radius: 4px; }
+    /* Prediction cards */
+    .pred-card { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; margin-bottom: 10px; overflow: hidden; box-shadow: var(--shadow); }
+    .pred-card-top { padding: 14px 16px; display: flex; align-items: flex-start; gap: 12px; cursor: pointer; transition: background 0.1s; }
+    .pred-card-top:hover { background: var(--surface2); }
+    .pred-conf { flex-shrink: 0; }
+    .conf-badge { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.07em; padding: 3px 8px; border-radius: 4px; }
     .conf-badge.high { background: var(--green-dim); color: var(--green); }
     .conf-badge.medium { background: var(--yellow-dim); color: var(--yellow); }
     .conf-badge.low { background: var(--surface2); color: var(--grey2); }
-    .horizon-txt { font-size: 11px; color: var(--grey); font-family: 'JetBrains Mono', monospace; }
-    .pred-card-body { padding: 14px 20px; background: #fafaf9; }
-    .pred-reasoning { font-size: 12px; color: var(--text2); line-height: 1.7; }
-    .pred-signals-row { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 12px; }
-    .pred-sig-item { display: flex; gap: 7px; font-size: 11px; color: var(--grey2); line-height: 1.4; }
-    .pred-sig-dot { width: 5px; height: 5px; border-radius: 50%; background: var(--blue); flex-shrink: 0; margin-top: 4px; }
+    .pred-statement { font-size: 13px; font-weight: 500; color: var(--text); line-height: 1.5; flex: 1; }
+    .pred-arrow { font-size: 12px; color: var(--grey); flex-shrink: 0; transition: transform 0.2s; margin-top: 1px; }
+    .pred-card.open .pred-arrow { transform: rotate(90deg); }
+    .pred-card-body { display: none; padding: 0 16px 14px; border-top: 1px solid var(--border); }
+    .pred-card.open .pred-card-body { display: block; }
+    .pred-reasoning { font-size: 12px; color: var(--text2); line-height: 1.7; padding-top: 12px; }
+    .pred-horizon { font-size: 10px; color: var(--grey); font-family: 'JetBrains Mono', monospace; margin-top: 8px; }
+    .pred-signals { margin-top: 10px; display: grid; grid-template-columns: 1fr 1fr; gap: 6px; }
+    .pred-signal-item { font-size: 11px; color: var(--text2); display: flex; gap: 6px; line-height: 1.4; }
+    .pred-signal-dot { width: 5px; height: 5px; border-radius: 50%; background: var(--blue); flex-shrink: 0; margin-top: 4px; }
 
-    .sources-note { font-size: 11px; color: var(--grey); font-family: 'JetBrains Mono', monospace; margin-bottom: 20px; }
+    /* Empty state */
+    .empty-state { text-align: center; padding: 48px 24px; }
+    .empty-icon { font-size: 36px; margin-bottom: 14px; opacity: 0.15; }
+    .empty-title { font-size: 14px; font-weight: 500; color: var(--text2); margin-bottom: 6px; }
+    .empty-sub { font-size: 12px; color: var(--grey); line-height: 1.6; }
+
+    /* Session history bar */
+    .session-bar { display: flex; align-items: center; gap: 8px; padding: 10px 18px; border-bottom: 1px solid var(--border); background: var(--surface); flex-shrink: 0; }
+    .session-label { font-size: 10px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.08em; color: var(--grey); white-space: nowrap; }
+    .session-select { flex: 1; background: var(--bg); border: 1px solid var(--border2); color: var(--text2); font-family: 'Inter', sans-serif; font-size: 11px; padding: 5px 8px; border-radius: 5px; outline: none; cursor: pointer; }
+    .session-new-btn { font-size: 10px; font-weight: 600; background: none; border: 1px solid var(--border2); color: var(--grey2); padding: 4px 10px; border-radius: 5px; cursor: pointer; transition: all 0.12s; white-space: nowrap; }
+    .session-new-btn:hover { border-color: var(--blue); color: var(--blue); }
+
+    /* ── COL 2: SOURCES ── */
+    .add-url-row { display: flex; gap: 6px; margin-bottom: 14px; }
+    .url-input { flex: 1; background: var(--bg); border: 1px solid var(--border2); border-radius: 6px; color: var(--text); font-family: 'Inter', sans-serif; font-size: 11px; padding: 7px 10px; outline: none; transition: border-color 0.15s; }
+    .url-input:focus { border-color: var(--blue); box-shadow: 0 0 0 2px var(--blue-glow); }
+    .url-input::placeholder { color: var(--grey); }
+    .add-url-btn { background: var(--surface2); border: 1px solid var(--border2); color: var(--text2); font-family: 'Inter', sans-serif; font-size: 11px; font-weight: 500; padding: 7px 12px; border-radius: 6px; cursor: pointer; white-space: nowrap; transition: all 0.12s; }
+    .add-url-btn:hover { border-color: var(--blue); color: var(--blue); background: var(--blue-soft); }
+
+    .source-card { background: var(--surface); border: 1px solid var(--border); border-radius: 8px; padding: 11px 13px; margin-bottom: 8px; }
+    .source-top { display: flex; align-items: flex-start; gap: 8px; margin-bottom: 6px; }
+    .source-favicon { width: 16px; height: 16px; border-radius: 3px; background: var(--surface2); border: 1px solid var(--border); flex-shrink: 0; margin-top: 1px; display: flex; align-items: center; justify-content: center; font-size: 9px; }
+    .source-info { flex: 1; min-width: 0; }
+    .source-title { font-size: 12px; font-weight: 500; color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin-bottom: 2px; }
+    .source-url { font-size: 10px; color: var(--grey); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-family: 'JetBrains Mono', monospace; }
+    .source-tag { font-size: 9px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em; padding: 2px 5px; border-radius: 3px; flex-shrink: 0; }
+    .source-tag.ai { background: var(--blue-soft); color: var(--blue); }
+    .source-tag.user { background: var(--green-dim); color: var(--green); }
+    .source-actions { display: flex; gap: 5px; }
+    .src-btn { font-size: 10px; font-weight: 500; padding: 3px 8px; border-radius: 4px; border: 1px solid var(--border); background: var(--surface2); color: var(--grey2); cursor: pointer; transition: all 0.12s; }
+    .src-btn:hover { color: var(--text); border-color: var(--border2); }
+    .src-btn.copy:hover { color: var(--blue); border-color: rgba(21,101,255,0.3); background: var(--blue-soft); }
+    .src-btn.del:hover { color: var(--red); border-color: rgba(220,38,38,0.3); background: var(--red-dim); }
+
+    .sources-empty { text-align: center; padding: 32px 16px; color: var(--grey); font-size: 12px; line-height: 1.6; }
+    .sources-count { font-size: 10px; color: var(--grey); font-family: 'JetBrains Mono', monospace; margin-bottom: 14px; }
+
+    /* ── COL 3: NOTES ── */
+    .notes-col { background: var(--surface); }
+    .notes-col .col-header { display: flex; align-items: center; justify-content: space-between; }
+    .save-indicator { font-size: 10px; color: var(--grey); font-family: 'JetBrains Mono', monospace; }
+    .quick-labels { display: flex; gap: 5px; flex-wrap: wrap; padding: 10px 18px 0; flex-shrink: 0; }
+    .ql-btn { font-size: 10px; font-weight: 600; padding: 4px 10px; border-radius: 4px; border: 1px solid var(--border2); background: var(--surface2); color: var(--grey2); cursor: pointer; transition: all 0.12s; }
+    .ql-btn:hover { color: var(--text); border-color: var(--border2); background: var(--surface); }
+    .ql-btn.bull { color: var(--green); border-color: rgba(22,163,74,0.3); background: var(--green-dim); }
+    .ql-btn.bull:hover { background: rgba(22,163,74,0.12); }
+    .ql-btn.bear { color: var(--red); border-color: rgba(220,38,38,0.3); background: var(--red-dim); }
+    .ql-btn.bear:hover { background: rgba(220,38,38,0.12); }
+    .ql-btn.catalyst { color: var(--blue); border-color: rgba(21,101,255,0.3); background: var(--blue-soft); }
+    .ql-btn.risk { color: var(--yellow); border-color: rgba(217,119,6,0.3); background: var(--yellow-dim); }
+    .notes-body { flex: 1; display: flex; flex-direction: column; padding: 14px 18px 18px; gap: 10px; overflow: hidden; }
+    .notes-textarea { flex: 1; width: 100%; background: var(--bg); border: 1px solid var(--border2); border-radius: 8px; color: var(--text); font-family: 'Inter', sans-serif; font-size: 13px; padding: 14px 16px; resize: none; outline: none; line-height: 1.8; transition: border-color 0.15s, box-shadow 0.15s; box-shadow: inset 0 1px 3px rgba(0,0,0,0.04); }
+    .notes-textarea:focus { border-color: var(--blue); box-shadow: 0 0 0 3px var(--blue-glow), inset 0 1px 3px rgba(0,0,0,0.04); }
+    .notes-textarea::placeholder { color: var(--grey); line-height: 1.8; }
+    .notes-footer { display: flex; align-items: center; justify-content: space-between; gap: 10px; flex-shrink: 0; }
+    .char-count { font-size: 10px; color: var(--grey); font-family: 'JetBrains Mono', monospace; }
+    .notes-actions { display: flex; gap: 8px; }
+    .clear-btn { background: none; border: 1px solid var(--border); color: var(--grey2); font-family: 'Inter', sans-serif; font-size: 12px; font-weight: 500; padding: 7px 14px; border-radius: 6px; cursor: pointer; transition: all 0.12s; }
+    .clear-btn:hover { border-color: var(--red); color: var(--red); }
+    .save-btn { background: var(--blue); border: none; color: white; font-family: 'Inter', sans-serif; font-size: 12px; font-weight: 600; padding: 7px 20px; border-radius: 6px; cursor: pointer; transition: background 0.12s; }
+    .save-btn:hover { background: #1a6fff; }
+
+    /* Error */
+    .error-box { background: var(--red-dim); border: 1px solid rgba(220,38,38,0.2); border-radius: 8px; padding: 12px 14px; color: var(--red); font-size: 12px; margin-bottom: 12px; display: none; }
+    .error-box.active { display: block; }
   </style>
 </head>
 <body>
+<div class="app">
 
-<!-- Sidebar -->
-<aside class="sidebar">
-  <div class="sidebar-logo">
-    <div class="logo-row">
-      <div class="logo-icon">O</div>
-      <div>
-        <div class="logo-name">Onyx AI</div>
-        <div class="logo-sub">Intelligence</div>
-      </div>
-    </div>
-  </div>
-  <nav class="sidebar-nav">
-    <div class="nav-section">Main</div>
-    <a class="nav-item" href="/">
-      <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor"><path d="M2 2h5v5H2V2zm0 7h5v5H2V9zm7-7h5v5H9V2zm0 7h5v5H9V9z"/></svg>
-      Dashboard
-    </a>
-    <a class="nav-item active" href="/search">
-      <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor"><path d="M11.742 10.344a6.5 6.5 0 1 0-1.397 1.398h-.001l3.85 3.85a1 1 0 0 0 1.415-1.414l-3.85-3.85a1.007 1.007 0 0 0-.115-.099zm-5.242 1.656a5.5 5.5 0 1 1 0-11 5.5 5.5 0 0 1 0 11z"/></svg>
-      Search & Predict
-    </a>
-    <div class="nav-section" style="margin-top:16px">Coming Soon</div>
-    <div class="nav-disabled">
-      <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor"><path d="M8 1a2 2 0 0 1 2 2v4H6V3a2 2 0 0 1 2-2zm3 6V3a3 3 0 0 0-6 0v4a2 2 0 0 0-2 2v5a2 2 0 0 0 2 2h6a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2z"/></svg>
-      Trading
-      <span class="nav-chip">Soon</span>
-    </div>
-  </nav>
-  <div class="sidebar-footer">
-    <div class="market-pill">
-      <div class="dot" id="mktDot"></div>
-      <span id="mktTxt">Checking...</span>
-    </div>
-  </div>
-</aside>
-
-<!-- Main -->
-<main class="main">
-
-  <div class="mode-tabs">
-    <button class="mode-tab active" id="tabStock" onclick="setMode('stock')">Stock / Crypto Signal</button>
-    <button class="mode-tab" id="tabPredict" onclick="setMode('predict')">Market Prediction</button>
-  </div>
-
-  <!-- Stock mode -->
-  <div id="stockMode">
-    <div class="search-card">
-      <div class="search-label">Analyse a Stock or Crypto</div>
-      <div class="search-row">
-        <input class="search-input" type="text" id="tickerInput" placeholder="Enter ticker e.g. AAPL, NVDA, BTC-USD" style="text-transform:uppercase"/>
-        <select class="select-input" id="assetType">
-          <option value="stock">Stock</option>
-          <option value="crypto">Crypto</option>
-        </select>
-        <button class="btn btn-primary" id="stockBtn" onclick="runStockScan()">Analyse →</button>
-      </div>
-      <div class="search-row" style="align-items:center">
-        <span class="source-label">
-          <svg width="12" height="12" viewBox="0 0 16 16" fill="currentColor"><path d="M8.636 3.5a.5.5 0 0 0-.5-.5H1.5A1.5 1.5 0 0 0 0 4.5v10A1.5 1.5 0 0 0 1.5 16h10a1.5 1.5 0 0 0 1.5-1.5V7.864a.5.5 0 0 0-1 0V14.5a.5.5 0 0 1-.5.5h-10a.5.5 0 0 1-.5-.5v-10a.5.5 0 0 1 .5-.5h6.636a.5.5 0 0 0 .5-.5z"/><path d="M16 .5a.5.5 0 0 0-.5-.5h-5a.5.5 0 0 0 0 1h3.793L6.146 9.146a.5.5 0 1 0 .708.708L15 1.707V5.5a.5.5 0 0 0 1 0v-5z"/></svg>
-          Custom source (optional)
-        </span>
-        <input class="source-input" type="url" id="stockSource" placeholder="Paste a URL you want the AI to consider e.g. https://reuters.com/article/..."/>
-      </div>
-    </div>
-  </div>
-
-  <!-- Predict mode -->
-  <div id="predictMode" style="display:none">
-    <div class="search-card">
-      <div class="search-label">Predict a Market Topic</div>
-      <div class="search-row">
-        <input class="search-input" type="text" id="topicInput" placeholder="e.g. Federal Reserve rate decision, AI regulation, oil prices"/>
-        <select class="select-input" id="domainSelect">
-          <option value="markets">Markets</option>
-          <option value="tech">Tech</option>
-          <option value="geopolitics">Geopolitics</option>
-        </select>
-        <select class="select-input" id="horizonSelect">
-          <option value="1-2 weeks">1-2 weeks</option>
-          <option value="1-7 days">1-7 days</option>
-          <option value="3-4 weeks">3-4 weeks</option>
-        </select>
-        <button class="btn btn-primary" id="predictBtn" onclick="runPrediction()">Predict →</button>
-      </div>
-      <div class="search-row" style="align-items:center">
-        <span class="source-label">
-          <svg width="12" height="12" viewBox="0 0 16 16" fill="currentColor"><path d="M8.636 3.5a.5.5 0 0 0-.5-.5H1.5A1.5 1.5 0 0 0 0 4.5v10A1.5 1.5 0 0 0 1.5 16h10a1.5 1.5 0 0 0 1.5-1.5V7.864a.5.5 0 0 0-1 0V14.5a.5.5 0 0 1-.5.5h-10a.5.5 0 0 1-.5-.5v-10a.5.5 0 0 1 .5-.5h6.636a.5.5 0 0 0 .5-.5z"/><path d="M16 .5a.5.5 0 0 0-.5-.5h-5a.5.5 0 0 0 0 1h3.793L6.146 9.146a.5.5 0 1 0 .708.708L15 1.707V5.5a.5.5 0 0 0 1 0v-5z"/></svg>
-          Custom source (optional)
-        </span>
-        <input class="source-input" type="url" id="predictSource" placeholder="Paste a URL you want the AI to consider e.g. https://bloomberg.com/article/..."/>
-      </div>
-    </div>
-  </div>
-
-  <!-- Loading -->
-  <div class="loading" id="loadingState">
-    <div class="spinner"></div>
-    <div class="loading-txt" id="loadingText">Scanning signals...</div>
-  </div>
-
-  <!-- Error -->
-  <div class="error-box" id="errorBox"></div>
-
-  <!-- Stock Results -->
-  <div class="results" id="stockResults">
-    <div class="result-card">
-      <div class="stock-top">
+  <!-- ── SIDEBAR ── -->
+  <aside class="sidebar">
+    <div class="sidebar-logo">
+      <div class="logo-row">
+        <div class="logo-icon">O</div>
         <div>
-          <div class="stock-ticker" id="resTicker"></div>
-          <div class="stock-name" id="resName"></div>
+          <div class="logo-name">Onyx AI</div>
+          <div class="logo-sub">Intelligence</div>
         </div>
-        <div class="score-display">
-          <div class="score-big nd" id="resScore">—</div>
-          <div class="score-out">/ 10</div>
-          <div class="sig-badge-lg pending" id="resBadge">—</div>
-          <div class="conf-row">
-            <div class="conf-track"><div class="conf-fill" id="resConfBar" style="width:0%"></div></div>
-            <span class="conf-txt" id="resConfTxt">—</span>
+      </div>
+    </div>
+    <nav class="sidebar-nav">
+      <div class="nav-section">Main</div>
+      <a class="nav-item" href="/">
+        <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor"><path d="M2 2h5v5H2V2zm0 7h5v5H2V9zm7-7h5v5H9V2zm0 7h5v5H9V9z"/></svg>
+        Dashboard
+      </a>
+      <a class="nav-item active" href="/search">
+        <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor"><path d="M11.742 10.344a6.5 6.5 0 1 0-1.397 1.398h-.001l3.85 3.85a1 1 0 0 0 1.415-1.414l-3.85-3.85zm-5.242 1.656a5.5 5.5 0 1 1 0-11 5.5 5.5 0 0 1 0 11z"/></svg>
+        Research
+      </a>
+      <div class="nav-section" style="margin-top:16px">Coming Soon</div>
+      <div class="nav-disabled">
+        <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor"><path d="M8 1a2 2 0 0 1 2 2v4H6V3a2 2 0 0 1 2-2zm3 6V3a3 3 0 0 0-6 0v4a2 2 0 0 0-2 2v5a2 2 0 0 0 2 2h6a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2z"/></svg>
+        Trading
+        <span class="nav-chip">Soon</span>
+      </div>
+    </nav>
+    <div class="sidebar-footer">
+      <div class="market-pill">
+        <div class="dot" id="mktDot"></div>
+        <span id="mktTxt">Checking...</span>
+      </div>
+    </div>
+  </aside>
+
+  <!-- ── RESEARCH PAGE ── -->
+  <div class="research">
+
+    <!-- ── COLUMN 1: AI ENGINE ── -->
+    <div class="col">
+      <div class="session-bar">
+        <span class="session-label">Session</span>
+        <select class="session-select" id="sessionSelect" onchange="loadSession(this.value)">
+          <option value="">New research session</option>
+        </select>
+        <button class="session-new-btn" onclick="newSession()">+ New</button>
+      </div>
+      <div class="col-header">
+        <div class="col-title">AI Research Engine</div>
+        <div class="col-sub">Search any topic · AI reads the web and predicts</div>
+      </div>
+      <div class="col-body">
+        <!-- Search box -->
+        <div class="search-box">
+          <textarea class="search-input" id="topicInput" rows="2" placeholder="What do you want to research? e.g. Federal Reserve rate decision, TSLA earnings, AI chip demand..."></textarea>
+          <div class="domain-row" id="domainRow">
+            <div class="domain-pill active" data-domain="markets" onclick="toggleDomain(this)">Markets</div>
+            <div class="domain-pill" data-domain="tech" onclick="toggleDomain(this)">Tech</div>
+            <div class="domain-pill" data-domain="geopolitics" onclick="toggleDomain(this)">Geopolitics</div>
+            <div class="domain-pill" data-domain="economics" onclick="toggleDomain(this)">Economics</div>
+            <div class="domain-pill" data-domain="macro" onclick="toggleDomain(this)">Macro</div>
+          </div>
+          <div class="search-bottom">
+            <select class="horizon-select" id="horizonSelect">
+              <option value="1-2 weeks">1-2 weeks</option>
+              <option value="1-7 days">1-7 days</option>
+              <option value="3-4 weeks">3-4 weeks</option>
+              <option value="1-3 months">1-3 months</option>
+            </select>
+            <button class="research-btn" id="researchBtn" onclick="runResearch()">Research →</button>
+          </div>
+        </div>
+
+        <!-- Status bar -->
+        <div class="status-bar" id="statusBar">
+          <div class="status-spinner"></div>
+          <span id="statusText">Initialising research agent...</span>
+        </div>
+
+        <!-- Error -->
+        <div class="error-box" id="errorBox"></div>
+
+        <!-- Overview card -->
+        <div class="overview-card" id="overviewCard">
+          <div class="overview-label">Research Overview</div>
+          <div class="overview-topic" id="overviewTopic"></div>
+          <div class="overview-tags" id="overviewTags"></div>
+          <div class="overview-text" id="overviewText"></div>
+        </div>
+
+        <!-- Prediction cards -->
+        <div id="predList"></div>
+
+        <!-- Empty state -->
+        <div class="empty-state" id="emptyState">
+          <div class="empty-icon">🔭</div>
+          <div class="empty-title">Start a research session</div>
+          <div class="empty-sub">Enter any topic above and the AI will search the web, find patterns, and generate predictions to help inform your investment decisions.</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── COLUMN 2: SOURCES ── -->
+    <div class="col">
+      <div class="col-header">
+        <div class="col-title">Sources</div>
+        <div class="col-sub" id="sourcesCount">0 sources</div>
+      </div>
+      <div class="col-body">
+        <!-- Add URL -->
+        <div class="add-url-row">
+          <input class="url-input" type="url" id="urlInput" placeholder="Paste a URL to add as a source..."/>
+          <button class="add-url-btn" onclick="addManualSource()">+ Add</button>
+        </div>
+
+        <!-- Sources list -->
+        <div id="sourcesList">
+          <div class="sources-empty">
+            <div style="font-size:24px;margin-bottom:10px;opacity:0.2">🔗</div>
+            Sources will appear here when you run a research query.<br>You can also paste your own URLs above.
           </div>
         </div>
       </div>
-      <div class="meta-grid">
-        <div class="meta-item"><div class="meta-label">Confidence</div><div class="meta-val" id="resConf">—</div></div>
-        <div class="meta-item"><div class="meta-label">Time Horizon</div><div class="meta-val" id="resHorizon">—</div></div>
-        <div class="meta-item"><div class="meta-label">Type</div><div class="meta-val" id="resType">—</div></div>
+    </div>
+
+    <!-- ── COLUMN 3: NOTES ── -->
+    <div class="col notes-col">
+      <div class="col-header">
+        <div>
+          <div class="col-title">Research Notes</div>
+          <div class="col-sub save-indicator" id="saveIndicator">Not saved yet</div>
+        </div>
+      </div>
+      <div class="quick-labels">
+        <button class="ql-btn bull" onclick="insertLabel('🟢 Bull Case')">🟢 Bull</button>
+        <button class="ql-btn bear" onclick="insertLabel('🔴 Bear Case')">🔴 Bear</button>
+        <button class="ql-btn catalyst" onclick="insertLabel('⚡ Catalyst')">⚡ Catalyst</button>
+        <button class="ql-btn risk" onclick="insertLabel('⚠️ Risk')">⚠️ Risk</button>
+        <button class="ql-btn" onclick="insertLabel('❓ Question')">❓ Question</button>
+        <button class="ql-btn" onclick="insertLabel('✅ Decision')">✅ Decision</button>
+      </div>
+      <div class="notes-body">
+        <textarea class="notes-textarea" id="notesArea" placeholder="Use this space to organise your research thoughts...&#10;&#10;Add bull and bear cases, catalysts, risks, open questions and your final decision.&#10;&#10;Your notes are saved per research session."></textarea>
+        <div class="notes-footer">
+          <span class="char-count" id="charCount">0 chars</span>
+          <div class="notes-actions">
+            <button class="clear-btn" onclick="clearNotes()">Clear</button>
+            <button class="save-btn" onclick="saveNotes()">Save Notes</button>
+          </div>
+        </div>
       </div>
     </div>
 
-    <div class="summary-bar" id="resSummary"></div>
-
-    <div class="two-col">
-      <div class="list-card">
-        <div class="list-title green">↑ Catalysts</div>
-        <ul class="bullet-list" id="resCatalysts"></ul>
-      </div>
-      <div class="list-card">
-        <div class="list-title red">↓ Risk Factors</div>
-        <ul class="bullet-list" id="resRisks"></ul>
-      </div>
-    </div>
-
-    <div class="signals-grid" id="resSignals"></div>
-    <button class="add-btn" style="margin-bottom:24px" onclick="addToWatchlist()">+ Add to Watchlist</button>
   </div>
-
-  <!-- Prediction Results -->
-  <div class="results" id="predictResults">
-    <div class="pred-meta">
-      <div class="pred-topic" id="predTopic"></div>
-      <div class="pred-tags">
-        <span class="pred-tag" id="predDomain"></span>
-        <span class="pred-tag" id="predHorizon"></span>
-      </div>
-    </div>
-    <div class="summary-bar" id="predSummary"></div>
-    <div class="sources-note" id="predSources"></div>
-    <div id="predList"></div>
-  </div>
-
-</main>
+</div>
 
 <script>
 const API = 'https://prediction-api-production-ad66.up.railway.app';
-let currentMode = 'stock';
-let lastStockResult = null;
+let sessions    = JSON.parse(localStorage.getItem('onyx_sessions') || '[]');
+let currentSessionId = null;
+let sources     = [];
+let activeDomain = 'markets';
 
-// Market status
-const now = new Date();
-const h = now.getUTCHours(), d = now.getUTCDay();
-const open = d > 0 && d < 6 && h >= 13 && h < 21;
-document.getElementById('mktDot').className = 'dot ' + (open ? 'open' : 'closed');
-document.getElementById('mktTxt').textContent = open ? 'Market Open' : 'Market Closed';
+// ── MARKET STATUS ──────────────────────────────────────────────
+(function() {
+  var now = new Date(), h = now.getUTCHours(), d = now.getUTCDay();
+  var open = d > 0 && d < 6 && h >= 13 && h < 21;
+  document.getElementById('mktDot').className = 'dot ' + (open ? 'open' : 'closed');
+  document.getElementById('mktTxt').textContent = open ? 'Market Open' : 'Market Closed';
+})();
 
-document.getElementById('tickerInput').addEventListener('keydown', e => { if (e.key === 'Enter') runStockScan(); });
-document.getElementById('topicInput').addEventListener('keydown', e => { if (e.key === 'Enter') runPrediction(); });
-
-function setMode(mode) {
-  currentMode = mode;
-  document.getElementById('stockMode').style.display = mode === 'stock' ? 'block' : 'none';
-  document.getElementById('predictMode').style.display = mode === 'predict' ? 'block' : 'none';
-  document.getElementById('tabStock').className = 'mode-tab' + (mode === 'stock' ? ' active' : '');
-  document.getElementById('tabPredict').className = 'mode-tab' + (mode === 'predict' ? ' active' : '');
-  document.getElementById('stockResults').classList.remove('active');
-  document.getElementById('predictResults').classList.remove('active');
-  document.getElementById('errorBox').classList.remove('active');
+// ── DOMAIN TOGGLE ──────────────────────────────────────────────
+function toggleDomain(el) {
+  document.querySelectorAll('.domain-pill').forEach(function(p) { p.classList.remove('active'); });
+  el.classList.add('active');
+  activeDomain = el.dataset.domain;
 }
 
-async function runStockScan() {
-  const ticker = document.getElementById('tickerInput').value.trim().toUpperCase();
-  const assetType = document.getElementById('assetType').value;
-  const customSource = document.getElementById('stockSource').value.trim();
-  if (!ticker) { document.getElementById('tickerInput').focus(); return; }
+// ── SESSIONS ───────────────────────────────────────────────────
+function saveSessions() {
+  localStorage.setItem('onyx_sessions', JSON.stringify(sessions));
+}
 
-  const btn = document.getElementById('stockBtn');
-  btn.disabled = true;
-  document.getElementById('loadingState').classList.add('active');
-  document.getElementById('stockResults').classList.remove('active');
-  document.getElementById('errorBox').classList.remove('active');
-  document.getElementById('loadingText').textContent = `Analysing ${ticker}...`;
+function populateSessionSelect() {
+  var sel = document.getElementById('sessionSelect');
+  sel.innerHTML = '<option value="">New research session</option>';
+  sessions.slice().reverse().forEach(function(s) {
+    var opt = document.createElement('option');
+    opt.value = s.id;
+    opt.textContent = s.topic.substring(0, 40) + (s.topic.length > 40 ? '...' : '') + ' · ' + new Date(s.created).toLocaleDateString();
+    sel.appendChild(opt);
+  });
+  if (currentSessionId) sel.value = currentSessionId;
+}
 
-  try {
-    const body = { ticker, asset_type: assetType };
-    if (customSource) body.custom_source = customSource;
-    const res = await fetch(`${API}/invest`, {
-      method: 'POST', headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(body)
-    });
-    const data = await res.json();
-    if (!res.ok) throw new Error(data.detail || 'Error');
-    lastStockResult = { ticker, assetType, data };
-    renderStockResult(data, ticker, assetType);
-  } catch(e) {
-    const eb = document.getElementById('errorBox');
-    eb.textContent = `Error: ${e.message}`;
-    eb.classList.add('active');
-  } finally {
-    document.getElementById('loadingState').classList.remove('active');
-    btn.disabled = false;
+function newSession() {
+  currentSessionId = null;
+  sources = [];
+  document.getElementById('sessionSelect').value = '';
+  document.getElementById('topicInput').value = '';
+  document.getElementById('notesArea').value = '';
+  document.getElementById('overviewCard').classList.remove('active');
+  document.getElementById('predList').innerHTML = '';
+  document.getElementById('emptyState').style.display = 'block';
+  renderSources();
+  updateCharCount();
+  document.getElementById('saveIndicator').textContent = 'Not saved yet';
+}
+
+function loadSession(id) {
+  if (!id) { newSession(); return; }
+  var s = sessions.find(function(s) { return s.id === id; });
+  if (!s) return;
+  currentSessionId = id;
+  sources = s.sources || [];
+  document.getElementById('notesArea').value = s.notes || '';
+  document.getElementById('topicInput').value = s.topic || '';
+  renderSources();
+  updateCharCount();
+  document.getElementById('saveIndicator').textContent = 'Saved ' + new Date(s.created).toLocaleTimeString();
+
+  // Restore results if available
+  if (s.result) {
+    renderResults(s.result, s.topic, s.domain, s.horizon);
   }
 }
 
-function renderStockResult(data, ticker, assetType) {
-  const sm = { BUY:{High:8.5,Medium:7.0,Low:6.0}, WATCH:{High:6.0,Medium:5.5,Low:4.5}, HOLD:{High:5.0,Medium:4.5,Low:4.0}, SELL:{High:2.0,Medium:3.0,Low:3.5} };
-  const score = sm[data.signal]?.[data.confidence] ?? 5.0;
-  const sc = score >= 7 ? 'hi' : score >= 5 ? 'mi' : 'lo';
-  const confPct = data.confidence === 'High' ? 85 : data.confidence === 'Medium' ? 60 : 35;
-  const sigCls = data.signal.toLowerCase();
-
-  document.getElementById('resTicker').textContent = ticker;
-  document.getElementById('resName').textContent = data.asset_name || '';
-  const scoreEl = document.getElementById('resScore');
-  scoreEl.textContent = score.toFixed(1);
-  scoreEl.className = `score-big ${sc}`;
-  const badge = document.getElementById('resBadge');
-  badge.textContent = data.signal;
-  badge.className = `sig-badge-lg ${sigCls}`;
-  document.getElementById('resConfBar').style.width = `${confPct}%`;
-  document.getElementById('resConfTxt').textContent = data.confidence;
-  document.getElementById('resConf').textContent = data.confidence;
-  document.getElementById('resHorizon').textContent = data.time_horizon;
-  document.getElementById('resType').textContent = assetType === 'stock' ? 'Equity' : 'Crypto';
-  document.getElementById('resSummary').textContent = data.summary;
-  document.getElementById('resCatalysts').innerHTML = (data.catalysts||[]).map(c=>`<li class="bullet-item up">${c}</li>`).join('');
-  document.getElementById('resRisks').innerHTML = (data.risks||[]).map(r=>`<li class="bullet-item dn">${r}</li>`).join('');
-  document.getElementById('resSignals').innerHTML = (data.supporting_signals||[]).map(s => {
-    const link = s.url ? `<a class="sig-src" href="${s.url}" target="_blank" rel="noopener">${s.source} ↗</a>`
-      : s.source ? `<a class="sig-src" href="https://news.google.com/search?q=${encodeURIComponent(s.source+' '+ticker)}" target="_blank">${s.source} ↗</a>` : '';
-    return `<div class="sig-card"><div class="sig-type">${s.type}</div><div class="sig-desc">${s.description}</div>${link}</div>`;
-  }).join('');
-
-  document.getElementById('stockResults').classList.add('active');
-  document.getElementById('stockResults').scrollIntoView({ behavior:'smooth', block:'start' });
+function saveCurrentSession(topic, domain, horizon, result) {
+  var notes = document.getElementById('notesArea').value;
+  if (currentSessionId) {
+    var s = sessions.find(function(s) { return s.id === currentSessionId; });
+    if (s) { s.notes = notes; s.sources = sources; s.result = result; s.topic = topic; saveSessions(); return; }
+  }
+  var id = Date.now().toString();
+  currentSessionId = id;
+  sessions.push({ id:id, topic:topic, domain:domain, horizon:horizon, notes:notes, sources:sources, result:result, created:Date.now() });
+  if (sessions.length > 20) sessions = sessions.slice(-20);
+  saveSessions();
+  populateSessionSelect();
 }
 
-function addToWatchlist() {
-  if (!lastStockResult) return;
-  const wl = JSON.parse(localStorage.getItem('onyx_wl_v3') || '[]');
-  const { ticker, assetType } = lastStockResult;
-  if (!wl.find(w => w.ticker === ticker)) {
-    wl.push({ ticker, type: assetType, signal:null, score:null, confidence:null, scannedAt:null, note:'', prevSignal:null, catalysts:[], risks:[] });
-    localStorage.setItem('onyx_wl_v3', JSON.stringify(wl));
-    alert(`${ticker} added to your Dashboard watchlist!`);
-  } else { alert(`${ticker} is already in your watchlist.`); }
-}
-
-async function runPrediction() {
-  const topic = document.getElementById('topicInput').value.trim();
-  const domain = document.getElementById('domainSelect').value;
-  const horizon = document.getElementById('horizonSelect').value;
-  const customSource = document.getElementById('predictSource').value.trim();
+// ── RESEARCH ───────────────────────────────────────────────────
+async function runResearch() {
+  var topic   = document.getElementById('topicInput').value.trim();
+  var horizon = document.getElementById('horizonSelect').value;
   if (!topic) { document.getElementById('topicInput').focus(); return; }
 
-  const btn = document.getElementById('predictBtn');
+  var btn = document.getElementById('researchBtn');
   btn.disabled = true;
-  document.getElementById('loadingState').classList.add('active');
-  document.getElementById('predictResults').classList.remove('active');
+  document.getElementById('statusBar').classList.add('active');
+  document.getElementById('statusText').textContent = 'Searching the web for "' + topic + '"...';
   document.getElementById('errorBox').classList.remove('active');
-  document.getElementById('loadingText').textContent = `Scanning signals for "${topic}"...`;
+  document.getElementById('overviewCard').classList.remove('active');
+  document.getElementById('predList').innerHTML = '';
+  document.getElementById('emptyState').style.display = 'none';
+
+  setTimeout(function() { document.getElementById('statusText').textContent = 'Analysing patterns and signals...'; }, 4000);
+  setTimeout(function() { document.getElementById('statusText').textContent = 'Generating predictions...'; }, 9000);
 
   try {
-    const body = { topic, domain, time_horizon: horizon };
-    if (customSource) body.custom_source = customSource;
-    const res = await fetch(`${API}/predict`, {
-      method: 'POST', headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(body)
+    var res = await fetch(API + '/predict', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ topic:topic, domain:activeDomain, time_horizon:horizon })
     });
-    const data = await res.json();
-    if (!res.ok) throw new Error(data.detail || 'Error');
-    renderPrediction(data, topic, domain, horizon);
+    var data = await res.json();
+    if (!res.ok) throw new Error(data.detail || 'Research failed');
+
+    renderResults(data, topic, activeDomain, horizon);
+    populateSourcesFromResult(data);
+    saveCurrentSession(topic, activeDomain, horizon, data);
+
   } catch(e) {
-    const eb = document.getElementById('errorBox');
-    eb.textContent = `Error: ${e.message}`;
+    var eb = document.getElementById('errorBox');
+    eb.textContent = 'Error: ' + e.message;
     eb.classList.add('active');
+    document.getElementById('emptyState').style.display = 'block';
   } finally {
-    document.getElementById('loadingState').classList.remove('active');
+    document.getElementById('statusBar').classList.remove('active');
     btn.disabled = false;
   }
 }
 
-function renderPrediction(data, topic, domain, horizon) {
-  document.getElementById('predTopic').textContent = topic;
-  document.getElementById('predDomain').textContent = domain.toUpperCase();
-  document.getElementById('predHorizon').textContent = horizon;
-  document.getElementById('predSummary').textContent = data.news_summary;
-  document.getElementById('predSources').textContent = `Searched: ${(data.sources_searched||[]).join(' · ')}`;
+function renderResults(data, topic, domain, horizon) {
+  // Overview
+  document.getElementById('overviewTopic').textContent = topic;
+  document.getElementById('overviewTags').innerHTML =
+    '<span class="overview-tag">' + domain.toUpperCase() + '</span>' +
+    '<span class="overview-tag">' + horizon + '</span>' +
+    '<span class="overview-tag">' + (data.predictions ? data.predictions.length : 0) + ' Predictions</span>';
+  document.getElementById('overviewText').textContent = data.news_summary || '';
+  document.getElementById('overviewCard').classList.add('active');
 
-  document.getElementById('predList').innerHTML = (data.predictions||[]).map(p => {
-    const cc = p.confidence.toLowerCase();
-    const signals = (p.supporting_signals||[]).map(s=>`
-      <div class="pred-sig-item"><div class="pred-sig-dot"></div><div>${s.description}${s.source?` <em style="color:var(--grey)">(${s.source})</em>`:''}</div></div>
-    `).join('');
-    return `<div class="pred-card">
-      <div class="pred-card-top">
-        <div class="pred-statement">${p.statement}</div>
-        <div class="pred-right">
-          <span class="conf-badge ${cc}">${p.confidence}</span>
-          <span class="horizon-txt">${p.time_horizon}</span>
-        </div>
-      </div>
-      <div class="pred-card-body">
-        <div class="pred-reasoning">${p.reasoning}</div>
-        <div class="pred-signals-row">${signals}</div>
-      </div>
-    </div>`;
+  // Predictions
+  var list = document.getElementById('predList');
+  list.innerHTML = (data.predictions || []).map(function(p, i) {
+    var cc = p.confidence.toLowerCase();
+    var signals = (p.supporting_signals || []).map(function(s) {
+      return '<div class="pred-signal-item"><div class="pred-signal-dot"></div><div>' + s.description + '</div></div>';
+    }).join('');
+    return '<div class="pred-card" id="pred-'+i+'">' +
+      '<div class="pred-card-top" onclick="togglePred('+i+')">' +
+        '<div class="pred-conf"><span class="conf-badge '+cc+'">'+p.confidence+'</span></div>' +
+        '<div class="pred-statement">'+p.statement+'</div>' +
+        '<div class="pred-arrow">▶</div>' +
+      '</div>' +
+      '<div class="pred-card-body">' +
+        '<div class="pred-reasoning">'+p.reasoning+'</div>' +
+        (signals ? '<div class="pred-signals">'+signals+'</div>' : '') +
+        '<div class="pred-horizon">Horizon: '+p.time_horizon+'</div>' +
+      '</div>' +
+    '</div>';
   }).join('');
-
-  document.getElementById('predictResults').classList.add('active');
-  document.getElementById('predictResults').scrollIntoView({ behavior:'smooth', block:'start' });
 }
+
+function togglePred(i) {
+  var card = document.getElementById('pred-'+i);
+  card.classList.toggle('open');
+}
+
+// ── SOURCES ────────────────────────────────────────────────────
+function populateSourcesFromResult(data) {
+  var newSources = [];
+  (data.predictions || []).forEach(function(p) {
+    (p.supporting_signals || []).forEach(function(s) {
+      if (s.source && !sources.find(function(src) { return src.title === s.source; })) {
+        newSources.push({ title: s.source, url: s.url || null, tag: 'ai', id: Date.now() + Math.random() });
+      }
+    });
+  });
+  (data.sources_searched || []).forEach(function(q) {
+    if (!sources.find(function(src) { return src.title === q; })) {
+      newSources.push({ title: q, url: null, tag: 'ai', id: Date.now() + Math.random() });
+    }
+  });
+  sources = sources.concat(newSources);
+  renderSources();
+}
+
+function addManualSource() {
+  var input = document.getElementById('urlInput');
+  var url = input.value.trim();
+  if (!url) return;
+  if (!url.startsWith('http')) url = 'https://' + url;
+  var title = url.replace(/^https?:\/\//, '').replace(/\/.*/, '');
+  sources.unshift({ title: title, url: url, tag: 'user', id: Date.now() });
+  input.value = '';
+  renderSources();
+  if (currentSessionId) {
+    var s = sessions.find(function(s) { return s.id === currentSessionId; });
+    if (s) { s.sources = sources; saveSessions(); }
+  }
+}
+
+function removeSource(id) {
+  sources = sources.filter(function(s) { return s.id !== id; });
+  renderSources();
+}
+
+function copySourceToNotes(title, url) {
+  var notes = document.getElementById('notesArea');
+  var addition = '\n📎 Source: ' + title + (url ? '\n   ' + url : '') + '\n';
+  notes.value += addition;
+  updateCharCount();
+  notes.scrollTop = notes.scrollHeight;
+}
+
+function renderSources() {
+  var list = document.getElementById('sourcesList');
+  var count = document.getElementById('sourcesCount');
+  count.textContent = sources.length + ' source' + (sources.length !== 1 ? 's' : '');
+
+  if (!sources.length) {
+    list.innerHTML = '<div class="sources-empty"><div style="font-size:24px;margin-bottom:10px;opacity:0.2">🔗</div>Sources will appear here when you run a research query.<br>You can also paste your own URLs above.</div>';
+    return;
+  }
+
+  list.innerHTML = sources.map(function(src) {
+    var domain = src.url ? src.url.replace(/^https?:\/\//, '').split('/')[0] : src.title;
+    var favicon = src.url ? '<img src="https://www.google.com/s2/favicons?domain=' + domain + '&sz=16" width="16" height="16" style="border-radius:2px" onerror="this.style.display=\'none\'">' : '🔗';
+    return '<div class="source-card">' +
+      '<div class="source-top">' +
+        '<div class="source-favicon">' + favicon + '</div>' +
+        '<div class="source-info">' +
+          '<div class="source-title">' + src.title + '</div>' +
+          '<div class="source-url">' + (src.url || 'AI search query') + '</div>' +
+        '</div>' +
+        '<span class="source-tag ' + src.tag + '">' + src.tag.toUpperCase() + '</span>' +
+      '</div>' +
+      '<div class="source-actions">' +
+        (src.url ? '<button class="src-btn" onclick="window.open(\'' + src.url + '\',\'_blank\')">↗ Open</button>' : '') +
+        '<button class="src-btn copy" onclick="copySourceToNotes(\'' + src.title.replace(/'/g,"\\'")+'\',\'' + (src.url||'').replace(/'/g,"\\'")+'\')">📋 Copy to notes</button>' +
+        '<button class="src-btn del" onclick="removeSource(' + src.id + ')">×</button>' +
+      '</div>' +
+    '</div>';
+  }).join('');
+}
+
+// ── NOTES ──────────────────────────────────────────────────────
+document.getElementById('notesArea').addEventListener('input', updateCharCount);
+document.addEventListener('keydown', function(e) {
+  if ((e.ctrlKey || e.metaKey) && e.key === 's') { e.preventDefault(); saveNotes(); }
+});
+document.getElementById('urlInput').addEventListener('keydown', function(e) {
+  if (e.key === 'Enter') addManualSource();
+});
+document.getElementById('topicInput').addEventListener('keydown', function(e) {
+  if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); runResearch(); }
+});
+
+function insertLabel(label) {
+  var ta = document.getElementById('notesArea');
+  var pos = ta.selectionStart;
+  var before = ta.value.substring(0, pos);
+  var after = ta.value.substring(pos);
+  var prefix = before.length > 0 && !before.endsWith('\n') ? '\n\n' : '';
+  ta.value = before + prefix + '── ' + label + ' ──\n' + after;
+  ta.selectionStart = ta.selectionEnd = pos + prefix.length + label.length + 8;
+  ta.focus();
+  updateCharCount();
+}
+
+function updateCharCount() {
+  var len = document.getElementById('notesArea').value.length;
+  document.getElementById('charCount').textContent = len.toLocaleString() + ' chars';
+}
+
+function saveNotes() {
+  var notes = document.getElementById('notesArea').value;
+  var topic = document.getElementById('topicInput').value.trim() || 'Untitled';
+  if (currentSessionId) {
+    var s = sessions.find(function(s) { return s.id === currentSessionId; });
+    if (s) { s.notes = notes; s.sources = sources; saveSessions(); }
+  } else if (notes.trim()) {
+    var id = Date.now().toString();
+    currentSessionId = id;
+    sessions.push({ id:id, topic:topic, domain:activeDomain, horizon:'1-2 weeks', notes:notes, sources:sources, result:null, created:Date.now() });
+    if (sessions.length > 20) sessions = sessions.slice(-20);
+    saveSessions();
+    populateSessionSelect();
+  }
+  var now = new Date().toLocaleTimeString('en-US',{hour:'numeric',minute:'2-digit'});
+  document.getElementById('saveIndicator').textContent = 'Saved at ' + now;
+  var btn = document.querySelector('.save-btn');
+  var orig = btn.textContent;
+  btn.textContent = 'Saved ✓';
+  btn.style.background = 'var(--green)';
+  setTimeout(function() { btn.textContent = orig; btn.style.background = ''; }, 1500);
+}
+
+function clearNotes() {
+  if (document.getElementById('notesArea').value && !confirm('Clear all notes?')) return;
+  document.getElementById('notesArea').value = '';
+  updateCharCount();
+}
+
+// ── INIT ───────────────────────────────────────────────────────
+populateSessionSelect();
+renderSources();
+updateCharCount();
 </script>
 </body>
 </html>
