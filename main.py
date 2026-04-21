@@ -1,31 +1,13 @@
-from fastapi import FastAPI, HTTPException
-from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import FileResponse
-from contextlib import asynccontextmanager
-import uvicorn
 import os
-
-from models import PredictionRequest, PredictionResponse, PredictionsListResponse, DomainSummaryResponse, InvestmentRequest, InvestmentResponse
+from fastapi import FastAPI
+from fastapi.responses import HTMLResponse
+from fastapi.middleware.cors import CORSMiddleware
+from models import PredictionRequest, InvestmentRequest
 from agent import PredictionAgent, InvestmentAgent
-from database import Database
+from database import init_db, save_prediction, get_recent_predictions
+import requests as req
 
-db = Database()
-agent = PredictionAgent()
-invest_agent = InvestmentAgent()
-
-
-@asynccontextmanager
-async def lifespan(app: FastAPI):
-    db.initialize()
-    yield
-
-
-app = FastAPI(
-    title="Onyx AI API",
-    description="AI-powered prediction and investment signal intelligence.",
-    version="1.0.0",
-    lifespan=lifespan
-)
+app = FastAPI(title="Onyx AI Prediction API")
 
 app.add_middleware(
     CORSMiddleware,
@@ -35,35 +17,107 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-
-# ── Frontend routes ──────────────────────────────────────────────────────────
-
-@app.get("/")
-def serve_frontend():
-    return FileResponse("index.html")
+init_db()
+predict_agent = PredictionAgent()
+invest_agent = InvestmentAgent()
 
 
-@app.get("/invest")
-def serve_invest():
-    return FileResponse("invest.html")
+# ── PAGES ─────────────────────────────────────────────────────
+
+@app.get("/", response_class=HTMLResponse)
+def dashboard():
+    with open("index.html", "r") as f:
+        return f.read()
+
+@app.get("/search", response_class=HTMLResponse)
+def search_page():
+    with open("search.html", "r") as f:
+        return f.read()
 
 
-@app.get("/watchlist")
-def serve_watchlist():
-    return FileResponse("watchlist.html")
+# ── PRICES ────────────────────────────────────────────────────
+
+@app.get("/prices")
+def get_prices(tickers: str):
+    """Get real-time stock prices. Tries Finnhub first, then Yahoo Finance."""
+    ticker_list = [t.strip().upper() for t in tickers.split(",") if t.strip()]
+    api_key = os.environ.get("FINNHUB_API_KEY", "")
+    result = {}
+    headers = {
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36",
+        "Accept": "application/json",
+    }
+
+    for ticker in ticker_list:
+        price = None
+        prev = None
+
+        # 1. Finnhub (primary)
+        if api_key:
+            try:
+                url = f"https://finnhub.io/api/v1/quote?symbol={ticker}&token={api_key}"
+                r = req.get(url, timeout=6, headers=headers)
+                if r.status_code == 200:
+                    data = r.json()
+                    c = data.get("c", 0)
+                    pc = data.get("pc", 0)
+                    if c and c > 0:
+                        price = round(float(c), 2)
+                        prev = round(float(pc), 2) if pc else price
+            except Exception:
+                pass
+
+        # 2. Yahoo Finance v8 (fallback)
+        if not price:
+            try:
+                url = f"https://query1.finance.yahoo.com/v8/finance/chart/{ticker}?interval=1m&range=1d"
+                r = req.get(url, timeout=6, headers=headers)
+                if r.status_code == 200:
+                    data = r.json()
+                    result_list = data.get("chart", {}).get("result", [])
+                    if result_list:
+                        meta = result_list[0].get("meta", {})
+                        p = meta.get("regularMarketPrice") or meta.get("previousClose")
+                        pc = meta.get("previousClose") or p
+                        if p and float(p) > 0:
+                            price = round(float(p), 2)
+                            prev = round(float(pc), 2) if pc else price
+            except Exception:
+                pass
+
+        # 3. Yahoo Finance v7 (second fallback)
+        if not price:
+            try:
+                url = f"https://query2.finance.yahoo.com/v7/finance/quote?symbols={ticker}"
+                r = req.get(url, timeout=6, headers=headers)
+                if r.status_code == 200:
+                    data = r.json()
+                    quotes = data.get("quoteResponse", {}).get("result", [])
+                    if quotes:
+                        q = quotes[0]
+                        p = q.get("regularMarketPrice")
+                        pc = q.get("regularMarketPreviousClose") or p
+                        if p and float(p) > 0:
+                            price = round(float(p), 2)
+                            prev = round(float(pc), 2) if pc else price
+            except Exception:
+                pass
+
+        if price:
+            chg = round(((price - prev) / prev) * 100, 2) if prev and prev > 0 else 0
+            result[ticker] = {"price": price, "prev_close": prev, "change_pct": chg}
+        else:
+            result[ticker] = {"price": None, "change_pct": None, "error": "No price data"}
+
+    return result
 
 
-@app.get("/search")
-def serve_search():
-    return FileResponse("search.html")
-
-
-# ── API routes ───────────────────────────────────────────────────────────────
+# ── CHART DATA ────────────────────────────────────────────────
 
 @app.get("/chart")
 def get_chart_data(ticker: str, from_ts: int = None, to_ts: int = None, resolution: str = "5"):
-    """Get historical price data for charting using Finnhub."""
-    import requests as req, time
+    """Get historical OHLCV data for charting via Finnhub."""
+    import time
     api_key = os.environ.get("FINNHUB_API_KEY", "")
     now = int(time.time())
     from_ts = from_ts or (now - 86400)
@@ -75,125 +129,37 @@ def get_chart_data(ticker: str, from_ts: int = None, to_ts: int = None, resoluti
         if data.get("s") == "ok":
             prices = [{"t": t, "p": c} for t, c in zip(data["t"], data["c"])]
             return {"ticker": ticker, "prices": prices}
-        # Try crypto
-        url2 = f"https://finnhub.io/api/v1/crypto/candle?symbol=BINANCE:{ticker.replace('-USD','USDT')}&resolution={resolution}&from={from_ts}&to={to_ts}&token={api_key}"
-        r2 = req.get(url2, timeout=10)
-        data2 = r2.json()
-        if data2.get("s") == "ok":
-            prices = [{"t": t, "p": c} for t, c in zip(data2["t"], data2["c"])]
-            return {"ticker": ticker, "prices": prices}
         return {"ticker": ticker, "prices": []}
     except Exception as e:
         return {"ticker": ticker, "prices": [], "error": str(e)}
 
 
-@app.get("/health")
-def health_check():
-    return {"status": "ok", "version": "1.0.0"}
+# ── AI ENDPOINTS ──────────────────────────────────────────────
 
-
-@app.get("/prices")
-def get_prices(tickers: str):
-    """Get real-time prices using Yahoo Finance - no API key needed."""
-    import requests as req
-    ticker_list = [t.strip().upper() for t in tickers.split(",") if t.strip()]
-    result = {}
-    headers = {
-        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36"
-    }
-    for ticker in ticker_list:
-        try:
-            url = f"https://query1.finance.yahoo.com/v8/finance/chart/{ticker}?interval=1m&range=1d"
-            r = req.get(url, timeout=10, headers=headers)
-            data = r.json()
-            chart = data.get("chart", {}).get("result", [])
-            if chart:
-                meta = chart[0].get("meta", {})
-                price = meta.get("regularMarketPrice") or meta.get("previousClose")
-                prev  = meta.get("previousClose") or meta.get("chartPreviousClose")
-                if price and price > 0:
-                    change_pct = round(((price - prev) / prev) * 100, 2) if prev else 0
-                    result[ticker] = {
-                        "price": round(price, 2),
-                        "prev_close": round(prev, 2) if prev else None,
-                        "change_pct": change_pct
-                    }
-                else:
-                    result[ticker] = {"price": None, "change_pct": None, "error": "No price data"}
-            else:
-                # Fallback: try v7 endpoint
-                url2 = f"https://query2.finance.yahoo.com/v7/finance/quote?symbols={ticker}"
-                r2 = req.get(url2, timeout=10, headers=headers)
-                data2 = r2.json()
-                quotes = data2.get("quoteResponse", {}).get("result", [])
-                if quotes:
-                    q = quotes[0]
-                    price = q.get("regularMarketPrice")
-                    prev  = q.get("regularMarketPreviousClose")
-                    if price:
-                        change_pct = round(((price - prev) / prev) * 100, 2) if prev else 0
-                        result[ticker] = {"price": round(price, 2), "prev_close": round(prev, 2) if prev else None, "change_pct": change_pct}
-                    else:
-                        result[ticker] = {"price": None, "change_pct": None, "error": "No data"}
-                else:
-                    result[ticker] = {"price": None, "change_pct": None, "error": "No data"}
-        except Exception as e:
-            result[ticker] = {"price": None, "change_pct": None, "error": str(e)}
+@app.post("/predict")
+async def predict(request: PredictionRequest):
+    result = await predict_agent.run(
+        topic=request.topic,
+        domain=request.domain,
+        time_horizon=request.time_horizon,
+        custom_source=getattr(request, "custom_source", None)
+    )
+    save_prediction(request.topic, result.dict())
     return result
 
-
-@app.post("/predict", response_model=PredictionResponse)
-async def run_prediction(request: PredictionRequest):
-    try:
-        result = await agent.run(
-            topic=request.topic,
-            domain=request.domain,
-            time_horizon=request.time_horizon
-        )
-        db.save_prediction(result)
-        return result
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
-
-
-@app.post("/invest", response_model=InvestmentResponse)
-async def run_investment(request: InvestmentRequest):
-    try:
-        result = await invest_agent.run(
-            ticker=request.ticker,
-            asset_type=request.asset_type,
-            custom_source=request.custom_source
-        )
-        return result
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
-
-
-@app.get("/predictions", response_model=PredictionsListResponse)
-def get_all_predictions(limit: int = 50, offset: int = 0):
-    predictions = db.get_predictions(limit=limit, offset=offset)
-    total = db.count_predictions()
-    return PredictionsListResponse(predictions=predictions, total=total)
-
-
-@app.get("/predictions/{domain}", response_model=PredictionsListResponse)
-def get_predictions_by_domain(domain: str, limit: int = 20):
-    if domain not in ("tech", "markets", "geopolitics"):
-        raise HTTPException(status_code=400, detail="domain must be one of: tech, markets, geopolitics")
-    predictions = db.get_predictions_by_domain(domain=domain, limit=limit)
-    total = db.count_predictions(domain=domain)
-    return PredictionsListResponse(predictions=predictions, total=total)
-
-
-@app.get("/summary", response_model=DomainSummaryResponse)
-def get_domain_summary():
-    return DomainSummaryResponse(
-        tech=db.count_predictions("tech"),
-        markets=db.count_predictions("markets"),
-        geopolitics=db.count_predictions("geopolitics"),
-        total=db.count_predictions()
+@app.post("/invest")
+async def invest(request: InvestmentRequest):
+    result = await invest_agent.run(
+        ticker=request.ticker,
+        asset_type=request.asset_type,
+        custom_source=getattr(request, "custom_source", None)
     )
+    return result
 
+@app.get("/predictions")
+def get_predictions(limit: int = 10):
+    return get_recent_predictions(limit)
 
-if __name__ == "__main__":
-    uvicorn.run("main:app", host="0.0.0.0", port=8000, reload=True)
+@app.get("/health")
+def health():
+    return {"status": "ok"}
