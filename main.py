@@ -94,23 +94,49 @@ def health_check():
 
 @app.get("/prices")
 def get_prices(tickers: str):
-    """Get current prices using Finnhub API."""
+    """Get real-time prices using Yahoo Finance - no API key needed."""
     import requests as req
-    api_key = os.environ.get("FINNHUB_API_KEY", "")
     ticker_list = [t.strip().upper() for t in tickers.split(",") if t.strip()]
     result = {}
+    headers = {
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36"
+    }
     for ticker in ticker_list:
         try:
-            url = f"https://finnhub.io/api/v1/quote?symbol={ticker}&token={api_key}"
-            r = req.get(url, timeout=10)
+            url = f"https://query1.finance.yahoo.com/v8/finance/chart/{ticker}?interval=1m&range=1d"
+            r = req.get(url, timeout=10, headers=headers)
             data = r.json()
-            price = data.get("c")  # current price
-            prev = data.get("pc")  # previous close
-            if price and prev and price > 0:
-                change_pct = round(((price - prev) / prev) * 100, 2)
-                result[ticker] = {"price": round(price, 2), "prev_close": round(prev, 2), "change_pct": change_pct}
+            chart = data.get("chart", {}).get("result", [])
+            if chart:
+                meta = chart[0].get("meta", {})
+                price = meta.get("regularMarketPrice") or meta.get("previousClose")
+                prev  = meta.get("previousClose") or meta.get("chartPreviousClose")
+                if price and price > 0:
+                    change_pct = round(((price - prev) / prev) * 100, 2) if prev else 0
+                    result[ticker] = {
+                        "price": round(price, 2),
+                        "prev_close": round(prev, 2) if prev else None,
+                        "change_pct": change_pct
+                    }
+                else:
+                    result[ticker] = {"price": None, "change_pct": None, "error": "No price data"}
             else:
-                result[ticker] = {"price": None, "change_pct": None, "error": "No data"}
+                # Fallback: try v7 endpoint
+                url2 = f"https://query2.finance.yahoo.com/v7/finance/quote?symbols={ticker}"
+                r2 = req.get(url2, timeout=10, headers=headers)
+                data2 = r2.json()
+                quotes = data2.get("quoteResponse", {}).get("result", [])
+                if quotes:
+                    q = quotes[0]
+                    price = q.get("regularMarketPrice")
+                    prev  = q.get("regularMarketPreviousClose")
+                    if price:
+                        change_pct = round(((price - prev) / prev) * 100, 2) if prev else 0
+                        result[ticker] = {"price": round(price, 2), "prev_close": round(prev, 2) if prev else None, "change_pct": change_pct}
+                    else:
+                        result[ticker] = {"price": None, "change_pct": None, "error": "No data"}
+                else:
+                    result[ticker] = {"price": None, "change_pct": None, "error": "No data"}
         except Exception as e:
             result[ticker] = {"price": None, "change_pct": None, "error": str(e)}
     return result
