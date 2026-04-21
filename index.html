@@ -425,61 +425,71 @@
 </div>
 
 <script>
-var _timerSecs = 120; // global timer countdown
+// ── STATE ─────────────────────────────────────────────────────
+var _timerSecs = 120;
 var CHART_COLORS = ["#1565ff","#16a34a","#d97706","#dc2626","#7c3aed","#0891b2","#be185d","#65a30d"];
+
+let watchlist   = JSON.parse(localStorage.getItem('onyx_wl_v3')    || '[]');
+let portfolio   = JSON.parse(localStorage.getItem('onyx_portfolio') || '[]');
+let scanHistory = JSON.parse(localStorage.getItem('onyx_hist_v3')  || '[]');
+let comments    = JSON.parse(localStorage.getItem('onyx_comments') || '{}');
+let prices      = {};
+let selectedTicker = null;
+
+const API = 'https://prediction-api-production-ad66.up.railway.app';
+
+// ── 2-MIN PRICE TIMER ─────────────────────────────────────────
 setInterval(function() {
   _timerSecs--;
-  var el = document.getElementById("priceTimer");
+  var el = document.getElementById('priceTimer');
   if (el) {
     var m = Math.floor(_timerSecs / 60);
     var s = _timerSecs % 60;
-    el.textContent = m + ":" + (s < 10 ? "0" : "") + s;
-    el.style.color = _timerSecs <= 15 ? "#dc2626" : "#1565ff";
+    el.textContent = m + ':' + (s < 10 ? '0' : '') + s;
+    el.style.opacity  = portfolio.length > 0 ? '1' : '0.4';
+    el.style.color    = _timerSecs <= 15 ? '#dc2626' : '#1565ff';
   }
   if (_timerSecs <= 0) {
     _timerSecs = 120;
-    if (typeof portfolio !== "undefined" && portfolio.length > 0 && typeof autoUpdatePortfolioPrices !== "undefined") {
-      autoUpdatePortfolioPrices();
-    }
+    if (portfolio.length > 0) autoUpdatePortfolioPrices();
   }
 }, 1000);
-const API = 'https://prediction-api-production-ad66.up.railway.app';
-let watchlist = JSON.parse(localStorage.getItem('onyx_wl_v3') || '[]');
-let portfolio = JSON.parse(localStorage.getItem('onyx_portfolio') || '[]');
-let scanHistory = JSON.parse(localStorage.getItem('onyx_hist_v3') || '[]');
-let comments = JSON.parse(localStorage.getItem('onyx_comments') || '{}');
-let prices = {};
-let selectedTicker = null;
 
-// Market status
-const now = new Date();
-const h = now.getUTCHours(), d = now.getUTCDay();
-const mktOpen = d > 0 && d < 6 && h >= 13 && h < 21;
-document.getElementById('mktDot').className = 'dot ' + (mktOpen ? 'open' : 'closed');
-document.getElementById('mktTxt').textContent = mktOpen ? 'Market Open' : 'Market Closed';
-document.getElementById('mktTime').textContent = now.toLocaleDateString('en-US', { weekday:'short', month:'short', day:'numeric' });
-
-document.getElementById('tickerInput').addEventListener('keydown', e => { if (e.key === 'Enter') addTicker(); });
-document.addEventListener('keydown', function(e) { if (e.key === 'Enter' && document.getElementById('buyModal').classList.contains('active')) confirmBuy(); if (e.key === 'Escape' && document.getElementById('buyModal').classList.contains('active')) closeBuyModal(); });
-
-renderTable();
-// Load prices for watchlist stocks immediately
-if (watchlist.length > 0) refreshPrices();
-
+// ── PERSIST ───────────────────────────────────────────────────
 function save() {
-  localStorage.setItem('onyx_wl_v3', JSON.stringify(watchlist));
-  localStorage.setItem('onyx_hist_v3', JSON.stringify(scanHistory));
+  localStorage.setItem('onyx_wl_v3',    JSON.stringify(watchlist));
+  localStorage.setItem('onyx_hist_v3',  JSON.stringify(scanHistory));
   localStorage.setItem('onyx_comments', JSON.stringify(comments));
 }
+function savePortfolio() {
+  localStorage.setItem('onyx_portfolio', JSON.stringify(portfolio));
+}
+
+// ── MARKET STATUS ─────────────────────────────────────────────
+(function() {
+  var now = new Date();
+  var h = now.getUTCHours(), d = now.getUTCDay();
+  var open = d > 0 && d < 6 && h >= 13 && h < 21;
+  var dot = document.getElementById('mktDot');
+  var txt = document.getElementById('mktTxt');
+  if (dot) dot.className = 'dot ' + (open ? 'open' : 'closed');
+  if (txt) txt.textContent = open ? 'Market Open' : 'Market Closed';
+})();
+
+// ── WATCHLIST ─────────────────────────────────────────────────
+document.getElementById('tickerInput').addEventListener('keydown', function(e) {
+  if (e.key === 'Enter') addTicker();
+});
 
 function addTicker() {
-  const ticker = document.getElementById('tickerInput').value.trim().toUpperCase();
-  const type = document.getElementById('assetType').value;
-  if (!ticker || watchlist.find(w => w.ticker === ticker)) {
+  var ticker = document.getElementById('tickerInput').value.trim().toUpperCase();
+  var type   = document.getElementById('assetType').value;
+  if (!ticker || watchlist.find(function(w) { return w.ticker === ticker; })) {
     document.getElementById('tickerInput').value = '';
     return;
   }
-  watchlist.push({ ticker, type, signal:null, score:null, confidence:null, scannedAt:null, prevSignal:null, catalysts:[], risks:[], signals:[], assetName:'' });
+  watchlist.push({ ticker: ticker, type: type, signal: null, score: null, confidence: null,
+                   scannedAt: null, prevSignal: null, catalysts: [], risks: [], signals: [], assetName: '' });
   save();
   renderTable();
   document.getElementById('tickerInput').value = '';
@@ -488,7 +498,7 @@ function addTicker() {
 
 function removeTicker(ticker) {
   if (selectedTicker === ticker) closePanel();
-  watchlist = watchlist.filter(w => w.ticker !== ticker);
+  watchlist = watchlist.filter(function(w) { return w.ticker !== ticker; });
   save();
   renderTable();
 }
@@ -496,52 +506,83 @@ function removeTicker(ticker) {
 async function refreshPrices() {
   if (!watchlist.length) return;
   try {
-    const res = await fetch(`${API}/prices?tickers=${encodeURIComponent(watchlist.map(w=>w.ticker).join(','))}`);
+    var tickers = watchlist.map(function(w) { return w.ticker; }).join(',');
+    var res = await fetch(API + '/prices?tickers=' + encodeURIComponent(tickers));
     if (res.ok) { prices = await res.json(); renderTable(); }
+  } catch(e) {}
+}
+
+async function autoUpdatePortfolioPrices() {
+  if (!portfolio.length) return;
+  try {
+    var tickers = portfolio.map(function(p) { return p.ticker; }).join(',');
+    var res = await fetch(API + '/prices?tickers=' + encodeURIComponent(tickers));
+    if (!res.ok) return;
+    var fresh = await res.json();
+    Object.assign(prices, fresh);
+    var now = Date.now();
+    portfolio.forEach(function(p) {
+      var price = fresh[p.ticker] && fresh[p.ticker].price;
+      if (price) {
+        p.points.push({ t: now, p: parseFloat(price) });
+        if (p.points.length > 1440) p.points = p.points.slice(-1440);
+      }
+    });
+    savePortfolio();
+    renderTable();
+    updateChartLegend();
+    drawChart();
+    var sub = document.getElementById('chartSubtitle');
+    if (sub && portfolio.length > 0) {
+      var t = new Date().toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' });
+      sub.textContent = portfolio.length + ' stock' + (portfolio.length !== 1 ? 's' : '') + ' tracked · ' + t;
+    }
+    _timerSecs = 120;
   } catch(e) {}
 }
 
 async function scanAll() {
   if (!watchlist.length) return;
-  const btn = document.getElementById('scanAllBtn');
+  var btn = document.getElementById('scanAllBtn');
   btn.disabled = true;
   document.getElementById('progressWrap').classList.add('active');
   await refreshPrices();
-  for (let i = 0; i < watchlist.length; i++) {
-    document.getElementById('progressFill').style.width = `${Math.round((i/watchlist.length)*100)}%`;
-    document.getElementById('progressTxt').textContent = `Analysing ${watchlist[i].ticker} (${i+1}/${watchlist.length})`;
+  for (var i = 0; i < watchlist.length; i++) {
+    document.getElementById('progressFill').style.width = Math.round((i / watchlist.length) * 100) + '%';
+    document.getElementById('progressTxt').textContent = 'Analysing ' + watchlist[i].ticker + ' (' + (i+1) + '/' + watchlist.length + ')';
     await scanTicker(watchlist[i].ticker, false);
     if (i < watchlist.length - 1) await sleep(3000);
   }
   document.getElementById('progressFill').style.width = '100%';
   document.getElementById('progressTxt').textContent = 'Scan complete';
-  setTimeout(() => document.getElementById('progressWrap').classList.remove('active'), 1500);
+  setTimeout(function() { document.getElementById('progressWrap').classList.remove('active'); }, 1500);
   btn.disabled = false;
   renderTable();
   if (selectedTicker) renderPanel(selectedTicker);
 }
 
-async function scanTicker(ticker, rerender = true) {
-  const w = watchlist.find(w => w.ticker === ticker);
+async function scanTicker(ticker, rerender) {
+  if (rerender === undefined) rerender = true;
+  var w = watchlist.find(function(w) { return w.ticker === ticker; });
   if (!w) return;
-  const prev = w.signal;
+  var prev = w.signal;
   w.scanning = true;
   if (rerender) renderTable();
   try {
-    const res = await fetch(`${API}/invest`, {
+    var res = await fetch(API + '/invest', {
       method: 'POST', headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ ticker, asset_type: w.type, custom_source: comments[ticker+'_url'] || undefined })
+      body: JSON.stringify({ ticker: ticker, asset_type: w.type, custom_source: comments[ticker + '_url'] || undefined })
     });
-    const data = await res.json();
+    var data = await res.json();
     if (res.ok) {
       w.signal = data.signal; w.assetName = data.asset_name || ''; w.summary = data.summary;
       w.scannedAt = new Date().toISOString(); w.prevSignal = prev;
       w.catalysts = data.catalysts || []; w.risks = data.risks || [];
       w.signals = data.supporting_signals || []; w.confidence = data.confidence;
-      const sm = { BUY:{High:8.5,Medium:7.0,Low:6.0}, WATCH:{High:6.0,Medium:5.5,Low:4.5}, HOLD:{High:5.0,Medium:4.5,Low:4.0}, SELL:{High:2.0,Medium:3.0,Low:3.5} };
-      w.score = sm[data.signal]?.[data.confidence] ?? 5.0;
-      scanHistory.unshift({ ticker, signal:data.signal, score:w.score, summary:data.summary, prevSignal:prev, time:new Date().toISOString() });
-      if (scanHistory.length > 100) scanHistory = scanHistory.slice(0,100);
+      var sm = { BUY:{High:8.5,Medium:7.0,Low:6.0}, WATCH:{High:6.0,Medium:5.5,Low:4.5}, HOLD:{High:5.0,Medium:4.5,Low:4.0}, SELL:{High:2.0,Medium:3.0,Low:3.5} };
+      w.score = sm[data.signal] && sm[data.signal][data.confidence] ? sm[data.signal][data.confidence] : 5.0;
+      scanHistory.unshift({ ticker:ticker, signal:data.signal, score:w.score, summary:data.summary, prevSignal:prev, time:new Date().toISOString() });
+      if (scanHistory.length > 100) scanHistory = scanHistory.slice(0, 100);
     }
   } catch(e) {}
   w.scanning = false;
@@ -549,246 +590,68 @@ async function scanTicker(ticker, rerender = true) {
   if (rerender) { renderTable(); if (selectedTicker === ticker) renderPanel(ticker); }
 }
 
-function selectStock(ticker) {
-  // Toggle deselect if clicking same stock
-  if (selectedTicker === ticker) {
-    selectedTicker = null;
-    document.querySelectorAll('tr.main-row').forEach(r => r.classList.remove('selected'));
-    document.getElementById('panelHead').innerHTML = `
-      <div>
-        <div style="font-size:11px;font-weight:600;color:var(--grey);text-transform:uppercase;letter-spacing:0.1em">Stock Detail</div>
-      </div>`;
-    document.getElementById('panelBody').innerHTML = `
-      <div class="panel-placeholder">
-        <div style="font-size:32px;margin-bottom:14px;opacity:0.15">📋</div>
-        <div style="font-size:13px;font-weight:500;color:var(--text2);margin-bottom:6px">No stock selected</div>
-        <div style="font-size:12px;line-height:1.6;color:var(--grey)">Click any row in the watchlist to view AI analysis, scan history, and add notes</div>
-      </div>`;
+// ── PORTFOLIO: BUY / SELL ─────────────────────────────────────
+function buyFromPanel(ticker) {
+  var input = document.getElementById('buyInput-' + ticker);
+  var shares = input ? parseFloat(input.value) : NaN;
+  if (isNaN(shares) || shares <= 0) {
+    if (input) { input.focus(); input.style.borderColor = 'var(--red)'; setTimeout(function() { input.style.borderColor = ''; }, 1500); }
     return;
   }
-  selectedTicker = ticker;
+  var priceData = prices[ticker];
+  var price = priceData ? parseFloat(priceData.price) : null;
+  if (!price) { alert(ticker + ': Price not loaded yet. Wait for refresh or click Scan All.'); return; }
+
+  var existing = portfolio.find(function(p) { return p.ticker === ticker; });
+  if (existing) {
+    existing.shares = (existing.shares || 0) + shares;
+    existing.buyPrice = existing.buyPrice || price;
+    existing.points.push({ t: Date.now(), p: price });
+  } else {
+    portfolio.push({ ticker: ticker, color: CHART_COLORS[portfolio.length % CHART_COLORS.length],
+                     shares: shares, buyPrice: price, points: [{ t: Date.now(), p: price }] });
+  }
+  savePortfolio();
+  if (input) input.value = '';
+  renderTable();
+  updateChartLegend();
+  drawChart();
   renderPanel(ticker);
-  document.querySelectorAll('tr.main-row').forEach(r => r.classList.remove('selected'));
-  const row = document.getElementById('row-' + ticker);
-  if (row) row.classList.add('selected');
 }
 
-function closePanel() {
-  selectedTicker = null;
-  document.querySelectorAll('tr.main-row').forEach(r => r.classList.remove('selected'));
-}
-
-function renderPanel(ticker) {
-  const w = watchlist.find(w => w.ticker === ticker);
-  if (!w) return;
-  const sigCls = w.signal ? w.signal.toLowerCase() : 'pending';
-  const sc = !w.score ? 'nd' : w.score >= 7 ? 'hi' : w.score >= 5 ? 'mi' : 'lo';
-  const confPct = w.confidence === 'High' ? 85 : w.confidence === 'Medium' ? 60 : w.confidence === 'Low' ? 35 : 0;
-  const comment = comments[ticker] || '';
-  const srcUrl = comments[ticker + '_url'] || '';
-  const hist = scanHistory.filter(h => h.ticker === ticker);
-
-  document.getElementById('panelHead').innerHTML = `
-    <div style="display:flex;align-items:center;justify-content:space-between;width:100%;gap:8px">
-      <div style="display:flex;align-items:center;gap:12px;min-width:0">
-        <div style="min-width:0">
-          <div class="panel-ticker">${ticker}</div>
-          <div class="panel-name">${w.assetName || w.type}</div>
-        </div>
-        <button class="panel-scan-btn" onclick="scanTicker('${ticker}')" ${w.scanning?'disabled':''}>Scan</button>
-      </div>
-      <div style="display:flex;align-items:flex-start;gap:6px;flex-shrink:0">
-        <div>
-          <input class="shares-input" type="number" id="buyInput-${ticker}" min="0.01" step="any" placeholder="qty"/>
-          <div class="shares-label">buy qty</div>
-        </div>
-        <button class="panel-trade-btn" onclick="buyFromPanel('${ticker}')">Buy</button>
-        <div>
-          <input class="shares-input" type="number" id="sellInput-${ticker}" min="0.01" step="any" placeholder="qty"/>
-          <div class="shares-label">sell qty</div>
-        </div>
-        <button class="panel-trade-btn" onclick="sellFromPanel('${ticker}')">Sell</button>
-      </div>
-    </div>
-  `;
-
-  const histHTML = hist.length ? hist.slice(0,30).map(h => `
-    <div class="phist-entry">
-      <div class="phist-top">
-        <span class="phist-sig" style="color:${h.signal==='BUY'?'var(--green)':h.signal==='SELL'?'var(--red)':h.signal==='WATCH'?'var(--yellow)':'var(--grey2)'}">${h.signal}</span>
-        <span class="phist-score">${h.score?.toFixed(1)||'—'}/10</span>
-        <span class="phist-time">${timeAgo(h.time)}</span>
-      </div>
-      <div class="phist-sum">${h.summary||''}</div>
-    </div>`).join('') : '<div class="no-phist">No scan history yet</div>';
-
-  document.getElementById('panelBody').innerHTML = `
-    ${w.signal ? `
-    <div class="panel-section">
-      <div style="display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:10px">
-        <div>
-          <div style="display:flex;align-items:flex-start;gap:10px">
-            <div class="panel-score-big ${sc}">${w.score ? w.score.toFixed(1) : '—'}</div>
-            <span class="sig ${sigCls}" style="font-size:12px;padding:5px 12px;margin-top:6px">${w.signal}</span>
-          </div>
-          <div style="font-size:10px;color:var(--grey);margin-top:4px">/ 10 AI Score</div>
-          <div class="conf-track" style="width:120px;margin-top:6px"><div class="conf-fill" style="width:${confPct}%"></div></div>
-          <div class="conf-label">Confidence: ${w.confidence || '—'}</div>
-        </div>
-      </div>
-      ${w.summary ? `<div class="panel-summary">${w.summary}</div>` : ''}
-    </div>
-
-    ${(w.catalysts?.length || w.risks?.length) ? `
-    <div class="panel-two-col">
-      ${w.catalysts?.length ? `<div class="panel-list-card"><div class="panel-list-title green">↑ Catalysts</div><ul class="panel-ul">${w.catalysts.map(c=>`<li class="panel-li up">${c}</li>`).join('')}</ul></div>` : ''}
-      ${w.risks?.length ? `<div class="panel-list-card"><div class="panel-list-title red">↓ Risks</div><ul class="panel-ul">${w.risks.map(r=>`<li class="panel-li dn">${r}</li>`).join('')}</ul></div>` : ''}
-    </div>` : ''}
-    ` : `<div style="font-size:12px;color:var(--grey2);margin-bottom:16px;padding:12px;background:var(--surface2);border-radius:6px;">No scan data yet — click <strong>Scan</strong> to analyse this stock.</div>`}
-
-    <hr class="panel-divider"/>
-
-    <div class="panel-hist-notes">
-      <div>
-        <div class="panel-section-label">Scan History</div>
-        <div class="panel-hist-scroll">${histHTML}</div>
-      </div>
-      <div class="notes-col">
-        <div>
-          <div class="panel-section-label">Custom Source</div>
-          <input class="notes-url-input" type="url" id="srcUrl-${ticker}" value="${srcUrl}" placeholder="Paste URL for AI to consider..."/>
-          <div class="notes-url-hint">AI will factor this source into next scan</div>
-        </div>
-        <div style="display:flex;flex-direction:column;flex:1;gap:6px">
-          <div class="panel-section-label">Notes</div>
-          <textarea class="notes-textarea" id="cmt-${ticker}" placeholder="Your notes, thesis, trade plan...">${comment}</textarea>
-          <button class="notes-save-btn" onclick="saveNotes('${ticker}')">Save</button>
-        </div>
-      </div>
-    </div>
-  `;
-}
-
-
-function saveComment(ticker, elemId) {
-  const id = elemId || ('cmt-' + ticker);
-  const val = document.getElementById(id)?.value || '';
-  comments[ticker] = val;
-  ['cmt-'+ticker, 'inlineCmt-'+ticker].forEach(i => {
-    const el = document.getElementById(i);
-    if (el) el.value = val;
-  });
-  save();
-}
-
-function saveNotes(ticker) {
-  const note = document.getElementById('cmt-' + ticker)?.value || '';
-  const url = document.getElementById('srcUrl-' + ticker)?.value || '';
-  comments[ticker] = note;
-  comments[ticker + '_url'] = url;
-  save();
-  // Visual feedback
-  const btn = event.target;
-  const orig = btn.textContent;
-  btn.textContent = 'Saved ✓';
-  btn.style.background = 'var(--green)';
-  setTimeout(() => { btn.textContent = orig; btn.style.background = ''; }, 1500);
-}
-
-function renderTable() {
-  const body = document.getElementById('tableBody');
-  const subtitle = document.getElementById('cardSubtitle');
-  subtitle.textContent = `${watchlist.length} ticker${watchlist.length !== 1 ? 's' : ''}`;
-
-  if (!watchlist.length) {
-    body.innerHTML = `<tr><td class="empty-cell" colspan="6"><div class="empty-icon">📊</div><div class="empty-text">Your watchlist is empty</div><div class="empty-sub">Type a ticker above and click + Add to get started</div></td></tr>`;
+function sellFromPanel(ticker) {
+  var input = document.getElementById('sellInput-' + ticker);
+  var shares = input ? parseFloat(input.value) : NaN;
+  if (isNaN(shares) || shares <= 0) {
+    if (input) { input.focus(); input.style.borderColor = 'var(--red)'; setTimeout(function() { input.style.borderColor = ''; }, 1500); }
     return;
   }
-
-  const order = { SELL:0, BUY:1, WATCH:2, HOLD:3 };
-  const sorted = [...watchlist].sort((a,b) => {
-    if (a.signal && b.signal) return (order[a.signal]??4)-(order[b.signal]??4);
-    if (a.signal) return -1; if (b.signal) return 1; return 0;
-  });
-
-  let rows = '';
-  sorted.forEach(w => {
-    const p = prices[w.ticker];
-    const price = p?.price ? '$'+parseFloat(p.price).toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2}) : '—';
-    const chg = p?.change_pct ?? null;
-    const chgStr = chg != null ? `${chg>0?'+':''}${chg}%` : '—';
-    const chgCls = chg==null?'neu':chg>0?'pos':chg<0?'neg':'neu';
-    const sigCls = w.signal ? w.signal.toLowerCase() : 'pending';
-    const sigTxt = w.scanning ? '...' : (w.signal || 'Pending');
-    const sc = !w.score?'nd':w.score>=7?'hi':w.score>=5?'mi':'lo';
-    const sbColor = !w.score?'#e5e4e2':w.score>=7?'#16a34a':w.score>=5?'#d97706':'#dc2626';
-    const sbWidth = w.score ? `${w.score*10}%` : '0%';
-    const scoreTxt = w.scanning ? '...' : (w.score ? w.score.toFixed(1) : '—');
-    const isSel = selectedTicker === w.ticker;
-    const alertHtml = (w.signal && w.prevSignal && w.prevSignal!==w.signal) ? `<span class="alert-pill">⚡ ${w.prevSignal}→${w.signal}</span>` : '';
-        rows += `
-      <tr class="main-row${isSel?' selected':''}" id="row-${w.ticker}" onclick="selectStock('${w.ticker}')">
-        <td>
-          <div class="ticker-name">${w.ticker}${alertHtml}</div>
-          <div class="ticker-sub">${(w.assetName||w.type).substring(0,28)}${w.scannedAt?' · '+timeAgo(w.scannedAt):''}</div>
-        </td>
-        <td class="price-cell${w.scanning?' scanning':''}">${w.scanning?'...':price}</td>
-        <td>
-          <div class="score-wrap">
-            <div class="score-n ${sc}">${scoreTxt}</div>
-            <div>
-              <div class="score-bar"><div class="score-fill" style="width:${sbWidth};background:${sbColor}"></div></div>
-              ${w.signal ? `<span class="sig ${sigCls}" style="margin-top:4px;display:inline-block">${w.signal}</span>` : ''}
-            </div>
-          </div>
-        </td>
-        <td onclick="event.stopPropagation()" style="text-align:center">${sharesCell(w.ticker)}</td>
-        <td onclick="event.stopPropagation()" style="text-align:center">${totalValueCell(w.ticker)}</td>
-        <td style="text-align:right;padding-right:12px" onclick="event.stopPropagation()"><button class="del-btn" id="del-${w.ticker}" title="Remove">&times;</button></td>
-      </tr>`;
-  });
-
-  body.innerHTML = rows;
-
-  // Attach delete button listeners after DOM is updated
-  document.querySelectorAll('.del-btn').forEach(btn => {
-    const ticker = btn.id.replace('del-', '');
-    btn.addEventListener('click', function(e) {
-      e.stopPropagation();
-      removeTicker(ticker);
-    });
-  });
+  var existing = portfolio.find(function(p) { return p.ticker === ticker; });
+  if (!existing || existing.shares <= 0) { alert(ticker + ' is not in your portfolio.'); return; }
+  if (shares >= existing.shares) {
+    portfolio = portfolio.filter(function(p) { return p.ticker !== ticker; });
+  } else {
+    existing.shares = Math.round((existing.shares - shares) * 10000) / 10000;
+  }
+  savePortfolio();
+  if (input) input.value = '';
+  renderTable();
+  updateChartLegend();
+  drawChart();
+  renderPanel(ticker);
 }
 
-function timeAgo(iso) {
-  const s = Math.floor((Date.now()-new Date(iso))/1000);
-  if (s<60) return `${s}s ago`; if (s<3600) return `${Math.floor(s/60)}m ago`;
-  if (s<86400) return `${Math.floor(s/3600)}h ago`; return `${Math.floor(s/86400)}d ago`;
-}
-function sleep(ms) { return new Promise(r=>setTimeout(r,ms)); }
-
-// ── PORTFOLIO CHART ───────────────────────────────────────────
-// Simple design: Buy records a price point. Every 5 min a new point is added. Chart draws the line.
-
-// portfolio = [{ticker, color, points: [{t, p}]}]
-// Loaded above in main state
-
-
-function getStockCurrentPrice(ticker) {
-  const p = prices[ticker];
-  return p?.price || null;
-}
-
+// ── HELPERS ───────────────────────────────────────────────────
 function getOwnedShares(ticker) {
-  const p = portfolio.find(p => p.ticker === ticker);
+  var p = portfolio.find(function(p) { return p.ticker === ticker; });
   return p ? (p.shares || 0) : 0;
 }
 
 function sharesCell(ticker) {
   var sh = getOwnedShares(ticker);
   if (sh > 0) {
-    var shStr = Number.isInteger(sh) ? sh.toString() : sh.toFixed(4).replace(/\.?0+$/, '');
-    return '<span style="font-family:JetBrains Mono,monospace;font-size:12px;color:var(--blue);font-weight:600">' + shStr + ' sh</span>';
+    var str = Number.isInteger(sh) ? String(sh) : sh.toFixed(4).replace(/\.?0+$/, '');
+    return '<span style="font-family:JetBrains Mono,monospace;font-size:12px;color:var(--blue);font-weight:600">' + str + ' sh</span>';
   }
   return '<span style="font-size:11px;color:var(--grey)">—</span>';
 }
@@ -802,684 +665,363 @@ function totalValueCell(ticker) {
   if (!price) return '<span style="font-size:11px;color:var(--grey)">—</span>';
   var total = sh * price;
   var totalStr = total.toLocaleString('en-US', {style:'currency', currency:'USD', minimumFractionDigits:2, maximumFractionDigits:2});
-  var entry = portfolio.find(function(p) { return p.ticker === ticker; });
-  var buyPrice = entry ? entry.buyPrice : null;
-  if (!buyPrice) return '<span style="font-family:JetBrains Mono,monospace;font-size:12px;font-weight:600">' + totalStr + '</span>';
-  var pnl = (price - buyPrice) * sh;
+  if (!entry || !entry.buyPrice) return '<span style="font-family:JetBrains Mono,monospace;font-size:12px;font-weight:600">' + totalStr + '</span>';
+  var pnl = (price - entry.buyPrice) * sh;
   var pnlColor = pnl >= 0 ? 'var(--green)' : 'var(--red)';
   var pnlStr = (pnl >= 0 ? '+' : '') + pnl.toLocaleString('en-US', {style:'currency', currency:'USD', minimumFractionDigits:2, maximumFractionDigits:2});
-  return '<div style="line-height:1.3">' +
+  return '<div style="line-height:1.4">' +
     '<span style="font-family:JetBrains Mono,monospace;font-size:12px;font-weight:600">' + totalStr + '</span><br>' +
     '<span style="font-size:10px;color:' + pnlColor + ';font-weight:600">' + pnlStr + '</span>' +
     '</div>';
 }
-function buyFromPanel(ticker) {
-  var input = document.getElementById('buyInput-' + ticker);
-  var shares = input ? parseFloat(input.value) : NaN;
-  if (isNaN(shares) || shares <= 0) {
-    if (input) { input.focus(); input.style.borderColor = 'var(--red)'; setTimeout(function() { input.style.borderColor = ''; }, 1500); }
+
+// ── PANEL ─────────────────────────────────────────────────────
+function selectStock(ticker) {
+  if (selectedTicker === ticker) {
+    selectedTicker = null;
+    document.querySelectorAll('tr.main-row').forEach(function(r) { r.classList.remove('selected'); });
+    document.getElementById('panelHead').innerHTML = '<div><div style="font-size:11px;font-weight:600;color:var(--grey);text-transform:uppercase;letter-spacing:0.1em">Stock Detail</div></div>';
+    document.getElementById('panelBody').innerHTML = '<div class="panel-placeholder"><div style="font-size:32px;margin-bottom:14px;opacity:0.15">📋</div><div style="font-size:13px;font-weight:500;color:var(--text2);margin-bottom:6px">No stock selected</div><div style="font-size:12px;line-height:1.6;color:var(--grey)">Click any row in the watchlist to view AI analysis, scan history, and add notes</div></div>';
     return;
   }
-  var price = prices[ticker] && prices[ticker].price ? parseFloat(prices[ticker].price) : null;
-  if (!price) { alert(ticker + ': Price not loaded yet.'); return; }
+  selectedTicker = ticker;
+  renderPanel(ticker);
+  document.querySelectorAll('tr.main-row').forEach(function(r) { r.classList.remove('selected'); });
+  var row = document.getElementById('row-' + ticker);
+  if (row) row.classList.add('selected');
+}
 
-  var existing = portfolio.find(function(p) { return p.ticker === ticker; });
-  if (existing) {
-    existing.shares = (existing.shares || 0) + shares;
-    existing.buyPrice = existing.buyPrice || price;
-    existing.points.push({ t: Date.now(), p: price });
-  } else {
-    portfolio.push({
-      ticker: ticker,
-      color: CHART_COLORS[portfolio.length % CHART_COLORS.length],
-      shares: shares,
-      buyPrice: price,
-      points: [{ t: Date.now(), p: price }]
-    });
+function closePanel() {
+  selectedTicker = null;
+  document.querySelectorAll('tr.main-row').forEach(function(r) { r.classList.remove('selected'); });
+}
+
+function renderPanel(ticker) {
+  var w = watchlist.find(function(w) { return w.ticker === ticker; });
+  if (!w) return;
+  var sigCls  = w.signal ? w.signal.toLowerCase() : 'pending';
+  var sc      = !w.score ? 'nd' : w.score>=7 ? 'hi' : w.score>=5 ? 'mi' : 'lo';
+  var confPct = w.confidence==='High' ? 85 : w.confidence==='Medium' ? 60 : w.confidence==='Low' ? 35 : 0;
+  var comment = comments[ticker] || '';
+  var srcUrl  = comments[ticker+'_url'] || '';
+  var hist    = scanHistory.filter(function(h) { return h.ticker===ticker; });
+
+  // Build head using DOM (no quote escaping issues)
+  var head = document.getElementById('panelHead');
+  head.innerHTML = '';
+
+  var left = document.createElement('div');
+  left.style.cssText = 'display:flex;align-items:center;gap:12px;min-width:0;flex:1';
+
+  var nameDiv = document.createElement('div');
+  var tickerEl = document.createElement('div');
+  tickerEl.className = 'panel-ticker';
+  tickerEl.textContent = ticker;
+  var nameEl = document.createElement('div');
+  nameEl.className = 'panel-name';
+  nameEl.textContent = w.assetName || w.type;
+  nameDiv.appendChild(tickerEl);
+  nameDiv.appendChild(nameEl);
+
+  var scanBtn = document.createElement('button');
+  scanBtn.className = 'panel-scan-btn';
+  scanBtn.textContent = 'Scan';
+  scanBtn.disabled = !!w.scanning;
+  scanBtn.onclick = function() { scanTicker(ticker); };
+
+  left.appendChild(nameDiv);
+  left.appendChild(scanBtn);
+
+  var right = document.createElement('div');
+  right.style.cssText = 'display:flex;align-items:flex-start;gap:6px;flex-shrink:0';
+
+  function makeQtyGroup(id, label) {
+    var wrap = document.createElement('div');
+    var inp = document.createElement('input');
+    inp.className = 'shares-input';
+    inp.type = 'number'; inp.min = '0.01'; inp.step = 'any';
+    inp.placeholder = 'qty'; inp.id = id;
+    var lbl = document.createElement('div');
+    lbl.className = 'shares-label';
+    lbl.textContent = label;
+    wrap.appendChild(inp); wrap.appendChild(lbl);
+    return wrap;
   }
 
-  savePortfolio();
-  renderTable();
-  updateChartLegend();
-  drawChart();
-  if (input) input.value = '';
-  var sub = document.getElementById('chartSubtitle');
-  if (sub) sub.textContent = portfolio.length + ' stock' + (portfolio.length !== 1 ? 's' : '') + ' tracked';
+  var buyQty = makeQtyGroup('buyInput-'+ticker, 'buy qty');
+  var buyBtn = document.createElement('button');
+  buyBtn.className = 'panel-trade-btn';
+  buyBtn.textContent = 'Buy';
+  buyBtn.onclick = function() { buyFromPanel(ticker); };
+
+  var sellQty = makeQtyGroup('sellInput-'+ticker, 'sell qty');
+  var sellBtn = document.createElement('button');
+  sellBtn.className = 'panel-trade-btn';
+  sellBtn.textContent = 'Sell';
+  sellBtn.onclick = function() { sellFromPanel(ticker); };
+
+  right.appendChild(buyQty);
+  right.appendChild(buyBtn);
+  right.appendChild(sellQty);
+  right.appendChild(sellBtn);
+
+  var row = document.createElement('div');
+  row.style.cssText = 'display:flex;align-items:center;justify-content:space-between;width:100%;gap:8px';
+  row.appendChild(left);
+  row.appendChild(right);
+  head.appendChild(row);
+
+  // Build body HTML (no function calls in here)
+  var histHTML = hist.length ? hist.slice(0,30).map(function(h) {
+    var col = h.signal==='BUY'?'var(--green)':h.signal==='SELL'?'var(--red)':h.signal==='WATCH'?'var(--yellow)':'var(--grey2)';
+    return '<div class="phist-entry"><div class="phist-top"><span class="phist-sig" style="color:'+col+'">'+h.signal+'</span><span class="phist-score">'+(h.score?h.score.toFixed(1):'—')+'/10</span><span class="phist-time">'+timeAgo(h.time)+'</span></div><div class="phist-sum">'+(h.summary||'')+'</div></div>';
+  }).join('') : '<div class="no-phist">No scan history yet</div>';
+
+  var scoreHTML = w.signal ?
+    '<div class="panel-section">' +
+      '<div style="display:flex;align-items:flex-start;gap:10px;margin-bottom:10px">' +
+        '<div class="panel-score-big '+sc+'">'+(w.score?w.score.toFixed(1):'—')+'</div>' +
+        '<span class="sig '+sigCls+'" style="font-size:12px;padding:5px 12px;margin-top:6px">'+w.signal+'</span>' +
+      '</div>' +
+      '<div style="font-size:10px;color:var(--grey);margin-bottom:6px">/ 10 AI Score</div>' +
+      '<div class="conf-track" style="width:120px"><div class="conf-fill" style="width:'+confPct+'%"></div></div>' +
+      '<div class="conf-label">Confidence: '+(w.confidence||'—')+'</div>' +
+      (w.summary?'<div class="panel-summary" style="margin-top:12px">'+w.summary+'</div>':'') +
+    '</div>' +
+    ((w.catalysts&&w.catalysts.length)||(w.risks&&w.risks.length)?
+      '<div class="panel-two-col">' +
+        (w.catalysts&&w.catalysts.length?'<div class="panel-list-card"><div class="panel-list-title green">↑ Catalysts</div><ul class="panel-ul">'+w.catalysts.map(function(c){return '<li class="panel-li up">'+c+'</li>';}).join('')+'</ul></div>':'') +
+        (w.risks&&w.risks.length?'<div class="panel-list-card"><div class="panel-list-title red">↓ Risks</div><ul class="panel-ul">'+w.risks.map(function(r){return '<li class="panel-li dn">'+r+'</li>';}).join('')+'</ul></div>':'') +
+      '</div>' : '')
+    : '<div style="font-size:12px;color:var(--grey2);margin-bottom:16px;padding:12px;background:var(--surface2);border-radius:6px">No scan data yet — click <strong>Scan</strong> to analyse.</div>';
+
+  document.getElementById('panelBody').innerHTML =
+    scoreHTML +
+    '<hr class="panel-divider"/>' +
+    '<div class="panel-hist-notes">' +
+      '<div><div class="panel-section-label">Scan History</div><div class="panel-hist-scroll">'+histHTML+'</div></div>' +
+      '<div class="notes-col">' +
+        '<div><div class="panel-section-label">Custom Source</div>' +
+          '<input class="notes-url-input" type="url" id="srcUrl-'+ticker+'" value="'+srcUrl+'" placeholder="Paste URL for AI to consider..."/>' +
+          '<div class="notes-url-hint">AI factors this into next scan</div>' +
+        '</div>' +
+        '<div style="display:flex;flex-direction:column;flex:1;gap:6px">' +
+          '<div class="panel-section-label">Notes</div>' +
+          '<textarea class="notes-textarea" id="cmt-'+ticker+'" placeholder="Your notes, thesis, trade plan...">'+comment+'</textarea>' +
+          '<button class="notes-save-btn" id="saveNotesBtn-'+ticker+'">Save</button>' +
+        '</div>' +
+      '</div>' +
+    '</div>';
+
+  // Attach save notes listener (no inline onclick needed)
+  var saveBtn = document.getElementById('saveNotesBtn-'+ticker);
+  if (saveBtn) saveBtn.onclick = function() { saveNotes(ticker); };
 }
 
 
-function sellFromPanel(ticker) {
-  var input = document.getElementById('sellInput-' + ticker);
-  var shares = input ? parseFloat(input.value) : NaN;
-  if (isNaN(shares) || shares <= 0) {
-    if (input) { input.focus(); input.style.borderColor = 'var(--red)'; setTimeout(function() { input.style.borderColor = ''; }, 1500); }
+function saveComment(ticker) {
+  var val = document.getElementById('cmt-' + ticker) ? document.getElementById('cmt-' + ticker).value : '';
+  comments[ticker] = val; save();
+}
+
+function saveNotes(ticker) {
+  var note = document.getElementById('cmt-' + ticker) ? document.getElementById('cmt-' + ticker).value : '';
+  var url  = document.getElementById('srcUrl-' + ticker) ? document.getElementById('srcUrl-' + ticker).value : '';
+  comments[ticker] = note; comments[ticker + '_url'] = url; save();
+  var btn = event.target; var orig = btn.textContent;
+  btn.textContent = 'Saved ✓'; btn.style.background = 'var(--green)';
+  setTimeout(function() { btn.textContent = orig; btn.style.background = ''; }, 1500);
+}
+
+// ── TABLE ─────────────────────────────────────────────────────
+function renderTable() {
+  var body = document.getElementById('tableBody');
+  document.getElementById('cardSubtitle').textContent = watchlist.length + ' ticker' + (watchlist.length!==1?'s':'');
+  if (!watchlist.length) {
+    body.innerHTML = '<tr><td class="empty-cell" colspan="6"><div class="empty-icon">📊</div><div class="empty-text">Your watchlist is empty</div><div class="empty-sub">Type a ticker above and click + Add to get started</div></td></tr>';
     return;
   }
-  var existing = portfolio.find(function(p) { return p.ticker === ticker; });
-  if (!existing) { alert(ticker + ' is not in your portfolio.'); return; }
-  if (shares >= existing.shares) {
-    // Sell all - remove from portfolio
-    portfolio = portfolio.filter(function(p) { return p.ticker !== ticker; });
-  } else {
-    existing.shares = Math.round((existing.shares - shares) * 10000) / 10000;
-  }
-  savePortfolio();
-  renderTable();
-  updateChartLegend();
-  drawChart();
-  if (input) input.value = '';
-  if (selectedTicker === ticker) renderPanel(ticker);
-  var sub = document.getElementById('chartSubtitle');
-  if (sub) sub.textContent = portfolio.length > 0
-    ? portfolio.length + ' stock' + (portfolio.length !== 1 ? 's' : '') + ' tracked'
-    : 'Add stocks to your portfolio using the Buy button';
+  var order = {SELL:0,BUY:1,WATCH:2,HOLD:3};
+  var sorted = watchlist.slice().sort(function(a,b){
+    if(a.signal&&b.signal) return (order[a.signal]||4)-(order[b.signal]||4);
+    if(a.signal) return -1; if(b.signal) return 1; return 0;
+  });
+  var rows = '';
+  sorted.forEach(function(w) {
+    var p = prices[w.ticker];
+    var price = p&&p.price ? '$'+parseFloat(p.price).toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2}) : '—';
+    var sigCls = w.signal ? w.signal.toLowerCase() : 'pending';
+    var sc = !w.score?'nd':w.score>=7?'hi':w.score>=5?'mi':'lo';
+    var sbColor = !w.score?'#e5e4e2':w.score>=7?'#16a34a':w.score>=5?'#d97706':'#dc2626';
+    var sbWidth = w.score ? (w.score*10)+'%' : '0%';
+    var scoreTxt = w.scanning ? '...' : (w.score ? w.score.toFixed(1) : '—');
+    var isSel = selectedTicker === w.ticker;
+    var alertHtml = (w.signal&&w.prevSignal&&w.prevSignal!==w.signal) ? '<span class="alert-pill">⚡ '+w.prevSignal+'→'+w.signal+'</span>' : '';
+    rows +=
+      '<tr class="main-row'+(isSel?' selected':'')+'" id="row-'+w.ticker+'" data-ticker="'+w.ticker+'">' +
+      '<td><div class="ticker-name">'+w.ticker+alertHtml+'</div><div class="ticker-sub">'+(w.assetName||w.type).substring(0,26)+(w.scannedAt?' · '+timeAgo(w.scannedAt):'')+' </div></td>' +
+      '<td class="price-cell'+(w.scanning?' scanning':'')+'">'+( w.scanning?'...':price)+'</td>' +
+      '<td><div class="score-wrap"><div class="score-n '+sc+'">'+scoreTxt+'</div><div><div class="score-bar"><div class="score-fill" style="width:'+sbWidth+';background:'+sbColor+'"></div></div>'+(w.signal?'<span class="sig '+sigCls+'" style="margin-top:4px;display:inline-block">'+w.signal+'</span>':'')+'</div></div></td>' +
+      '<td style="text-align:center">'+sharesCell(w.ticker)+'</td>' +
+      '<td style="text-align:center">'+totalValueCell(w.ticker)+'</td>' +
+      '<td style="text-align:right;padding-right:12px"><button class="del-btn" data-ticker="'+w.ticker+'" title="Remove">&times;</button></td>' +
+      '</tr>';
+  });
+  body.innerHTML = rows;
+
+  // Attach listeners via data attributes (no inline onclick needed)
+  body.querySelectorAll('tr.main-row').forEach(function(row) {
+    var t = row.dataset.ticker;
+    row.addEventListener('click', function() { selectStock(t); });
+  });
+  body.querySelectorAll('.del-btn').forEach(function(btn) {
+    var t = btn.dataset.ticker;
+    btn.addEventListener('click', function(e) { e.stopPropagation(); removeTicker(t); });
+  });
 }
 
-function sellStock(ticker) {
-  portfolio = portfolio.filter(p => p.ticker !== ticker);
-  savePortfolio();
-  updateChartLegend();
-  drawChart();
-  const subtitle = document.getElementById('chartSubtitle');
-  if (subtitle) {
-    subtitle.textContent = portfolio.length > 0
-      ? portfolio.length + ' stock' + (portfolio.length !== 1 ? 's' : '') + ' tracked'
-      : 'Add stocks to your portfolio using the Buy button';
-  }
-}
 
-function savePortfolio() {
-  localStorage.setItem('onyx_portfolio', JSON.stringify(portfolio));
-}
-
+// ── CHART ─────────────────────────────────────────────────────
 function updateChartLegend() {
-  const legend = document.getElementById('chartLegend');
-  const empty = document.getElementById('chartEmpty');
+  var legend = document.getElementById('chartLegend');
+  var empty  = document.getElementById('chartEmpty');
+  var sub    = document.getElementById('chartSubtitle');
   if (!legend) return;
-
-  if (portfolio.length === 0) {
+  if (!portfolio.length) {
     legend.innerHTML = '';
     if (empty) empty.style.display = 'block';
-    const canvas = document.getElementById('portfolioChart');
-    if (canvas) {
-      const ctx = canvas.getContext('2d');
-      ctx.clearRect(0, 0, canvas.width, canvas.height);
-    }
     return;
   }
-
   if (empty) empty.style.display = 'none';
-  legend.innerHTML = portfolio.map(p => {
-    const points = p.points;
-    const first = points[0]?.p;
-    const last = points[points.length - 1]?.p;
-    const shares = p.shares || 1;
-    const pnl = first && last ? ((last - first) * shares) : null;
-    const pnlStr = pnl !== null ? ` ${pnl >= 0 ? '+' : ''}$${Math.abs(pnl).toFixed(2)}` : '';
-    const pnlColor = pnl === null ? '' : pnl >= 0 ? 'color:var(--green)' : 'color:var(--red)';
-    return `<div class="chart-legend-item">
-      <div class="chart-legend-dot" style="background:${p.color}"></div>
-      <span>${p.ticker} <span style="${pnlColor};font-weight:600">${pnlStr}</span></span>
-    </div>`;
+  if (sub) sub.textContent = portfolio.length + ' stock' + (portfolio.length!==1?'s':'') + ' tracked';
+  legend.innerHTML = portfolio.map(function(p) {
+    var pts = p.points;
+    var first = pts[0] && pts[0].p;
+    var last  = pts[pts.length-1] && pts[pts.length-1].p;
+    var pnl   = first && last ? ((last - first) * (p.shares||1)) : null;
+    var pnlColor = pnl===null?'':pnl>=0?'color:var(--green)':'color:var(--red)';
+    var pnlStr = pnl!==null ? ' <span style="'+pnlColor+';font-weight:600">'+(pnl>=0?'+':'')+'$'+Math.abs(pnl).toFixed(2)+'</span>' : '';
+    return '<div class="chart-legend-item"><div class="chart-legend-dot" style="background:'+p.color+'"></div><span>'+p.ticker+pnlStr+'</span></div>';
   }).join('');
 }
 
 function drawChart() {
-  const canvas = document.getElementById('portfolioChart');
+  var canvas = document.getElementById('portfolioChart');
   if (!canvas) return;
-  const wrap = canvas.parentElement;
-  const W = wrap.clientWidth || 600;
-  const H = 200;
+  var wrap = canvas.parentElement;
+  var W = wrap.clientWidth || 600, H = 200;
   canvas.width = W * window.devicePixelRatio;
   canvas.height = H * window.devicePixelRatio;
-  canvas.style.width = W + 'px';
-  canvas.style.height = H + 'px';
-
-  const ctx = canvas.getContext('2d');
+  canvas.style.width = W + 'px'; canvas.style.height = H + 'px';
+  var ctx = canvas.getContext('2d');
   ctx.scale(window.devicePixelRatio, window.devicePixelRatio);
   ctx.clearRect(0, 0, W, H);
 
-  const visible = portfolio.filter(p => p.points.length >= 2);
-  if (visible.length === 0) {
-    // Draw placeholder grid even with no data
-    drawGrid(ctx, W, H, null, null);
-    return;
+  var visible = portfolio.filter(function(p) { return p.points && p.points.length >= 1; });
+  var pad = { top:16, right:20, bottom:32, left:52 };
+  var plotW = W - pad.left - pad.right;
+  var plotH = H - pad.top - pad.bottom;
+
+  // Draw grid
+  ctx.strokeStyle = '#e5e4e2'; ctx.lineWidth = 1;
+  for (var i = 0; i <= 4; i++) {
+    var y = pad.top + (i/4) * plotH;
+    ctx.beginPath(); ctx.moveTo(pad.left, y); ctx.lineTo(W-pad.right, y); ctx.stroke();
   }
 
-  const pad = { top: 16, right: 20, bottom: 32, left: 52 };
-  const plotW = W - pad.left - pad.right;
-  const plotH = H - pad.top - pad.bottom;
+  if (!visible.length || visible.every(function(p){return p.points.length < 2;})) return;
 
-  // Normalize to $ P&L per position (shares × price change)
-  const allPnl = [];
-  visible.forEach(p => {
-    const base = p.points[0].p;
-    const shares = p.shares || 1;
-    p.points.forEach(pt => allPnl.push((pt.p - base) * shares));
+  var vis2 = visible.filter(function(p){return p.points.length >= 2;});
+  if (!vis2.length) return;
+
+  var allPnl = [];
+  vis2.forEach(function(p) {
+    var base = p.points[0].p, sh = p.shares||1;
+    p.points.forEach(function(pt) { allPnl.push((pt.p-base)*sh); });
   });
+  var minV = Math.min.apply(null, allPnl.concat([-0.5]));
+  var maxV = Math.max.apply(null, allPnl.concat([0.5]));
+  var range = maxV - minV || 1;
 
-  const minV = Math.min(...allPnl, -0.5);
-  const maxV = Math.max(...allPnl, 0.5);
-  const range = maxV - minV || 1;
+  var allT = [];
+  vis2.forEach(function(p) { p.points.forEach(function(pt){allT.push(pt.t);}); });
+  var tMin = Math.min.apply(null, allT), tMax = Math.max.apply(null, allT);
+  var tRange = tMax - tMin || 1;
 
-  // Time range across all series
-  const allT = visible.flatMap(p => p.points.map(pt => pt.t));
-  const tMin = Math.min(...allT);
-  const tMax = Math.max(...allT);
-  const tRange = tMax - tMin || 1;
+  function toX(t) { return pad.left + ((t-tMin)/tRange)*plotW; }
+  function toY(v) { return pad.top + ((maxV-v)/range)*plotH; }
 
-  const toX = t => pad.left + ((t - tMin) / tRange) * plotW;
-  const toY = v => pad.top + ((maxV - v) / range) * plotH;
-
-  drawGrid(ctx, W, H, { pad, plotH, maxV, range }, { tMin, tMax, plotW, pad });
-
-  // Draw each stock line
-  visible.forEach(p => {
-    const base = p.points[0].p;
-    const pts = p.points.map(pt => ({ x: toX(pt.t), y: toY((pt.p - base) * (p.shares || 1)) }));
-
-    // Gradient fill
-    const grad = ctx.createLinearGradient(0, pad.top, 0, pad.top + plotH);
-    grad.addColorStop(0, p.color + '30');
-    grad.addColorStop(1, p.color + '00');
-    ctx.beginPath();
-    ctx.moveTo(pts[0].x, pts[0].y);
-    pts.forEach(pt => ctx.lineTo(pt.x, pt.y));
-    ctx.lineTo(pts[pts.length-1].x, toY(0));
-    ctx.lineTo(pts[0].x, toY(0));
-    ctx.closePath();
-    ctx.fillStyle = grad;
-    ctx.fill();
-
-    // Line
-    ctx.beginPath();
-    ctx.moveTo(pts[0].x, pts[0].y);
-    pts.forEach(pt => ctx.lineTo(pt.x, pt.y));
-    ctx.strokeStyle = p.color;
-    ctx.lineWidth = 2;
-    ctx.lineJoin = 'round';
-    ctx.lineCap = 'round';
-    ctx.stroke();
-
-    // End dot
-    const last = pts[pts.length - 1];
-    ctx.beginPath();
-    ctx.arc(last.x, last.y, 4, 0, Math.PI * 2);
-    ctx.fillStyle = p.color;
-    ctx.fill();
-    ctx.strokeStyle = '#fff';
-    ctx.lineWidth = 1.5;
-    ctx.stroke();
-  });
-}
-
-function drawGrid(ctx, W, H, yInfo, xInfo) {
-  const pad = yInfo?.pad || { top: 16, right: 20, bottom: 32, left: 52 };
-  const plotH = yInfo?.plotH || (H - pad.top - pad.bottom);
-  const plotW = xInfo ? (W - pad.left - pad.right) : (W - pad.left - pad.right);
-
-  ctx.strokeStyle = '#e5e4e2';
-  ctx.lineWidth = 1;
-  for (let i = 0; i <= 4; i++) {
-    const y = pad.top + (i / 4) * plotH;
-    ctx.beginPath();
-    ctx.moveTo(pad.left, y);
-    ctx.lineTo(W - pad.right, y);
-    ctx.stroke();
-    if (yInfo) {
-      const v = yInfo.maxV - (i / 4) * yInfo.range;
-      ctx.fillStyle = '#9ca3af';
-      ctx.font = '10px Inter, sans-serif';
-      ctx.textAlign = 'right';
-      const label = Math.abs(v) >= 1000 ? (v >= 0 ? '+' : '') + '$' + (v/1000).toFixed(1) + 'k'
-                  : (v >= 0 ? '+' : '') + '$' + v.toFixed(0);
-      ctx.fillText(label, pad.left - 4, y + 3);
-    }
+  // Y-axis labels
+  ctx.fillStyle = '#9ca3af'; ctx.font = '10px Inter,sans-serif'; ctx.textAlign = 'right';
+  for (var i = 0; i <= 4; i++) {
+    var v = maxV - (i/4)*range;
+    var label = (Math.abs(v)>=1000?(v>=0?'+':'')+'$'+(v/1000).toFixed(1)+'k':(v>=0?'+':'')+'$'+v.toFixed(0));
+    ctx.fillText(label, pad.left-4, pad.top+(i/4)*plotH+3);
   }
 
   // Zero line
-  if (yInfo) {
-    const zeroY = pad.top + ((yInfo.maxV - 0) / yInfo.range) * plotH;
-    if (zeroY >= pad.top && zeroY <= pad.top + plotH) {
-      ctx.setLineDash([4, 4]);
-      ctx.strokeStyle = '#d1d0cd';
-      ctx.lineWidth = 1;
-      ctx.beginPath();
-      ctx.moveTo(pad.left, zeroY);
-      ctx.lineTo(W - pad.right, zeroY);
-      ctx.stroke();
-      ctx.setLineDash([]);
-    }
-  }
-
-  // X axis labels
-  if (xInfo) {
-    ctx.fillStyle = '#9ca3af';
-    ctx.font = '10px Inter, sans-serif';
-    ctx.textAlign = 'center';
-    for (let i = 0; i <= 4; i++) {
-      const t = xInfo.tMin + (i / 4) * (xInfo.tMax - xInfo.tMin);
-      const x = pad.left + (i / 4) * plotW;
-      const date = new Date(t);
-      const label = date.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true });
-      ctx.fillText(label, x, H - 8);
-    }
-  }
-}
-
-// Auto-update every 5 minutes: fetch new prices and add data points
-async function autoUpdatePrices() {
-  if (!watchlist.length) return;
-
-  try {
-    const tickers = watchlist.map(w => w.ticker).join(',');
-    const res = await fetch(`${API}/prices?tickers=${encodeURIComponent(tickers)}`);
-    if (res.ok) {
-      prices = await res.json();
-      renderTable();
-    }
-  } catch(e) {}
-
-  // Add new data point to each portfolio stock
-  const now = Date.now();
-  let updated = false;
-  portfolio.forEach(p => {
-    const price = prices[p.ticker]?.price;
-    if (price) {
-      p.points.push({ t: now, p: price });
-      // Keep max 288 points (24h at 5min intervals)
-      if (p.points.length > 288) p.points = p.points.slice(-288);
-      updated = true;
-    }
-  });
-
-  if (updated) {
-    savePortfolio();
-    updateChartLegend();
-    drawChart();
-    const subtitle = document.getElementById('chartSubtitle');
-    if (subtitle && portfolio.length > 0) {
-      const t = new Date().toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' });
-      subtitle.textContent = portfolio.length + ' stock' + (portfolio.length !== 1 ? 's' : '') + ' tracked · Updated ' + t;
-    }
-  }
-}
-
-
-function filterChart(btn, range) {
-  document.querySelectorAll('.chart-range-btn').forEach(b => b.classList.remove('active'));
-  btn.classList.add('active');
-  const ms = { '1D': 86400000, '1W': 604800000, '1M': 2592000000, '3M': 7776000000 };
-  const cutoff = Date.now() - ms[range];
-  // Temporarily filter points for display
-  const orig = portfolio;
-  const filtered = portfolio.map(p => ({ ...p, points: p.points.filter(pt => pt.t >= cutoff) }));
-  portfolio = filtered;
-  updateChartLegend();
-  drawChart();
-  portfolio = orig;
-}
-
-// Init chart on load
-updateChartLegend();
-drawChart();
-
-// Start auto-update every 5 minutes
-setInterval(autoUpdatePrices, 5 * 60 * 1000);
-
-// Redraw on resize
-new ResizeObserver(() => drawChart()).observe(document.querySelector('.chart-card') || document.body);
-
-
-function sleep(ms) { return new Promise(r=>setTimeout(r,ms)); }
-
-// ── PORTFOLIO CHART ───────────────────────────────────────────
-let hiddenTickers = new Set();
-let chartRange = '1D';
-
-var CHART_COLORS_OLD = ['#1565ff','#16a34a','#d97706','#dc2626','#7c3aed','#0891b2','#be185d','#65a30d'];
-
-function savePortfolio() {
-  localStorage.setItem('onyx_portfolio', JSON.stringify(portfolio));
-  localStorage.setItem('onyx_price_history', JSON.stringify(priceHistory));
-}
-
-function getColor(ticker) {
-  const idx = portfolio.findIndex(p => p.ticker === ticker);
-  return idx >= 0 ? CHART_COLORS[idx % CHART_COLORS.length] : CHART_COLORS[0];
-}
-
-function getOwnedShares(ticker) {
-  const p = portfolio.find(p => p.ticker === ticker);
-  return p ? (p.shares || 0) : 0;
-}
-
-function sharesCell(ticker) {
-  var sh = getOwnedShares(ticker);
-  if (sh > 0) {
-    var shStr = Number.isInteger(sh) ? sh.toString() : sh.toFixed(4).replace(/\.?0+$/, '');
-    return '<span style="font-family:JetBrains Mono,monospace;font-size:12px;color:var(--blue);font-weight:600">' + shStr + ' sh</span>';
-  }
-  return '<span style="font-size:11px;color:var(--grey)">—</span>';
-}
-
-function totalValueCell(ticker) {
-  const sh = getOwnedShares(ticker);
-  if (sh <= 0) return '<span style="font-size:11px;color:var(--grey)">—</span>';
-  const price = prices[ticker]?.price;
-  if (!price) return '<span style="font-size:11px;color:var(--grey)">—</span>';
-  const total = (sh * price).toLocaleString('en-US', {style:'currency', currency:'USD', minimumFractionDigits:2, maximumFractionDigits:2});
-  const entry = portfolio.find(p => p.ticker === ticker)?.buyPrice;
-  const pnl = entry ? ((price - entry) * sh) : null;
-  const pnlColor = pnl === null ? '' : pnl >= 0 ? 'color:var(--green)' : 'color:var(--red)';
-  const pnlStr = pnl !== null ? ' <span style="font-size:10px;' + pnlColor + '">' + (pnl >= 0 ? '+' : '') + '$' + Math.abs(pnl).toFixed(2) + '</span>' : '';
-  return '<span style="font-family:JetBrains Mono,monospace;font-size:11px;font-weight:600">' + total + pnlStr + '</span>';
-}
-
-
-function sellFromPanel(ticker) {
-  var input = document.getElementById('sellInput-' + ticker);
-  var shares = input ? parseFloat(input.value) : NaN;
-  if (isNaN(shares) || shares <= 0) {
-    if (input) { input.focus(); input.style.borderColor = 'var(--red)'; setTimeout(function() { input.style.borderColor = ''; }, 1500); }
-    return;
-  }
-  var existing = portfolio.find(function(p) { return p.ticker === ticker; });
-  if (!existing) { alert(ticker + ' is not in your portfolio.'); return; }
-  if (shares >= existing.shares) {
-    // Sell all - remove from portfolio
-    portfolio = portfolio.filter(function(p) { return p.ticker !== ticker; });
-  } else {
-    existing.shares = Math.round((existing.shares - shares) * 10000) / 10000;
-  }
-  savePortfolio();
-  renderTable();
-  updateChartLegend();
-  drawChart();
-  if (input) input.value = '';
-  if (selectedTicker === ticker) renderPanel(ticker);
-  var sub = document.getElementById('chartSubtitle');
-  if (sub) sub.textContent = portfolio.length > 0
-    ? portfolio.length + ' stock' + (portfolio.length !== 1 ? 's' : '') + ' tracked'
-    : 'Add stocks to your portfolio using the Buy button';
-}
-
-function sellStock(ticker) {
-  portfolio = portfolio.filter(p => p.ticker !== ticker);
-  delete priceHistory[ticker];
-  savePortfolio();
-  updateChartLegend();
-  drawChart();
-
-  const btn = event?.target;
-  if (btn) {
-    const orig = btn.textContent;
-    btn.textContent = 'Removed';
-    setTimeout(() => btn.textContent = orig, 1500);
-  }
-}
-
-function recordPricePoint(ticker) {
-  const p = prices[ticker];
-  if (!p?.price) return;
-  if (!priceHistory[ticker]) priceHistory[ticker] = [];
-  priceHistory[ticker].push({ t: Math.floor(Date.now() / 1000), p: parseFloat(p.price) });
-  // Keep max 1000 points per ticker
-  if (priceHistory[ticker].length > 1000) priceHistory[ticker] = priceHistory[ticker].slice(-1000);
-}
-
-function setChartRange(range) {
-  chartRange = range;
-  document.querySelectorAll('.chart-range-btn').forEach(b => b.classList.toggle('active', b.textContent === range));
-  drawChart();
-}
-
-function toggleChartTicker(ticker) {
-  hiddenTickers.has(ticker) ? hiddenTickers.delete(ticker) : hiddenTickers.add(ticker);
-  updateChartLegend();
-  drawChart();
-}
-
-function updateChartLegend() {
-  const legend = document.getElementById('chartLegend');
-  const subtitle = document.getElementById('chartSubtitle');
-  const empty = document.getElementById('chartEmpty');
-
-  if (portfolio.length === 0) {
-    legend.innerHTML = '';
-    subtitle.textContent = 'Click Buy on any stock to start tracking';
-    empty.style.display = 'block';
-    const canvas = document.getElementById('portfolioChart');
-    if (canvas) { const ctx = canvas.getContext('2d'); ctx.clearRect(0,0,canvas.width,canvas.height); }
-    return;
-  }
-
-  empty.style.display = 'none';
-  const t = new Date().toLocaleTimeString('en-US',{hour:'numeric',minute:'2-digit'});
-  subtitle.textContent = `${portfolio.length} stock${portfolio.length!==1?'s':''} tracked · ${t}`;
-
-  legend.innerHTML = portfolio.map(p => `
-    <div class="chart-legend-item${hiddenTickers.has(p.ticker)?' hidden':''}" onclick="toggleChartTicker('${p.ticker}')">
-      <div class="chart-legend-dot" style="background:${p.color}"></div>
-      ${p.ticker}
-    </div>`).join('');
-}
-
-function getFilteredHistory(ticker) {
-  const hist = priceHistory[ticker] || [];
-  if (hist.length === 0) return [];
-  const ranges = { '1D': 86400, '1W': 604800, '1M': 2592000, '3M': 7776000 };
-  const cutoff = Math.floor(Date.now()/1000) - (ranges[chartRange] || 86400);
-  const filtered = hist.filter(pt => pt.t >= cutoff);
-  return filtered.length >= 1 ? filtered : hist.slice(-2);
-}
-
-function drawChart() {
-  const canvas = document.getElementById('portfolioChart');
-  if (!canvas) return;
-  const wrap = canvas.parentElement;
-  const dpr = window.devicePixelRatio || 1;
-  const W = wrap.clientWidth;
-  const H = 200;
-  canvas.width = W * dpr;
-  canvas.height = H * dpr;
-  canvas.style.width = W + 'px';
-  canvas.style.height = H + 'px';
-
-  const ctx = canvas.getContext('2d');
-  ctx.scale(dpr, dpr);
-  ctx.clearRect(0, 0, W, H);
-
-  const visible = portfolio.filter(p => !hiddenTickers.has(p.ticker));
-  const hasData = visible.some(p => getFilteredHistory(p.ticker).length > 1);
-
-  if (!hasData) {
-    ctx.fillStyle = '#9ca3af';
-    ctx.font = '12px Inter, sans-serif';
-    ctx.textAlign = 'center';
-    ctx.fillText(portfolio.length > 0 ? 'Waiting for price data...' : 'No stocks tracked yet', W/2, H/2);
-    return;
-  }
-
-  const pad = { top: 16, right: 16, bottom: 32, left: 52 };
-  const plotW = W - pad.left - pad.right;
-  const plotH = H - pad.top - pad.bottom;
-
-  // Collect all % change values for scale
-  let allVals = [];
-  visible.forEach(p => {
-    const d = getFilteredHistory(p.ticker);
-    if (d.length < 1) return;
-    const base = d[0].p;
-    d.forEach(pt => allVals.push(((pt.p - base) / base) * 100));
-  });
-
-  if (allVals.length === 0) return;
-  const minV = Math.min(...allVals, -0.2);
-  const maxV = Math.max(...allVals, 0.2);
-  const vRange = maxV - minV || 1;
-
-  const toY = v => pad.top + ((maxV - v) / vRange) * plotH;
-
-  // Grid lines
-  ctx.strokeStyle = '#e5e4e2';
-  ctx.lineWidth = 1;
-  [0, 0.25, 0.5, 0.75, 1].forEach(i => {
-    const v = maxV - i * vRange;
-    const y = pad.top + i * plotH;
-    ctx.beginPath(); ctx.moveTo(pad.left, y); ctx.lineTo(W - pad.right, y); ctx.stroke();
-    ctx.fillStyle = '#9ca3af';
-    ctx.font = '10px Inter, sans-serif';
-    ctx.textAlign = 'right';
-    ctx.fillText((v >= 0 ? '+' : '') + v.toFixed(1) + '%', pad.left - 4, y + 3);
-  });
-
-  // Zero line
-  const zeroY = toY(0);
-  if (zeroY >= pad.top && zeroY <= pad.top + plotH) {
-    ctx.strokeStyle = '#d1d0cd';
-    ctx.lineWidth = 1;
-    ctx.setLineDash([4, 4]);
-    ctx.beginPath(); ctx.moveTo(pad.left, zeroY); ctx.lineTo(W - pad.right, zeroY); ctx.stroke();
+  var zeroY = toY(0);
+  if (zeroY >= pad.top && zeroY <= pad.top+plotH) {
+    ctx.setLineDash([4,4]); ctx.strokeStyle='#d1d0cd'; ctx.lineWidth=1;
+    ctx.beginPath(); ctx.moveTo(pad.left,zeroY); ctx.lineTo(W-pad.right,zeroY); ctx.stroke();
     ctx.setLineDash([]);
   }
 
-  // Find global time range
-  let tMin = Infinity, tMax = -Infinity;
-  visible.forEach(p => {
-    const d = getFilteredHistory(p.ticker);
-    if (d.length < 1) return;
-    tMin = Math.min(tMin, d[0].t);
-    tMax = Math.max(tMax, d[d.length-1].t);
-  });
-  const tRange = tMax - tMin || 1;
-  const toX = t => pad.left + ((t - tMin) / tRange) * plotW;
-
-  // Draw each series
-  visible.forEach(p => {
-    const d = getFilteredHistory(p.ticker);
-    if (d.length < 1) return;
-    const base = d[0].p;
-    const norm = d.map(pt => ({ t: pt.t, v: ((pt.p - base) / base) * 100 }));
-    const color = p.color;
-
-    // If only 1 point, draw a dot
-    if (norm.length === 1) {
-      ctx.beginPath();
-      ctx.arc(toX(norm[0].t), toY(norm[0].v), 5, 0, Math.PI*2);
-      ctx.fillStyle = color;
-      ctx.fill();
-      return;
-    }
-
-    // Gradient fill
-    const grad = ctx.createLinearGradient(0, pad.top, 0, pad.top + plotH);
-    grad.addColorStop(0, color + '30');
-    grad.addColorStop(1, color + '00');
-    ctx.beginPath();
-    ctx.moveTo(toX(norm[0].t), toY(norm[0].v));
-    norm.forEach(pt => ctx.lineTo(toX(pt.t), toY(pt.v)));
-    ctx.lineTo(toX(norm[norm.length-1].t), toY(0));
-    ctx.lineTo(toX(norm[0].t), toY(0));
-    ctx.closePath();
-    ctx.fillStyle = grad;
-    ctx.fill();
-
-    // Line
-    ctx.beginPath();
-    ctx.moveTo(toX(norm[0].t), toY(norm[0].v));
-    norm.forEach(pt => ctx.lineTo(toX(pt.t), toY(pt.v)));
-    ctx.strokeStyle = color;
-    ctx.lineWidth = 2;
-    ctx.lineJoin = 'round';
-    ctx.lineCap = 'round';
-    ctx.stroke();
-
-    // End dot
-    const last = norm[norm.length-1];
-    ctx.beginPath();
-    ctx.arc(toX(last.t), toY(last.v), 4, 0, Math.PI*2);
-    ctx.fillStyle = color;
-    ctx.fill();
-    ctx.strokeStyle = 'white';
-    ctx.lineWidth = 2;
-    ctx.stroke();
+  // Draw lines
+  vis2.forEach(function(p) {
+    var base = p.points[0].p, sh = p.shares||1;
+    var pts = p.points.map(function(pt){return{x:toX(pt.t),y:toY((pt.p-base)*sh)};});
+    var grad = ctx.createLinearGradient(0,pad.top,0,pad.top+plotH);
+    grad.addColorStop(0,p.color+'28'); grad.addColorStop(1,p.color+'00');
+    ctx.beginPath(); ctx.moveTo(pts[0].x,pts[0].y);
+    pts.forEach(function(pt){ctx.lineTo(pt.x,pt.y);});
+    ctx.lineTo(pts[pts.length-1].x,toY(0)); ctx.lineTo(pts[0].x,toY(0));
+    ctx.closePath(); ctx.fillStyle=grad; ctx.fill();
+    ctx.beginPath(); ctx.moveTo(pts[0].x,pts[0].y);
+    pts.forEach(function(pt){ctx.lineTo(pt.x,pt.y);});
+    ctx.strokeStyle=p.color; ctx.lineWidth=2; ctx.lineJoin='round'; ctx.stroke();
+    var last=pts[pts.length-1];
+    ctx.beginPath(); ctx.arc(last.x,last.y,4,0,Math.PI*2);
+    ctx.fillStyle=p.color; ctx.fill();
+    ctx.strokeStyle='#fff'; ctx.lineWidth=1.5; ctx.stroke();
   });
 
-  // X-axis time labels
-  ctx.fillStyle = '#9ca3af';
-  ctx.font = '10px Inter, sans-serif';
-  ctx.textAlign = 'center';
-  [0, 0.25, 0.5, 0.75, 1].forEach(i => {
-    const t = tMin + i * tRange;
-    const x = pad.left + i * plotW;
-    const d = new Date(t * 1000);
-    const label = chartRange === '1D'
-      ? d.toLocaleTimeString('en-US',{hour:'numeric',minute:'2-digit',hour12:true})
-      : d.toLocaleDateString('en-US',{month:'short',day:'numeric'});
-    ctx.fillText(label, x, H - 8);
-  });
-}
-// Resize observer to redraw on layout change
-new ResizeObserver(() => drawChart()).observe(document.getElementById('portfolioChart').parentElement);
-
-// Update portfolio stock prices every 60 seconds only
-async function autoUpdatePortfolioPrices() {
-  if (!portfolio || portfolio.length === 0) return;
-  var tickers = portfolio.map(function(p) { return p.ticker; }).join(',');
-  try {
-    var res = await fetch(API + '/prices?tickers=' + encodeURIComponent(tickers));
-    if (!res.ok) return;
-    var fresh = await res.json();
-    // Update global prices
-    Object.assign(prices, fresh);
-    // Add new data points to chart
-    var now = Date.now();
-    portfolio.forEach(function(p) {
-      var newPrice = fresh[p.ticker] && fresh[p.ticker].price;
-      if (newPrice) {
-        p.points.push({ t: now, p: newPrice });
-        if (p.points.length > 1440) p.points = p.points.slice(-1440);
-      }
-    });
-    savePortfolio();
-    renderTable();
-    updateChartLegend();
-    drawChart();
-    var sub = document.getElementById('chartSubtitle');
-    if (sub && portfolio.length > 0) {
-      var t = new Date().toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' });
-      sub.textContent = portfolio.length + ' stock' + (portfolio.length !== 1 ? 's' : '') + ' tracked · Updated ' + t;
-    }
-  } catch(e) { console.log('Price update failed:', e); }
-}
-// 2-minute countdown timer - runs always, ticks every second
-
-
-function _tickTimer() {
-  _timerSecs--;
-  const el = document.getElementById('priceTimer');
-  if (el) {
-    const m = Math.floor(_timerSecs / 60);
-    const s = _timerSecs % 60;
-    el.textContent = m + ':' + String(s).padStart(2, '0');
-    el.style.opacity = portfolio.length > 0 ? '1' : '0.4';
-    el.style.color = _timerSecs <= 15 ? '#dc2626' : '#1565ff';
-    el.style.borderColor = _timerSecs <= 15 ? 'rgba(220,38,38,0.3)' : 'rgba(21,101,255,0.2)';
-    el.style.background = _timerSecs <= 15 ? 'rgba(220,38,38,0.06)' : 'var(--blue-soft)';
-  }
-  if (_timerSecs <= 0) {
-    _timerSecs = 120; // reset
-    if (portfolio.length > 0) autoUpdatePortfolioPrices();
+  // X-axis labels
+  ctx.fillStyle='#9ca3af'; ctx.font='10px Inter,sans-serif'; ctx.textAlign='center';
+  for (var i=0;i<=4;i++){
+    var t = tMin+(i/4)*(tMax-tMin);
+    var x = pad.left+(i/4)*plotW;
+    var d = new Date(t);
+    ctx.fillText(d.toLocaleTimeString('en-US',{hour:'numeric',minute:'2-digit',hour12:true}),x,H-8);
   }
 }
 
-// Start ticking immediately
-setInterval(_tickTimer, 1000);
+function filterChart(btn, range) {
+  document.querySelectorAll('.chart-range-btn').forEach(function(b){b.classList.remove('active');});
+  btn.classList.add('active');
+  var ms = {'1D':86400000,'1W':604800000,'1M':2592000000,'3M':7776000000};
+  var cutoff = Date.now() - ms[range];
+  var orig = portfolio;
+  portfolio = portfolio.map(function(p){return Object.assign({},p,{points:p.points.filter(function(pt){return pt.t>=cutoff;})});});
+  updateChartLegend(); drawChart();
+  portfolio = orig;
+}
 
-// Also trigger price update soon after load if portfolio exists
+// ── UTILS ─────────────────────────────────────────────────────
+function timeAgo(iso) {
+  var s = Math.floor((Date.now()-new Date(iso))/1000);
+  if (s<60) return s+'s ago'; if (s<3600) return Math.floor(s/60)+'m ago';
+  if (s<86400) return Math.floor(s/3600)+'h ago'; return Math.floor(s/86400)+'d ago';
+}
+function sleep(ms) { return new Promise(function(r){setTimeout(r,ms);}); }
+
+// ── INIT ──────────────────────────────────────────────────────
+renderTable();
+updateChartLegend();
+drawChart();
+if (watchlist.length > 0) refreshPrices();
 if (portfolio.length > 0) setTimeout(autoUpdatePortfolioPrices, 500);
-
+new ResizeObserver(function(){drawChart();}).observe(document.querySelector('.chart-card')||document.body);
 </script>
 </body>
 </html>
