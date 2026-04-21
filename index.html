@@ -248,6 +248,22 @@
     canvas#portfolioChart { width: 100%; height: 200px; display: block; }
     .chart-empty { padding: 48px 20px; text-align: center; color: var(--grey); font-size: 12px; }
     .chart-tooltip { position: absolute; background: var(--text); color: var(--surface); border-radius: 6px; padding: 6px 10px; font-size: 11px; font-family: "JetBrains Mono", monospace; pointer-events: none; opacity: 0; transition: opacity 0.1s; white-space: nowrap; z-index: 10; transform: translate(-50%, -120%); }
+
+    /* Buy Modal */
+    .modal-overlay { display:none; position:fixed; inset:0; background:rgba(0,0,0,0.3); z-index:1000; align-items:center; justify-content:center; }
+    .modal-overlay.active { display:flex; }
+    .modal-box { background:var(--surface); border:1px solid var(--border); border-radius:12px; box-shadow:0 8px 32px rgba(0,0,0,0.12); padding:24px; width:320px; }
+    .modal-title { font-size:15px; font-weight:600; color:var(--text); margin-bottom:4px; }
+    .modal-sub { font-size:12px; color:var(--grey); margin-bottom:20px; }
+    .modal-label { font-size:11px; font-weight:600; text-transform:uppercase; letter-spacing:0.08em; color:var(--grey); margin-bottom:6px; }
+    .modal-input { width:100%; background:var(--bg); border:1px solid var(--border2); border-radius:6px; color:var(--text); font-family:"Inter",sans-serif; font-size:16px; font-weight:600; padding:10px 14px; outline:none; margin-bottom:8px; transition:border-color 0.15s; }
+    .modal-input:focus { border-color:var(--blue); box-shadow:0 0 0 2px var(--blue-glow); }
+    .modal-total { font-size:12px; color:var(--grey2); margin-bottom:20px; height:18px; }
+    .modal-total strong { color:var(--text); }
+    .modal-btns { display:flex; gap:8px; }
+    .modal-cancel { flex:1; background:var(--surface2); border:1px solid var(--border); color:var(--text2); font-family:"Inter",sans-serif; font-size:13px; font-weight:500; padding:9px; border-radius:6px; cursor:pointer; }
+    .modal-confirm { flex:1; background:var(--blue); border:none; color:white; font-family:"Inter",sans-serif; font-size:13px; font-weight:600; padding:9px; border-radius:6px; cursor:pointer; transition:background 0.12s; }
+    .modal-confirm:hover { background:#1a6fff; }
   </style>
 </head>
 <body>
@@ -439,6 +455,7 @@ document.getElementById('mktTxt').textContent = mktOpen ? 'Market Open' : 'Marke
 document.getElementById('mktTime').textContent = now.toLocaleDateString('en-US', { weekday:'short', month:'short', day:'numeric' });
 
 document.getElementById('tickerInput').addEventListener('keydown', e => { if (e.key === 'Enter') addTicker(); });
+document.addEventListener('keydown', function(e) { if (e.key === 'Enter' && document.getElementById('buyModal').classList.contains('active')) confirmBuy(); if (e.key === 'Escape' && document.getElementById('buyModal').classList.contains('active')) closeBuyModal(); });
 
 renderTable();
 // Load prices for watchlist stocks immediately
@@ -776,18 +793,51 @@ function totalValueCell(ticker) {
 }
 
 function buyStock(ticker) {
-  // Get current price
-  var price = prices[ticker] && prices[ticker].price ? prices[ticker].price : null;
+  var price = prices[ticker] && prices[ticker].price ? parseFloat(prices[ticker].price) : null;
   if (!price) {
-    alert(ticker + ': No price loaded yet. Wait for prices to refresh or click Scan All first.');
+    alert(ticker + ': Price not loaded yet. Wait for the price refresh or hit Scan All.');
     return;
   }
+  // Store context for confirmBuy
+  window._buyTicker = ticker;
+  window._buyPrice = price;
 
-  // Ask how many shares
-  var input = prompt('Buy ' + ticker + ' @ $' + price + ' — How many shares?', '1');
-  if (input === null) return;
-  var shares = parseFloat(input);
-  if (isNaN(shares) || shares <= 0) { alert('Enter a valid number of shares.'); return; }
+  // Show modal
+  document.getElementById('modalTitle').textContent = 'Buy ' + ticker;
+  document.getElementById('modalSub').textContent = 'Current price: $' + price.toFixed(2) + ' per share';
+  document.getElementById('modalShares').value = '';
+  document.getElementById('modalTotal').textContent = '';
+  document.getElementById('buyModal').classList.add('active');
+  setTimeout(function() { document.getElementById('modalShares').focus(); }, 100);
+}
+
+function updateModalTotal() {
+  var shares = parseFloat(document.getElementById('modalShares').value);
+  var total = document.getElementById('modalTotal');
+  if (!isNaN(shares) && shares > 0 && window._buyPrice) {
+    var t = (shares * window._buyPrice).toLocaleString('en-US', {style:'currency', currency:'USD'});
+    total.innerHTML = 'Total: <strong>' + t + '</strong>';
+  } else {
+    total.textContent = '';
+  }
+}
+
+function closeBuyModal() {
+  document.getElementById('buyModal').classList.remove('active');
+  window._buyTicker = null;
+  window._buyPrice = null;
+}
+
+function confirmBuy() {
+  var ticker = window._buyTicker;
+  var price = window._buyPrice;
+  var shares = parseFloat(document.getElementById('modalShares').value);
+
+  if (!ticker || !price) return;
+  if (isNaN(shares) || shares <= 0) {
+    document.getElementById('modalShares').focus();
+    return;
+  }
 
   // Add to portfolio
   var existing = portfolio.find(function(p) { return p.ticker === ticker; });
@@ -806,14 +856,16 @@ function buyStock(ticker) {
   }
 
   savePortfolio();
+  closeBuyModal();
   renderTable();
   updateChartLegend();
   drawChart();
 
   var sub = document.getElementById('chartSubtitle');
   if (sub) sub.textContent = portfolio.length + ' stock' + (portfolio.length !== 1 ? 's' : '') + ' tracked';
-  alert('Bought ' + shares + ' shares of ' + ticker + ' @ $' + price + '. Total: $' + (shares * price).toFixed(2));
 }
+
+
 function sellStock(ticker) {
   portfolio = portfolio.filter(p => p.ticker !== ticker);
   savePortfolio();
@@ -1392,5 +1444,20 @@ setInterval(_tickTimer, 1000);
 if (portfolio.length > 0) setTimeout(autoUpdatePortfolioPrices, 500);
 
 </script>
+
+  <!-- Buy Modal -->
+  <div class="modal-overlay" id="buyModal" onclick="if(event.target===this)closeBuyModal()">
+    <div class="modal-box">
+      <div class="modal-title" id="modalTitle">Buy Stock</div>
+      <div class="modal-sub" id="modalSub">Current price: —</div>
+      <div class="modal-label">Number of Shares</div>
+      <input class="modal-input" type="number" id="modalShares" min="0.01" step="any" placeholder="0" oninput="updateModalTotal()"/>
+      <div class="modal-total" id="modalTotal"></div>
+      <div class="modal-btns">
+        <button class="modal-cancel" onclick="closeBuyModal()">Cancel</button>
+        <button class="modal-confirm" onclick="confirmBuy()">Buy</button>
+      </div>
+    </div>
+  </div>
 </body>
 </html>
