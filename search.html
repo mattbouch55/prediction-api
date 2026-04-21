@@ -574,9 +574,20 @@ function renderResults(data, topic, domain, horizon) {
         '<div class="pred-body">' +
           '<div class="pred-reasoning">'+p.reasoning+'</div>' +
           (signals ? '<div class="pred-signals-grid">'+signals+'</div>' : '') +
-          '<div style="display:flex;align-items:center">' +
+          '<div style="display:flex;align-items:center;gap:10px">' +
             '<span class="pred-horizon">Horizon: '+p.time_horizon+'</span>' +
             '<button class="pred-add-notes" onclick="addPredToNotes('+i+')">+ Add to notes</button>' +
+            '<button class="pred-add-notes" style="color:var(--text);border:1px solid var(--border2);padding:2px 9px;border-radius:4px;text-decoration:none" onclick="toggleStockEffect('+i+')">📈 Stock Effect</button>' +
+          '</div>' +
+          '<div class="stock-effect-wrap" id="se-wrap-'+i+'" style="display:none">' +
+            '<div class="stock-effect-input-row">' +
+              '<input class="stock-ticker-input" id="se-ticker-'+i+'" placeholder="Ticker e.g. TSLA" maxlength="10"/>' +
+              '<button class="analyse-btn" id="se-btn-'+i+'" onclick="runStockEffect('+i+')">Analyse →</button>' +
+              '<div class="effect-loading" id="se-loading-'+i+'">' +
+                '<div class="effect-mini-spin"></div><span>Analysing...</span>' +
+              '</div>' +
+            '</div>' +
+            '<div class="effect-result" id="se-result-'+i+'"></div>' +
           '</div>' +
         '</div>' +
       '</div>';
