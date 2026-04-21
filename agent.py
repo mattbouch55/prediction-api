@@ -20,12 +20,12 @@ class PredictionAgent:
         self.client = anthropic.Anthropic(api_key=api_key)
         self.model = "claude-sonnet-4-5"
 
-    async def run(self, topic: str, domain: str, time_horizon: str) -> PredictionResponse:
+    async def run(self, topic: str, domain: str, time_horizon: str, custom_source: str = None) -> PredictionResponse:
         loop = asyncio.get_event_loop()
-        result = await loop.run_in_executor(None, self._run_sync, topic, domain, time_horizon)
+        result = await loop.run_in_executor(None, self._run_sync, topic, domain, time_horizon, custom_source)
         return result
 
-    def _run_sync(self, topic: str, domain: str, time_horizon: str) -> PredictionResponse:
+    def _run_sync(self, topic: str, domain: str, time_horizon: str, custom_source: str = None) -> PredictionResponse:
         domain_context = DOMAIN_PROMPTS.get(domain, "You are an intelligence analyst.")
 
         custom_source_note = ""
