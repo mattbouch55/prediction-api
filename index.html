@@ -269,6 +269,18 @@
     .shares-input:focus { border-color:var(--blue); box-shadow:0 0 0 2px var(--blue-glow); }
     .shares-input::placeholder { color:var(--grey); font-weight:400; }
     .shares-label { font-size:10px; color:var(--grey); text-align:center; margin-top:2px; }
+
+    /* Dev Price Tester */
+    .dev-panel { position:fixed; bottom:20px; right:20px; background:var(--text); color:var(--surface); border-radius:10px; padding:14px 16px; z-index:9999; width:220px; box-shadow:0 4px 20px rgba(0,0,0,0.3); font-size:12px; }
+    .dev-panel-title { font-size:10px; font-weight:700; text-transform:uppercase; letter-spacing:0.1em; color:#666; margin-bottom:10px; display:flex; justify-content:space-between; align-items:center; }
+    .dev-panel-close { background:none; border:none; color:#666; cursor:pointer; font-size:16px; line-height:1; }
+    .dev-panel-close:hover { color:#fff; }
+    .dev-row { display:flex; gap:6px; margin-bottom:6px; }
+    .dev-select { flex:1; background:#222; border:1px solid #444; color:#fff; font-family:"Inter",sans-serif; font-size:11px; padding:5px 8px; border-radius:5px; outline:none; }
+    .dev-input { width:80px; background:#222; border:1px solid #444; color:#fff; font-family:"JetBrains Mono",monospace; font-size:12px; padding:5px 8px; border-radius:5px; outline:none; text-align:right; }
+    .dev-btn { background:#1565ff; color:#fff; border:none; font-family:"Inter",sans-serif; font-size:11px; font-weight:600; padding:5px 10px; border-radius:5px; cursor:pointer; width:100%; margin-top:4px; }
+    .dev-btn:hover { background:#1a6fff; }
+    .dev-hint { font-size:10px; color:#555; margin-top:8px; line-height:1.5; }
   </style>
 </head>
 <body>
@@ -1015,13 +1027,93 @@ function timeAgo(iso) {
 }
 function sleep(ms) { return new Promise(function(r){setTimeout(r,ms);}); }
 
+
+// ── DEV TESTING ──────────────────────────────────────────────
+function devPopulateSelect() {
+  var sel = document.getElementById('devTicker');
+  if (!sel) return;
+  sel.innerHTML = '<option value="">Select stock...</option>';
+  portfolio.forEach(function(p) {
+    var opt = document.createElement('option');
+    opt.value = p.ticker;
+    opt.textContent = p.ticker + ' (owned: ' + p.shares + ' sh)';
+    sel.appendChild(opt);
+  });
+  // Also add watchlist stocks
+  watchlist.forEach(function(w) {
+    if (!portfolio.find(function(p){return p.ticker===w.ticker;})) {
+      var opt = document.createElement('option');
+      opt.value = w.ticker;
+      opt.textContent = w.ticker + ' (watchlist only)';
+      sel.appendChild(opt);
+    }
+  });
+}
+
+function devSetPrice() {
+  var ticker = document.getElementById('devTicker').value;
+  var price  = parseFloat(document.getElementById('devPrice').value);
+  if (!ticker) { alert('Select a stock first'); return; }
+  if (isNaN(price) || price <= 0) { alert('Enter a valid price'); return; }
+
+  // Inject into prices object
+  if (!prices[ticker]) prices[ticker] = {};
+  prices[ticker].price = price;
+
+  // Add chart data point for portfolio stocks
+  var p = portfolio.find(function(p) { return p.ticker === ticker; });
+  if (p) {
+    p.points.push({ t: Date.now(), p: price });
+    savePortfolio();
+  }
+
+  // Update everything
+  renderTable();
+  updateChartLegend();
+  drawChart();
+
+  // Reset timer
+  _timerSecs = 120;
+
+  // Feedback
+  var btn = document.querySelector('.dev-btn');
+  btn.textContent = '✓ Injected $' + price + ' for ' + ticker;
+  setTimeout(function() { btn.textContent = 'Inject Price & Update Chart'; }, 2000);
+}
+
+// Populate dev select whenever portfolio changes
+var _origSavePortfolio = savePortfolio;
+savePortfolio = function() {
+  _origSavePortfolio();
+  devPopulateSelect();
+};
+
 // ── INIT ──────────────────────────────────────────────────────
 renderTable();
 updateChartLegend();
 drawChart();
 if (watchlist.length > 0) refreshPrices();
+devPopulateSelect();
 if (portfolio.length > 0) setTimeout(autoUpdatePortfolioPrices, 500);
 new ResizeObserver(function(){drawChart();}).observe(document.querySelector('.chart-card')||document.body);
 </script>
+
+  <!-- Dev Price Tester (remove before production) -->
+  <div class="dev-panel" id="devPanel">
+    <div class="dev-panel-title">
+      🧪 Price Tester
+      <button class="dev-panel-close" onclick="document.getElementById('devPanel').style.display='none'">×</button>
+    </div>
+    <div class="dev-row">
+      <select class="dev-select" id="devTicker">
+        <option value="">Select stock...</option>
+      </select>
+    </div>
+    <div class="dev-row">
+      <input class="dev-input" type="number" id="devPrice" placeholder="Price" step="0.01"/>
+    </div>
+    <button class="dev-btn" onclick="devSetPrice()">Inject Price & Update Chart</button>
+    <div class="dev-hint">Simulates a price update as if the 2-min timer fired. Adds a chart data point.</div>
+  </div>
 </body>
 </html>
