@@ -402,6 +402,7 @@
 <script>
 const API = 'https://prediction-api-production-ad66.up.railway.app';
 let watchlist = JSON.parse(localStorage.getItem('onyx_wl_v3') || '[]');
+let portfolio = JSON.parse(localStorage.getItem('onyx_portfolio') || '[]');
 let scanHistory = JSON.parse(localStorage.getItem('onyx_hist_v3') || '[]');
 let comments = JSON.parse(localStorage.getItem('onyx_comments') || '{}');
 let prices = {};
@@ -1040,7 +1041,6 @@ new ResizeObserver(() => drawChart()).observe(document.querySelector('.chart-car
 function sleep(ms) { return new Promise(r=>setTimeout(r,ms)); }
 
 // ── PORTFOLIO CHART ───────────────────────────────────────────
-let portfolio = JSON.parse(localStorage.getItem('onyx_portfolio') || '[]');
 let hiddenTickers = new Set();
 let chartRange = '1D';
 
