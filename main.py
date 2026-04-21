@@ -181,6 +181,10 @@ async def stock_effect(request: dict):
     confidence = request.get("confidence", "")
     topic      = request.get("topic", "")
 
+    prediction = prediction or ""
+    topic = topic or ""
+    confidence = confidence or ""
+
     prompt = f"""You are a senior equity analyst. A macro/thematic research prediction has been made:
 
 TOPIC: {topic}
@@ -191,19 +195,19 @@ Analyse how this specific prediction would affect the stock: {ticker}
 
 Search the web for current information about {ticker} and its relationship to the prediction topic.
 
-Return ONLY a valid JSON object (no markdown):
+Return ONLY a valid JSON object (no markdown, no extra text):
 {{
   "ticker": "{ticker}",
   "company_name": "Full company name",
-  "impact": "High" | "Medium" | "Low" | "Minimal",
-  "direction": "Bullish" | "Bearish" | "Neutral" | "Mixed",
-  "impact_score": <number -10 to +10, positive=bullish>,
-  "summary": "2-3 sentence plain English explanation of how this prediction affects the stock",
-  "bull_scenario": "What happens to the stock if prediction is correct",
-  "bear_scenario": "What happens if prediction is wrong or reversed",
+  "impact": "High",
+  "direction": "Bullish",
+  "impact_score": 5,
+  "summary": "2-3 sentence explanation",
+  "bull_scenario": "What happens if prediction is correct",
+  "bear_scenario": "What happens if prediction is wrong",
   "key_factors": ["factor 1", "factor 2", "factor 3"],
-  "time_horizon": "When the effect would likely materialise",
-  "confidence": "High" | "Medium" | "Low"
+  "time_horizon": "2-4 weeks",
+  "confidence": "Medium"
 }}"""
 
     try:
@@ -216,14 +220,27 @@ Return ONLY a valid JSON object (no markdown):
         import json
         text = ""
         for block in response.content:
-            if hasattr(block, "text"):
+            if hasattr(block, "text") and block.text:
                 text += block.text
         # Extract JSON
         start = text.find("{")
         end   = text.rfind("}") + 1
         if start >= 0 and end > start:
-            return json.loads(text[start:end])
-        return {"error": "Could not parse response", "raw": text[:200]}
+            result = json.loads(text[start:end])
+            # Ensure no None values that would cause concat errors
+            defaults = {
+                "ticker": ticker, "company_name": ticker,
+                "impact": "Medium", "direction": "Neutral",
+                "impact_score": 0, "summary": "Analysis unavailable.",
+                "bull_scenario": "N/A", "bear_scenario": "N/A",
+                "key_factors": [], "time_horizon": "Unknown",
+                "confidence": "Low"
+            }
+            for k, v in defaults.items():
+                if result.get(k) is None:
+                    result[k] = v
+            return result
+        return {"error": "Could not parse AI response"}
     except Exception as e:
         return {"error": str(e)}
 
