@@ -4,7 +4,7 @@ from fastapi.responses import HTMLResponse
 from fastapi.middleware.cors import CORSMiddleware
 from models import PredictionRequest, InvestmentRequest
 from agent import PredictionAgent, InvestmentAgent
-from database import init_db, save_prediction, get_recent_predictions
+from database import Database
 import requests as req
 
 app = FastAPI(title="Onyx AI Prediction API")
@@ -17,9 +17,11 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-init_db()
+db = Database()
+db.initialize()
+
 predict_agent = PredictionAgent()
-invest_agent = InvestmentAgent()
+invest_agent  = InvestmentAgent()
 
 
 # ── PAGES ─────────────────────────────────────────────────────
@@ -50,7 +52,7 @@ def get_prices(tickers: str):
 
     for ticker in ticker_list:
         price = None
-        prev = None
+        prev  = None
 
         # 1. Finnhub (primary)
         if api_key:
@@ -59,11 +61,11 @@ def get_prices(tickers: str):
                 r = req.get(url, timeout=6, headers=headers)
                 if r.status_code == 200:
                     data = r.json()
-                    c = data.get("c", 0)
+                    c  = data.get("c", 0)
                     pc = data.get("pc", 0)
-                    if c and c > 0:
+                    if c and float(c) > 0:
                         price = round(float(c), 2)
-                        prev = round(float(pc), 2) if pc else price
+                        prev  = round(float(pc), 2) if pc else price
             except Exception:
                 pass
 
@@ -74,14 +76,14 @@ def get_prices(tickers: str):
                 r = req.get(url, timeout=6, headers=headers)
                 if r.status_code == 200:
                     data = r.json()
-                    result_list = data.get("chart", {}).get("result", [])
-                    if result_list:
-                        meta = result_list[0].get("meta", {})
-                        p = meta.get("regularMarketPrice") or meta.get("previousClose")
+                    results = data.get("chart", {}).get("result", [])
+                    if results:
+                        meta = results[0].get("meta", {})
+                        p  = meta.get("regularMarketPrice") or meta.get("previousClose")
                         pc = meta.get("previousClose") or p
                         if p and float(p) > 0:
                             price = round(float(p), 2)
-                            prev = round(float(pc), 2) if pc else price
+                            prev  = round(float(pc), 2) if pc else price
             except Exception:
                 pass
 
@@ -94,12 +96,12 @@ def get_prices(tickers: str):
                     data = r.json()
                     quotes = data.get("quoteResponse", {}).get("result", [])
                     if quotes:
-                        q = quotes[0]
-                        p = q.get("regularMarketPrice")
+                        q  = quotes[0]
+                        p  = q.get("regularMarketPrice")
                         pc = q.get("regularMarketPreviousClose") or p
                         if p and float(p) > 0:
                             price = round(float(p), 2)
-                            prev = round(float(pc), 2) if pc else price
+                            prev  = round(float(pc), 2) if pc else price
             except Exception:
                 pass
 
@@ -112,19 +114,18 @@ def get_prices(tickers: str):
     return result
 
 
-# ── CHART DATA ────────────────────────────────────────────────
+# ── CHART ─────────────────────────────────────────────────────
 
 @app.get("/chart")
 def get_chart_data(ticker: str, from_ts: int = None, to_ts: int = None, resolution: str = "5"):
-    """Get historical OHLCV data for charting via Finnhub."""
     import time
     api_key = os.environ.get("FINNHUB_API_KEY", "")
-    now = int(time.time())
+    now     = int(time.time())
     from_ts = from_ts or (now - 86400)
-    to_ts = to_ts or now
+    to_ts   = to_ts   or now
     try:
-        url = f"https://finnhub.io/api/v1/stock/candle?symbol={ticker}&resolution={resolution}&from={from_ts}&to={to_ts}&token={api_key}"
-        r = req.get(url, timeout=10)
+        url  = f"https://finnhub.io/api/v1/stock/candle?symbol={ticker}&resolution={resolution}&from={from_ts}&to={to_ts}&token={api_key}"
+        r    = req.get(url, timeout=10)
         data = r.json()
         if data.get("s") == "ok":
             prices = [{"t": t, "p": c} for t, c in zip(data["t"], data["c"])]
@@ -134,7 +135,7 @@ def get_chart_data(ticker: str, from_ts: int = None, to_ts: int = None, resoluti
         return {"ticker": ticker, "prices": [], "error": str(e)}
 
 
-# ── AI ENDPOINTS ──────────────────────────────────────────────
+# ── AI ────────────────────────────────────────────────────────
 
 @app.post("/predict")
 async def predict(request: PredictionRequest):
@@ -144,7 +145,10 @@ async def predict(request: PredictionRequest):
         time_horizon=request.time_horizon,
         custom_source=getattr(request, "custom_source", None)
     )
-    save_prediction(request.topic, result.dict())
+    try:
+        db.save_prediction(result)
+    except Exception:
+        pass
     return result
 
 @app.post("/invest")
@@ -158,7 +162,10 @@ async def invest(request: InvestmentRequest):
 
 @app.get("/predictions")
 def get_predictions(limit: int = 10):
-    return get_recent_predictions(limit)
+    try:
+        return db.get_predictions(limit=limit)
+    except Exception:
+        return []
 
 @app.get("/health")
 def health():
