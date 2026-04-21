@@ -599,11 +599,11 @@ function renderPanel(ticker) {
       </div>
       <div style="display:flex;align-items:flex-start;gap:6px;flex-shrink:0">
         <div>
-          <input class="shares-input" type="number" id="sharesInput-${ticker}" min="0.01" step="any" placeholder="Shares" title="Number of shares"/>
+          <input class="shares-input" type="number" id="sharesInput-${ticker}" min="0.01" step="any" placeholder="Shares"/>
           <div class="shares-label">qty</div>
         </div>
         <button class="panel-trade-btn" onclick="buyFromPanel('${ticker}')">Buy</button>
-        <button class="panel-trade-btn" onclick="sellStock('${ticker}')">Sell</button>
+        <button class="panel-trade-btn" onclick="sellFromPanel('${ticker}')">Sell</button>
       </div>
     </div>
   `;
@@ -909,6 +909,32 @@ function confirmBuy() {
 }
 
 
+function sellFromPanel(ticker) {
+  var input = document.getElementById('sharesInput-' + ticker);
+  var shares = input ? parseFloat(input.value) : NaN;
+  if (isNaN(shares) || shares <= 0) {
+    if (input) { input.focus(); input.style.borderColor = 'var(--red)'; setTimeout(function() { input.style.borderColor = ''; }, 1500); }
+    return;
+  }
+  var existing = portfolio.find(function(p) { return p.ticker === ticker; });
+  if (!existing) { alert(ticker + ' is not in your portfolio.'); return; }
+  if (shares >= existing.shares) {
+    // Sell all - remove from portfolio
+    portfolio = portfolio.filter(function(p) { return p.ticker !== ticker; });
+  } else {
+    existing.shares = Math.round((existing.shares - shares) * 10000) / 10000;
+  }
+  savePortfolio();
+  renderTable();
+  updateChartLegend();
+  drawChart();
+  if (input) input.value = '';
+  var sub = document.getElementById('chartSubtitle');
+  if (sub) sub.textContent = portfolio.length > 0
+    ? portfolio.length + ' stock' + (portfolio.length !== 1 ? 's' : '') + ' tracked'
+    : 'Add stocks to your portfolio using the Buy button';
+}
+
 function sellStock(ticker) {
   portfolio = portfolio.filter(p => p.ticker !== ticker);
   savePortfolio();
@@ -1209,6 +1235,32 @@ function totalValueCell(ticker) {
   return '<span style="font-family:JetBrains Mono,monospace;font-size:11px;font-weight:600">' + total + pnlStr + '</span>';
 }
 
+
+function sellFromPanel(ticker) {
+  var input = document.getElementById('sharesInput-' + ticker);
+  var shares = input ? parseFloat(input.value) : NaN;
+  if (isNaN(shares) || shares <= 0) {
+    if (input) { input.focus(); input.style.borderColor = 'var(--red)'; setTimeout(function() { input.style.borderColor = ''; }, 1500); }
+    return;
+  }
+  var existing = portfolio.find(function(p) { return p.ticker === ticker; });
+  if (!existing) { alert(ticker + ' is not in your portfolio.'); return; }
+  if (shares >= existing.shares) {
+    // Sell all - remove from portfolio
+    portfolio = portfolio.filter(function(p) { return p.ticker !== ticker; });
+  } else {
+    existing.shares = Math.round((existing.shares - shares) * 10000) / 10000;
+  }
+  savePortfolio();
+  renderTable();
+  updateChartLegend();
+  drawChart();
+  if (input) input.value = '';
+  var sub = document.getElementById('chartSubtitle');
+  if (sub) sub.textContent = portfolio.length > 0
+    ? portfolio.length + ' stock' + (portfolio.length !== 1 ? 's' : '') + ' tracked'
+    : 'Add stocks to your portfolio using the Buy button';
+}
 
 function sellStock(ticker) {
   portfolio = portfolio.filter(p => p.ticker !== ticker);
