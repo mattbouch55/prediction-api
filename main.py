@@ -169,6 +169,64 @@ def get_predictions(limit: int = 10):
     except Exception:
         return []
 
+
+@app.post("/stock-effect")
+async def stock_effect(request: dict):
+    """Analyse how a macro prediction affects a specific stock."""
+    import anthropic as ant
+    client = ant.Anthropic(api_key=os.environ.get("ANTHROPIC_API_KEY"))
+
+    prediction = request.get("prediction", "")
+    ticker     = request.get("ticker", "").upper().strip()
+    confidence = request.get("confidence", "")
+    topic      = request.get("topic", "")
+
+    prompt = f"""You are a senior equity analyst. A macro/thematic research prediction has been made:
+
+TOPIC: {topic}
+PREDICTION: {prediction}
+PREDICTION CONFIDENCE: {confidence}
+
+Analyse how this specific prediction would affect the stock: {ticker}
+
+Search the web for current information about {ticker} and its relationship to the prediction topic.
+
+Return ONLY a valid JSON object (no markdown):
+{{
+  "ticker": "{ticker}",
+  "company_name": "Full company name",
+  "impact": "High" | "Medium" | "Low" | "Minimal",
+  "direction": "Bullish" | "Bearish" | "Neutral" | "Mixed",
+  "impact_score": <number -10 to +10, positive=bullish>,
+  "summary": "2-3 sentence plain English explanation of how this prediction affects the stock",
+  "bull_scenario": "What happens to the stock if prediction is correct",
+  "bear_scenario": "What happens if prediction is wrong or reversed",
+  "key_factors": ["factor 1", "factor 2", "factor 3"],
+  "time_horizon": "When the effect would likely materialise",
+  "confidence": "High" | "Medium" | "Low"
+}}"""
+
+    try:
+        response = client.messages.create(
+            model="claude-sonnet-4-5",
+            max_tokens=1000,
+            tools=[{"type": "web_search_20250305", "name": "web_search"}],
+            messages=[{"role": "user", "content": prompt}]
+        )
+        import json
+        text = ""
+        for block in response.content:
+            if hasattr(block, "text"):
+                text += block.text
+        # Extract JSON
+        start = text.find("{")
+        end   = text.rfind("}") + 1
+        if start >= 0 and end > start:
+            return json.loads(text[start:end])
+        return {"error": "Could not parse response", "raw": text[:200]}
+    except Exception as e:
+        return {"error": str(e)}
+
 @app.get("/health")
 def health():
     return {"status": "ok"}
