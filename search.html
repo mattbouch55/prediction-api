@@ -373,13 +373,13 @@
         </div>
 
         <!-- Prediction section -->
-        <div id="predSection" style="display:none">
+        <div id="predSection">
           <div class="pred-section-label">Predictions</div>
           <div id="predList"></div>
         </div>
 
         <!-- Custom Prediction Tester -->
-        <div class="custom-pred-section" id="customPredSection" style="display:none">
+        <div class="custom-pred-section" id="customPredSection" style="margin-top:20px;padding-top:16px;border-top:2px solid var(--border)">
           <div class="custom-pred-header">
             <span>Your Own Prediction</span>
             <span style="font-size:10px;font-weight:400;text-transform:none;letter-spacing:0;color:var(--grey)">Test any statement against any stock</span>
@@ -628,6 +628,7 @@ function renderResults(data, topic, domain, horizon) {
   var preds = predData;
   if (preds.length) {
     document.getElementById('predSection').style.display = 'block';
+    document.getElementById('customPredSection').style.display = 'block';
     document.getElementById('predList').innerHTML = preds.map(function(p, i) {
       var cc = (p.confidence||'low').toLowerCase();
       var signals = (p.supporting_signals||[]).map(function(s) {
