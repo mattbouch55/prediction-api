@@ -724,11 +724,18 @@ function getPortfolioColor(ticker) {
 }
 
 function buyStock(ticker) {
-  if (portfolio.find(p => p.ticker === ticker)) return; // already owned
+  if (portfolio.find(p => p.ticker === ticker)) return;
   const w = watchlist.find(w => w.ticker === ticker);
   if (!w) return;
   portfolio.push({ ticker, type: w.type, boughtAt: Date.now(), color: CHART_COLORS[portfolio.length % CHART_COLORS.length] });
   localStorage.setItem('onyx_portfolio', JSON.stringify(portfolio));
+  // Record entry price snapshot
+  const p = prices[ticker];
+  if (p?.price) {
+    if (!priceHistory[ticker]) priceHistory[ticker] = [];
+    priceHistory[ticker].push({ t: Math.floor(Date.now() / 1000), p: p.price });
+    localStorage.setItem('onyx_price_history', JSON.stringify(priceHistory));
+  }
   fetchChartData(ticker).then(() => drawChart());
   updateLegend();
 }
@@ -747,26 +754,68 @@ function setChartRange(range) {
   Object.keys(chartData).length > 0 ? refreshChartData() : null;
 }
 
-async function fetchChartData(ticker) {
-  const apiKey = '';  // Uses Finnhub from backend
-  const now = Math.floor(Date.now() / 1000);
-  const ranges = { '1D': 60*60*24, '1W': 60*60*24*7, '1M': 60*60*24*30, '3M': 60*60*24*90 };
-  const from = now - ranges[chartRange];
-  const resolution = chartRange === '1D' ? '5' : chartRange === '1W' ? '60' : 'D';
+// Price history stored as {ticker: [{t, p}]} in localStorage
+let priceHistory = JSON.parse(localStorage.getItem('onyx_price_history') || '{}');
 
+function savePriceSnapshot() {
+  // Save current price for all portfolio stocks
+  portfolio.forEach(p => {
+    const price = prices[p.ticker];
+    if (!price?.price) return;
+    if (!priceHistory[p.ticker]) priceHistory[p.ticker] = [];
+    priceHistory[p.ticker].push({ t: Math.floor(Date.now() / 1000), p: price.price });
+    // Keep max 2016 points (1 week at 5-min intervals)
+    if (priceHistory[p.ticker].length > 2016) {
+      priceHistory[p.ticker] = priceHistory[p.ticker].slice(-2016);
+    }
+  });
+  localStorage.setItem('onyx_price_history', JSON.stringify(priceHistory));
+}
+
+async function fetchChartData(ticker) {
+  const ranges = { '1D': 60*60*24, '1W': 60*60*24*7, '1M': 60*60*24*30, '3M': 60*60*24*90 };
+  const cutoff = Math.floor(Date.now() / 1000) - ranges[chartRange];
+
+  // Use stored history if available
+  if (priceHistory[ticker] && priceHistory[ticker].length > 1) {
+    const filtered = priceHistory[ticker].filter(pt => pt.t >= cutoff);
+    if (filtered.length > 1) {
+      chartData[ticker] = filtered;
+      return;
+    }
+  }
+
+  // Try Finnhub via backend
+  const now = Math.floor(Date.now() / 1000);
+  const resolution = chartRange === '1D' ? '5' : chartRange === '1W' ? '60' : 'D';
   try {
-    const res = await fetch(`${API}/chart?ticker=${encodeURIComponent(ticker)}&from=${from}&to=${now}&resolution=${resolution}`);
+    const res = await fetch(`${API}/chart?ticker=${encodeURIComponent(ticker)}&from=${cutoff}&to=${now}&resolution=${resolution}`);
     if (res.ok) {
       const data = await res.json();
-      if (data.prices && data.prices.length > 0) {
+      if (data.prices && data.prices.length > 1) {
         chartData[ticker] = data.prices;
+        // Seed our local history with this data
+        if (!priceHistory[ticker]) priceHistory[ticker] = [];
+        data.prices.forEach(pt => {
+          if (!priceHistory[ticker].find(h => h.t === pt.t)) {
+            priceHistory[ticker].push(pt);
+          }
+        });
+        localStorage.setItem('onyx_price_history', JSON.stringify(priceHistory));
+        return;
       }
     }
-  } catch(e) {
-    // Fallback: generate simulated data from current price
-    const p = prices[ticker];
-    if (p?.price) {
-      chartData[ticker] = generateSimulatedPrices(p.price, ranges[chartRange]);
+  } catch(e) {}
+
+  // Fallback: use current price as single point
+  const p = prices[ticker];
+  if (p?.price) {
+    const existing = priceHistory[ticker] || [];
+    if (existing.length < 2) {
+      // Not enough history yet — show message
+      chartData[ticker] = [{ t: now - 60, p: p.price }, { t: now, p: p.price }];
+    } else {
+      chartData[ticker] = existing.filter(pt => pt.t >= cutoff);
     }
   }
 }
@@ -989,8 +1038,59 @@ if (portfolio.length > 0) {
   refreshChartData();
 }
 
+// Auto-update prices every 5 minutes and record history
+async function autoUpdatePrices() {
+  if (portfolio.length === 0) return;
+  await refreshPrices();     // Fetch latest prices
+  savePriceSnapshot();       // Record snapshot to history
+  await refreshChartData();  // Redraw chart with new data
+}
+
+// Run immediately then every 5 minutes
+if (portfolio.length > 0) {
+  savePriceSnapshot(); // Record initial snapshot
+}
+setInterval(autoUpdatePrices, 5 * 60 * 1000);
+
+// Also update price display every 60 seconds
+setInterval(async () => {
+  if (watchlist.length > 0) await refreshPrices();
+}, 60 * 1000);
+
 // Resize observer to redraw on layout change
 new ResizeObserver(() => drawChart()).observe(document.getElementById('portfolioChart').parentElement);
+
+// Auto price refresh every 5 minutes
+async function autoRefreshPrices() {
+  await refreshPrices();
+
+  // Append latest prices to chart data for portfolio stocks
+  const now = Math.floor(Date.now() / 1000);
+  let updated = false;
+  portfolio.forEach(p => {
+    const price = prices[p.ticker];
+    if (price?.price && chartData[p.ticker]) {
+      chartData[p.ticker].push({ t: now, p: price.price });
+      // Keep last 288 points (24hrs at 5min intervals)
+      if (chartData[p.ticker].length > 288) {
+        chartData[p.ticker] = chartData[p.ticker].slice(-288);
+      }
+      updated = true;
+    }
+  });
+
+  if (updated) drawChart();
+
+  // Show last updated time
+  const subtitle = document.getElementById('chartSubtitle');
+  if (portfolio.length > 0) {
+    const t = new Date().toLocaleTimeString('en-US', { hour:'numeric', minute:'2-digit' });
+    subtitle.textContent = `${portfolio.length} stock${portfolio.length !== 1 ? 's' : ''} · Updated ${t}`;
+  }
+}
+
+// Run immediately then every 5 minutes
+setInterval(autoRefreshPrices, 5 * 60 * 1000);
 
 </script>
 </body>
