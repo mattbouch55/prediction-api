@@ -517,40 +517,90 @@ function removeTicker(ticker) {
 
 async function refreshPrices() {
   if (!watchlist.length) return;
+  // Try backend first (fast, batched)
   try {
     var tickers = watchlist.map(function(w) { return w.ticker; }).join(',');
     var res = await fetch(API + '/prices?tickers=' + encodeURIComponent(tickers));
-    if (res.ok) { prices = await res.json(); renderTable(); }
+    if (res.ok) {
+      var data = await res.json();
+      // Check if we got real prices
+      var hasPrice = Object.values(data).some(function(v) { return v && v.price; });
+      if (hasPrice) { prices = data; renderTable(); return; }
+    }
   } catch(e) {}
+
+  // Fallback: fetch each ticker client-side
+  for (var i = 0; i < watchlist.length; i++) {
+    var ticker = watchlist[i].ticker;
+    var price = await fetchPriceClientSide(ticker);
+    if (price) {
+      if (!prices[ticker]) prices[ticker] = {};
+      prices[ticker].price = price;
+    }
+  }
+  renderTable();
+}
+
+async function fetchPriceClientSide(ticker) {
+  // Fetch directly from browser - bypasses Railway IP blocks
+  try {
+    // Use Yahoo Finance via allorigins CORS proxy
+    var yUrl = 'https://query1.finance.yahoo.com/v8/finance/chart/' + ticker + '?interval=1m&range=1d';
+    var proxyUrl = 'https://api.allorigins.win/raw?url=' + encodeURIComponent(yUrl);
+    var res = await fetch(proxyUrl, { timeout: 8000 });
+    if (!res.ok) throw new Error('proxy failed');
+    var data = await res.json();
+    var chart = data && data.chart && data.chart.result;
+    if (chart && chart[0]) {
+      var meta = chart[0].meta;
+      var price = meta.regularMarketPrice || meta.previousClose;
+      if (price && price > 0) return parseFloat(price);
+    }
+  } catch(e) {}
+
+  // Fallback: try backend (in case Railway IP gets whitelisted)
+  try {
+    var res2 = await fetch(API + '/prices?tickers=' + encodeURIComponent(ticker));
+    if (res2.ok) {
+      var data2 = await res2.json();
+      if (data2[ticker] && data2[ticker].price) return data2[ticker].price;
+    }
+  } catch(e) {}
+
+  return null;
 }
 
 async function autoUpdatePortfolioPrices() {
   if (!portfolio.length) return;
-  try {
-    var tickers = portfolio.map(function(p) { return p.ticker; }).join(',');
-    var res = await fetch(API + '/prices?tickers=' + encodeURIComponent(tickers));
-    if (!res.ok) return;
-    var fresh = await res.json();
-    Object.assign(prices, fresh);
-    var now = Date.now();
-    portfolio.forEach(function(p) {
-      var price = fresh[p.ticker] && fresh[p.ticker].price;
-      if (price) {
-        p.points.push({ t: now, p: parseFloat(price) });
-        if (p.points.length > 1440) p.points = p.points.slice(-1440);
-      }
-    });
+  var now = Date.now();
+  var updated = false;
+
+  for (var i = 0; i < portfolio.length; i++) {
+    var p = portfolio[i];
+    var price = await fetchPriceClientSide(p.ticker);
+    if (price) {
+      // Update prices cache
+      if (!prices[p.ticker]) prices[p.ticker] = {};
+      prices[p.ticker].price = price;
+      // Add chart point
+      p.points.push({ t: now, p: price });
+      if (p.points.length > 1440) p.points = p.points.slice(-1440);
+      updated = true;
+    }
+  }
+
+  if (updated) {
     savePortfolio();
     renderTable();
     updateChartLegend();
     drawChart();
     var sub = document.getElementById('chartSubtitle');
-    if (sub && portfolio.length > 0) {
+    if (sub) {
       var t = new Date().toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' });
       sub.textContent = portfolio.length + ' stock' + (portfolio.length !== 1 ? 's' : '') + ' tracked · ' + t;
     }
-    _timerSecs = 120;
-  } catch(e) {}
+  }
+  _timerSecs = 120;
 }
 
 async function scanAll() {
