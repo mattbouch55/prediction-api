@@ -332,15 +332,16 @@
       <table class="tbl">
         <thead>
           <tr>
-            <th style="width:38%">Ticker</th>
-            <th style="width:18%">Price</th>
-            <th style="width:18%">Score</th>
-            <th style="width:16%">Shares</th>
+            <th style="width:30%">Ticker</th>
+            <th style="width:16%">Price <span id="priceTimer" style="font-size:9px;color:var(--blue);font-weight:400;margin-left:4px;font-family:'JetBrains Mono',monospace"></span></th>
+            <th style="width:15%">Score</th>
+            <th style="width:14%">Shares</th>
+            <th style="width:15%">Total Value</th>
             <th style="width:10%"></th>
           </tr>
         </thead>
         <tbody id="tableBody">
-          <tr><td class="empty-cell" colspan="5">
+          <tr><td class="empty-cell" colspan="6">
             <div class="empty-icon">📊</div>
             <div class="empty-text">Your watchlist is empty</div>
             <div class="empty-sub">Type a ticker above and click + Add to get started</div>
@@ -649,7 +650,7 @@ function renderTable() {
   subtitle.textContent = `${watchlist.length} ticker${watchlist.length !== 1 ? 's' : ''}`;
 
   if (!watchlist.length) {
-    body.innerHTML = `<tr><td class="empty-cell" colspan="5"><div class="empty-icon">📊</div><div class="empty-text">Your watchlist is empty</div><div class="empty-sub">Type a ticker above and click + Add to get started</div></td></tr>`;
+    body.innerHTML = `<tr><td class="empty-cell" colspan="6"><div class="empty-icon">📊</div><div class="empty-text">Your watchlist is empty</div><div class="empty-sub">Type a ticker above and click + Add to get started</div></td></tr>`;
     return;
   }
 
@@ -691,6 +692,7 @@ function renderTable() {
           </div>
         </td>
         <td onclick="event.stopPropagation()" style="text-align:center">${sharesCell(w.ticker)}</td>
+        <td onclick="event.stopPropagation()" style="text-align:center">${totalValueCell(w.ticker)}</td>
         <td style="text-align:right;padding-right:12px" onclick="event.stopPropagation()"><button class="del-btn" id="del-${w.ticker}" title="Remove">&times;</button></td>
       </tr>`;
   });
@@ -737,6 +739,19 @@ function sharesCell(ticker) {
     return '<span style="font-family:JetBrains Mono,monospace;font-size:11px;color:var(--blue);font-weight:600">' + sh + ' sh</span>';
   }
   return '<span style="font-size:11px;color:var(--grey)">—</span>';
+}
+
+function totalValueCell(ticker) {
+  const sh = getOwnedShares(ticker);
+  if (sh <= 0) return '<span style="font-size:11px;color:var(--grey)">—</span>';
+  const price = prices[ticker]?.price;
+  if (!price) return '<span style="font-size:11px;color:var(--grey)">—</span>';
+  const total = (sh * price).toLocaleString('en-US', {style:'currency', currency:'USD', minimumFractionDigits:2, maximumFractionDigits:2});
+  const entry = portfolio.find(p => p.ticker === ticker)?.buyPrice;
+  const pnl = entry ? ((price - entry) * sh) : null;
+  const pnlColor = pnl === null ? '' : pnl >= 0 ? 'color:var(--green)' : 'color:var(--red)';
+  const pnlStr = pnl !== null ? ' <span style="font-size:10px;' + pnlColor + '">' + (pnl >= 0 ? '+' : '') + '$' + Math.abs(pnl).toFixed(2) + '</span>' : '';
+  return '<span style="font-family:JetBrains Mono,monospace;font-size:11px;font-weight:600">' + total + pnlStr + '</span>';
 }
 
 function buyStock(ticker) {
@@ -1068,6 +1083,19 @@ function sharesCell(ticker) {
   return '<span style="font-size:11px;color:var(--grey)">—</span>';
 }
 
+function totalValueCell(ticker) {
+  const sh = getOwnedShares(ticker);
+  if (sh <= 0) return '<span style="font-size:11px;color:var(--grey)">—</span>';
+  const price = prices[ticker]?.price;
+  if (!price) return '<span style="font-size:11px;color:var(--grey)">—</span>';
+  const total = (sh * price).toLocaleString('en-US', {style:'currency', currency:'USD', minimumFractionDigits:2, maximumFractionDigits:2});
+  const entry = portfolio.find(p => p.ticker === ticker)?.buyPrice;
+  const pnl = entry ? ((price - entry) * sh) : null;
+  const pnlColor = pnl === null ? '' : pnl >= 0 ? 'color:var(--green)' : 'color:var(--red)';
+  const pnlStr = pnl !== null ? ' <span style="font-size:10px;' + pnlColor + '">' + (pnl >= 0 ? '+' : '') + '$' + Math.abs(pnl).toFixed(2) + '</span>' : '';
+  return '<span style="font-family:JetBrains Mono,monospace;font-size:11px;font-weight:600">' + total + pnlStr + '</span>';
+}
+
 function buyStock(ticker) {
   // Remove if already owned (toggle off)
   if (portfolio.find(p => p.ticker === ticker)) {
@@ -1348,6 +1376,7 @@ async function autoUpdatePortfolioPrices() {
       savePortfolio();
       updateChartLegend();
       drawChart();
+      priceTimerSeconds = 120; // reset countdown after successful update
       const subtitle = document.getElementById('chartSubtitle');
       if (subtitle && portfolio.length > 0) {
         const t = new Date().toLocaleTimeString('en-US', { hour:'numeric', minute:'2-digit' });
@@ -1357,10 +1386,36 @@ async function autoUpdatePortfolioPrices() {
   } catch(e) {}
 }
 
-// Run every 60 seconds - portfolio stocks only
-setInterval(autoUpdatePortfolioPrices, 60 * 1000);
-// Also run immediately on load if stocks are owned
-if (portfolio.length > 0) setTimeout(autoUpdatePortfolioPrices, 1000);
+// 2-minute countdown timer displayed next to "Price"
+let priceTimerSeconds = 120;
+let priceTimerInterval = null;
+
+function startPriceTimer() {
+  if (priceTimerInterval) clearInterval(priceTimerInterval);
+  priceTimerSeconds = 120;
+  updateTimerDisplay();
+  priceTimerInterval = setInterval(() => {
+    priceTimerSeconds--;
+    updateTimerDisplay();
+    if (priceTimerSeconds <= 0) {
+      autoUpdatePortfolioPrices();
+      priceTimerSeconds = 120; // reset
+    }
+  }, 1000);
+}
+
+function updateTimerDisplay() {
+  const el = document.getElementById('priceTimer');
+  if (!el) return;
+  if (portfolio.length === 0) { el.textContent = ''; return; }
+  const m = Math.floor(priceTimerSeconds / 60);
+  const s = priceTimerSeconds % 60;
+  el.textContent = m + ':' + String(s).padStart(2, '0');
+}
+
+// Start timer and run immediately if stocks owned
+startPriceTimer();
+if (portfolio.length > 0) setTimeout(autoUpdatePortfolioPrices, 500);
 
 </script>
 </body>
