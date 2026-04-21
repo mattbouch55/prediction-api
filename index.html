@@ -367,8 +367,11 @@
           <tr>
             <th style="width:30%">Ticker</th>
             <th style="width:16%">
-              Price
-              <span id="priceTimer" title="Next price update for owned stocks" style="font-size:9px;color:var(--blue);font-weight:500;margin-left:6px;font-family:'JetBrains Mono',monospace;background:var(--blue-soft);padding:1px 5px;border-radius:3px;border:1px solid rgba(21,101,255,0.2)">2:00</span>
+              <span style="display:flex;align-items:center;gap:5px">
+                Price
+                <button onclick="manualRefreshPrices()" title="Refresh prices now" style="background:none;border:none;cursor:pointer;color:var(--blue);font-size:13px;line-height:1;padding:0 2px;opacity:0.7" onmouseover="this.style.opacity=1" onmouseout="this.style.opacity=0.7">↻</button>
+                <span id="priceTimer" title="Next auto-refresh" style="font-size:9px;color:var(--blue);font-weight:500;font-family:'JetBrains Mono',monospace;background:var(--blue-soft);padding:1px 5px;border-radius:3px;border:1px solid rgba(21,101,255,0.2)">2:00</span>
+              </span>
             </th>
             <th style="width:15%">Score</th>
             <th style="width:14%">Shares</th>
@@ -505,7 +508,8 @@ function addTicker() {
   save();
   renderTable();
   document.getElementById('tickerInput').value = '';
-  refreshPrices();
+  // Fetch this ticker's price immediately and independently
+  refreshSinglePrice(ticker);
 }
 
 function removeTicker(ticker) {
@@ -517,565 +521,91 @@ function removeTicker(ticker) {
 
 async function refreshPrices() {
   if (!watchlist.length) return;
-  // Try backend first (fast, batched)
   try {
     var tickers = watchlist.map(function(w) { return w.ticker; }).join(',');
     var res = await fetch(API + '/prices?tickers=' + encodeURIComponent(tickers));
     if (res.ok) {
-      var data = await res.json();
-      // Check if we got real prices
-      var hasPrice = Object.values(data).some(function(v) { return v && v.price; });
-      if (hasPrice) { prices = data; renderTable(); return; }
+      var fresh = await res.json();
+      // Merge into prices
+      Object.keys(fresh).forEach(function(t) {
+        if (fresh[t] && fresh[t].price) {
+          if (!prices[t]) prices[t] = {};
+          prices[t].price = fresh[t].price;
+          prices[t].change_pct = fresh[t].change_pct;
+        }
+      });
+      renderTable();
     }
   } catch(e) {}
+}
 
-  // Fallback: fetch each ticker client-side
-  for (var i = 0; i < watchlist.length; i++) {
-    var ticker = watchlist[i].ticker;
-    var price = await fetchPriceClientSide(ticker);
-    if (price) {
-      if (!prices[ticker]) prices[ticker] = {};
-      prices[ticker].price = price;
-    }
+async function refreshSinglePrice(ticker) {
+  var price = await fetchPriceClientSide(ticker);
+  if (price) {
+    if (!prices[ticker]) prices[ticker] = {};
+    prices[ticker].price = price;
+    renderTable();
   }
-  renderTable();
+  return price;
+}
+
+async function manualRefreshPrices() {
+  var btn = document.querySelector('button[onclick="manualRefreshPrices()"]');
+  if (btn) { btn.textContent = '⟳'; btn.style.opacity = '1'; }
+  await refreshPrices();
+  if (portfolio.length > 0) await autoUpdatePortfolioPrices();
+  if (btn) { setTimeout(function(){ btn.textContent = '↻'; btn.style.opacity = '0.7'; }, 500); }
 }
 
 async function fetchPriceClientSide(ticker) {
-  // Fetch directly from browser - bypasses Railway IP blocks
+  // Our Railway backend has full internet access - use it
   try {
-    // Use Yahoo Finance via allorigins CORS proxy
-    var yUrl = 'https://query1.finance.yahoo.com/v8/finance/chart/' + ticker + '?interval=1m&range=1d';
-    var proxyUrl = 'https://api.allorigins.win/raw?url=' + encodeURIComponent(yUrl);
-    var res = await fetch(proxyUrl, { timeout: 8000 });
-    if (!res.ok) throw new Error('proxy failed');
-    var data = await res.json();
-    var chart = data && data.chart && data.chart.result;
-    if (chart && chart[0]) {
-      var meta = chart[0].meta;
-      var price = meta.regularMarketPrice || meta.previousClose;
-      if (price && price > 0) return parseFloat(price);
+    var res = await fetch(API + '/prices?tickers=' + encodeURIComponent(ticker));
+    if (res.ok) {
+      var data = await res.json();
+      if (data[ticker] && data[ticker].price) {
+        return parseFloat(data[ticker].price);
+      }
     }
   } catch(e) {}
-
-  // Fallback: try backend (in case Railway IP gets whitelisted)
-  try {
-    var res2 = await fetch(API + '/prices?tickers=' + encodeURIComponent(ticker));
-    if (res2.ok) {
-      var data2 = await res2.json();
-      if (data2[ticker] && data2[ticker].price) return data2[ticker].price;
-    }
-  } catch(e) {}
-
   return null;
 }
 
+
 async function autoUpdatePortfolioPrices() {
   if (!portfolio.length) return;
-  var now = Date.now();
-  var updated = false;
-
-  for (var i = 0; i < portfolio.length; i++) {
-    var p = portfolio[i];
-    var price = await fetchPriceClientSide(p.ticker);
-    if (price) {
-      // Update prices cache
-      if (!prices[p.ticker]) prices[p.ticker] = {};
-      prices[p.ticker].price = price;
-      // Add chart point
-      p.points.push({ t: now, p: price });
-      if (p.points.length > 1440) p.points = p.points.slice(-1440);
-      updated = true;
-    }
-  }
-
-  if (updated) {
-    savePortfolio();
-    renderTable();
-    updateChartLegend();
-    drawChart();
-    var sub = document.getElementById('chartSubtitle');
-    if (sub) {
-      var t = new Date().toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' });
-      sub.textContent = portfolio.length + ' stock' + (portfolio.length !== 1 ? 's' : '') + ' tracked · ' + t;
-    }
-  }
-  _timerSecs = 120;
-}
-
-async function scanAll() {
-  if (!watchlist.length) return;
-  var btn = document.getElementById('scanAllBtn');
-  btn.disabled = true;
-  document.getElementById('progressWrap').classList.add('active');
-  await refreshPrices();
-  for (var i = 0; i < watchlist.length; i++) {
-    document.getElementById('progressFill').style.width = Math.round((i / watchlist.length) * 100) + '%';
-    document.getElementById('progressTxt').textContent = 'Analysing ' + watchlist[i].ticker + ' (' + (i+1) + '/' + watchlist.length + ')';
-    await scanTicker(watchlist[i].ticker, false);
-    if (i < watchlist.length - 1) await sleep(3000);
-  }
-  document.getElementById('progressFill').style.width = '100%';
-  document.getElementById('progressTxt').textContent = 'Scan complete';
-  setTimeout(function() { document.getElementById('progressWrap').classList.remove('active'); }, 1500);
-  btn.disabled = false;
-  renderTable();
-  if (selectedTicker) renderPanel(selectedTicker);
-}
-
-async function scanTicker(ticker, rerender) {
-  if (rerender === undefined) rerender = true;
-  var w = watchlist.find(function(w) { return w.ticker === ticker; });
-  if (!w) return;
-  var prev = w.signal;
-  w.scanning = true;
-  if (rerender) renderTable();
   try {
-    var res = await fetch(API + '/invest', {
-      method: 'POST', headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ ticker: ticker, asset_type: w.type, custom_source: comments[ticker + '_url'] || undefined })
+    var tickers = portfolio.map(function(p) { return p.ticker; }).join(',');
+    var res = await fetch(API + '/prices?tickers=' + encodeURIComponent(tickers));
+    if (!res.ok) return;
+    var fresh = await res.json();
+    var now = Date.now();
+    var updated = false;
+    portfolio.forEach(function(p) {
+      var priceData = fresh[p.ticker];
+      var price = priceData && priceData.price ? parseFloat(priceData.price) : null;
+      if (price) {
+        if (!prices[p.ticker]) prices[p.ticker] = {};
+        prices[p.ticker].price = price;
+        p.points.push({ t: now, p: price });
+        if (p.points.length > 1440) p.points = p.points.slice(-1440);
+        updated = true;
+      }
     });
-    var data = await res.json();
-    if (res.ok) {
-      w.signal = data.signal; w.assetName = data.asset_name || ''; w.summary = data.summary;
-      w.scannedAt = new Date().toISOString(); w.prevSignal = prev;
-      w.catalysts = data.catalysts || []; w.risks = data.risks || [];
-      w.signals = data.supporting_signals || []; w.confidence = data.confidence;
-      var sm = { BUY:{High:8.5,Medium:7.0,Low:6.0}, WATCH:{High:6.0,Medium:5.5,Low:4.5}, HOLD:{High:5.0,Medium:4.5,Low:4.0}, SELL:{High:2.0,Medium:3.0,Low:3.5} };
-      w.score = sm[data.signal] && sm[data.signal][data.confidence] ? sm[data.signal][data.confidence] : 5.0;
-      scanHistory.unshift({ ticker:ticker, signal:data.signal, score:w.score, summary:data.summary, prevSignal:prev, time:new Date().toISOString() });
-      if (scanHistory.length > 100) scanHistory = scanHistory.slice(0, 100);
+    if (updated) {
+      savePortfolio();
+      renderTable();
+      updateChartLegend();
+      drawChart();
+      var sub = document.getElementById('chartSubtitle');
+      if (sub) {
+        var t = new Date().toLocaleTimeString('en-US', { hour:'numeric', minute:'2-digit' });
+        sub.textContent = portfolio.length + ' stock' + (portfolio.length!==1?'s':'') + ' tracked · ' + t;
+      }
     }
   } catch(e) {}
-  w.scanning = false;
-  save();
-  if (rerender) { renderTable(); if (selectedTicker === ticker) renderPanel(ticker); }
+  _timerSecs = 120;
 }
-
-// ── PORTFOLIO: BUY / SELL ─────────────────────────────────────
-function buyFromPanel(ticker) {
-  var input = document.getElementById('buyInput-' + ticker);
-  var shares = input ? parseFloat(input.value) : NaN;
-  if (isNaN(shares) || shares <= 0) {
-    if (input) { input.focus(); input.style.borderColor = 'var(--red)'; setTimeout(function() { input.style.borderColor = ''; }, 1500); }
-    return;
-  }
-  var priceData = prices[ticker];
-  var price = priceData ? parseFloat(priceData.price) : null;
-  if (!price) { alert(ticker + ': Price not loaded yet. Wait for refresh or click Scan All.'); return; }
-
-  var existing = portfolio.find(function(p) { return p.ticker === ticker; });
-  if (existing) {
-    existing.shares = (existing.shares || 0) + shares;
-    existing.buyPrice = existing.buyPrice || price;
-    existing.points.push({ t: Date.now(), p: price });
-  } else {
-    portfolio.push({ ticker: ticker, color: CHART_COLORS[portfolio.length % CHART_COLORS.length],
-                     shares: shares, buyPrice: price, points: [{ t: Date.now(), p: price }] });
-  }
-  savePortfolio();
-  if (input) input.value = '';
-  renderTable();
-  updateChartLegend();
-  drawChart();
-  renderPanel(ticker);
-}
-
-function sellFromPanel(ticker) {
-  var input = document.getElementById('sellInput-' + ticker);
-  var shares = input ? parseFloat(input.value) : NaN;
-  if (isNaN(shares) || shares <= 0) {
-    if (input) { input.focus(); input.style.borderColor = 'var(--red)'; setTimeout(function() { input.style.borderColor = ''; }, 1500); }
-    return;
-  }
-  var existing = portfolio.find(function(p) { return p.ticker === ticker; });
-  if (!existing || existing.shares <= 0) { alert(ticker + ' is not in your portfolio.'); return; }
-  if (shares >= existing.shares) {
-    portfolio = portfolio.filter(function(p) { return p.ticker !== ticker; });
-  } else {
-    existing.shares = Math.round((existing.shares - shares) * 10000) / 10000;
-  }
-  savePortfolio();
-  if (input) input.value = '';
-  renderTable();
-  updateChartLegend();
-  drawChart();
-  renderPanel(ticker);
-}
-
-// ── HELPERS ───────────────────────────────────────────────────
-function getOwnedShares(ticker) {
-  var p = portfolio.find(function(p) { return p.ticker === ticker; });
-  return p ? (p.shares || 0) : 0;
-}
-
-function sharesCell(ticker) {
-  var sh = getOwnedShares(ticker);
-  if (sh > 0) {
-    var str = Number.isInteger(sh) ? String(sh) : sh.toFixed(4).replace(/\.?0+$/, '');
-    return '<span style="font-family:JetBrains Mono,monospace;font-size:12px;color:var(--blue);font-weight:600">' + str + ' sh</span>';
-  }
-  return '<span style="font-size:11px;color:var(--grey)">—</span>';
-}
-
-function totalValueCell(ticker) {
-  var sh = getOwnedShares(ticker);
-  if (sh <= 0) return '<span style="font-size:11px;color:var(--grey)">—</span>';
-  var entry = portfolio.find(function(p) { return p.ticker === ticker; });
-  var priceData = prices[ticker];
-  var price = priceData ? parseFloat(priceData.price) : (entry ? entry.buyPrice : null);
-  if (!price) return '<span style="font-size:11px;color:var(--grey)">—</span>';
-  var total = sh * price;
-  var totalStr = total.toLocaleString('en-US', {style:'currency', currency:'USD', minimumFractionDigits:2, maximumFractionDigits:2});
-  if (!entry || !entry.buyPrice) return '<span style="font-family:JetBrains Mono,monospace;font-size:12px;font-weight:600">' + totalStr + '</span>';
-  var pnl = (price - entry.buyPrice) * sh;
-  var pnlColor = pnl >= 0 ? 'var(--green)' : 'var(--red)';
-  var pnlStr = (pnl >= 0 ? '+' : '') + pnl.toLocaleString('en-US', {style:'currency', currency:'USD', minimumFractionDigits:2, maximumFractionDigits:2});
-  return '<div style="line-height:1.4">' +
-    '<span style="font-family:JetBrains Mono,monospace;font-size:12px;font-weight:600">' + totalStr + '</span><br>' +
-    '<span style="font-size:10px;color:' + pnlColor + ';font-weight:600">' + pnlStr + '</span>' +
-    '</div>';
-}
-
-// ── PANEL ─────────────────────────────────────────────────────
-function selectStock(ticker) {
-  if (selectedTicker === ticker) {
-    selectedTicker = null;
-    document.querySelectorAll('tr.main-row').forEach(function(r) { r.classList.remove('selected'); });
-    document.getElementById('panelHead').innerHTML = '<div><div style="font-size:11px;font-weight:600;color:var(--grey);text-transform:uppercase;letter-spacing:0.1em">Stock Detail</div></div>';
-    document.getElementById('panelBody').innerHTML = '<div class="panel-placeholder"><div style="font-size:32px;margin-bottom:14px;opacity:0.15">📋</div><div style="font-size:13px;font-weight:500;color:var(--text2);margin-bottom:6px">No stock selected</div><div style="font-size:12px;line-height:1.6;color:var(--grey)">Click any row in the watchlist to view AI analysis, scan history, and add notes</div></div>';
-    return;
-  }
-  selectedTicker = ticker;
-  renderPanel(ticker);
-  document.querySelectorAll('tr.main-row').forEach(function(r) { r.classList.remove('selected'); });
-  var row = document.getElementById('row-' + ticker);
-  if (row) row.classList.add('selected');
-}
-
-function closePanel() {
-  selectedTicker = null;
-  document.querySelectorAll('tr.main-row').forEach(function(r) { r.classList.remove('selected'); });
-}
-
-function renderPanel(ticker) {
-  var w = watchlist.find(function(w) { return w.ticker === ticker; });
-  if (!w) return;
-  var sigCls  = w.signal ? w.signal.toLowerCase() : 'pending';
-  var sc      = !w.score ? 'nd' : w.score>=7 ? 'hi' : w.score>=5 ? 'mi' : 'lo';
-  var confPct = w.confidence==='High' ? 85 : w.confidence==='Medium' ? 60 : w.confidence==='Low' ? 35 : 0;
-  var comment = comments[ticker] || '';
-  var srcUrl  = comments[ticker+'_url'] || '';
-  var hist    = scanHistory.filter(function(h) { return h.ticker===ticker; });
-
-  // Build head using DOM (no quote escaping issues)
-  var head = document.getElementById('panelHead');
-  head.innerHTML = '';
-
-  var left = document.createElement('div');
-  left.style.cssText = 'display:flex;align-items:center;gap:12px;min-width:0;flex:1';
-
-  var nameDiv = document.createElement('div');
-  var tickerEl = document.createElement('div');
-  tickerEl.className = 'panel-ticker';
-  tickerEl.textContent = ticker;
-  var nameEl = document.createElement('div');
-  nameEl.className = 'panel-name';
-  nameEl.textContent = w.assetName || w.type;
-  nameDiv.appendChild(tickerEl);
-  nameDiv.appendChild(nameEl);
-
-  var scanBtn = document.createElement('button');
-  scanBtn.className = 'panel-scan-btn';
-  scanBtn.textContent = 'Scan';
-  scanBtn.disabled = !!w.scanning;
-  scanBtn.onclick = function() { scanTicker(ticker); };
-
-  left.appendChild(nameDiv);
-  left.appendChild(scanBtn);
-
-  var right = document.createElement('div');
-  right.style.cssText = 'display:flex;align-items:flex-start;gap:6px;flex-shrink:0';
-
-  function makeQtyGroup(id, label) {
-    var wrap = document.createElement('div');
-    var inp = document.createElement('input');
-    inp.className = 'shares-input';
-    inp.type = 'number'; inp.min = '0.01'; inp.step = 'any';
-    inp.placeholder = 'qty'; inp.id = id;
-    var lbl = document.createElement('div');
-    lbl.className = 'shares-label';
-    lbl.textContent = label;
-    wrap.appendChild(inp); wrap.appendChild(lbl);
-    return wrap;
-  }
-
-  var buyQty = makeQtyGroup('buyInput-'+ticker, 'buy qty');
-  var buyBtn = document.createElement('button');
-  buyBtn.className = 'panel-trade-btn';
-  buyBtn.textContent = 'Buy';
-  buyBtn.onclick = function() { buyFromPanel(ticker); };
-
-  var sellQty = makeQtyGroup('sellInput-'+ticker, 'sell qty');
-  var sellBtn = document.createElement('button');
-  sellBtn.className = 'panel-trade-btn';
-  sellBtn.textContent = 'Sell';
-  sellBtn.onclick = function() { sellFromPanel(ticker); };
-
-  right.appendChild(buyQty);
-  right.appendChild(buyBtn);
-  right.appendChild(sellQty);
-  right.appendChild(sellBtn);
-
-  var row = document.createElement('div');
-  row.style.cssText = 'display:flex;align-items:center;justify-content:space-between;width:100%;gap:8px';
-  row.appendChild(left);
-  row.appendChild(right);
-  head.appendChild(row);
-
-  // Build body HTML (no function calls in here)
-  var histHTML = hist.length ? hist.slice(0,30).map(function(h) {
-    var col = h.signal==='BUY'?'var(--green)':h.signal==='SELL'?'var(--red)':h.signal==='WATCH'?'var(--yellow)':'var(--grey2)';
-    return '<div class="phist-entry"><div class="phist-top"><span class="phist-sig" style="color:'+col+'">'+h.signal+'</span><span class="phist-score">'+(h.score?h.score.toFixed(1):'—')+'/10</span><span class="phist-time">'+timeAgo(h.time)+'</span></div><div class="phist-sum">'+(h.summary||'')+'</div></div>';
-  }).join('') : '<div class="no-phist">No scan history yet</div>';
-
-  var scoreHTML = w.signal ?
-    '<div class="panel-section">' +
-      '<div style="display:flex;align-items:flex-start;gap:10px;margin-bottom:10px">' +
-        '<div class="panel-score-big '+sc+'">'+(w.score?w.score.toFixed(1):'—')+'</div>' +
-        '<span class="sig '+sigCls+'" style="font-size:12px;padding:5px 12px;margin-top:6px">'+w.signal+'</span>' +
-      '</div>' +
-      '<div style="font-size:10px;color:var(--grey);margin-bottom:6px">/ 10 AI Score</div>' +
-      '<div class="conf-track" style="width:120px"><div class="conf-fill" style="width:'+confPct+'%"></div></div>' +
-      '<div class="conf-label">Confidence: '+(w.confidence||'—')+'</div>' +
-      (w.summary?'<div class="panel-summary" style="margin-top:12px">'+w.summary+'</div>':'') +
-    '</div>' +
-    ((w.catalysts&&w.catalysts.length)||(w.risks&&w.risks.length)?
-      '<div class="panel-two-col">' +
-        (w.catalysts&&w.catalysts.length?'<div class="panel-list-card"><div class="panel-list-title green">↑ Catalysts</div><ul class="panel-ul">'+w.catalysts.map(function(c){return '<li class="panel-li up">'+c+'</li>';}).join('')+'</ul></div>':'') +
-        (w.risks&&w.risks.length?'<div class="panel-list-card"><div class="panel-list-title red">↓ Risks</div><ul class="panel-ul">'+w.risks.map(function(r){return '<li class="panel-li dn">'+r+'</li>';}).join('')+'</ul></div>':'') +
-      '</div>' : '')
-    : '<div style="font-size:12px;color:var(--grey2);margin-bottom:16px;padding:12px;background:var(--surface2);border-radius:6px">No scan data yet — click <strong>Scan</strong> to analyse.</div>';
-
-  document.getElementById('panelBody').innerHTML =
-    scoreHTML +
-    '<hr class="panel-divider"/>' +
-    '<div class="panel-hist-notes">' +
-      '<div><div class="panel-section-label">Scan History</div><div class="panel-hist-scroll">'+histHTML+'</div></div>' +
-      '<div class="notes-col">' +
-        '<div><div class="panel-section-label">Custom Source</div>' +
-          '<input class="notes-url-input" type="url" id="srcUrl-'+ticker+'" value="'+srcUrl+'" placeholder="Paste URL for AI to consider..."/>' +
-          '<div class="notes-url-hint">AI factors this into next scan</div>' +
-        '</div>' +
-        '<div style="display:flex;flex-direction:column;flex:1;gap:6px">' +
-          '<div class="panel-section-label">Notes</div>' +
-          '<textarea class="notes-textarea" id="cmt-'+ticker+'" placeholder="Your notes, thesis, trade plan...">'+comment+'</textarea>' +
-          '<button class="notes-save-btn" id="saveNotesBtn-'+ticker+'">Save</button>' +
-        '</div>' +
-      '</div>' +
-    '</div>';
-
-  // Attach save notes listener (no inline onclick needed)
-  var saveBtn = document.getElementById('saveNotesBtn-'+ticker);
-  if (saveBtn) saveBtn.onclick = function() { saveNotes(ticker); };
-}
-
-
-function saveComment(ticker) {
-  var val = document.getElementById('cmt-' + ticker) ? document.getElementById('cmt-' + ticker).value : '';
-  comments[ticker] = val; save();
-}
-
-function saveNotes(ticker) {
-  var note = document.getElementById('cmt-' + ticker) ? document.getElementById('cmt-' + ticker).value : '';
-  var url  = document.getElementById('srcUrl-' + ticker) ? document.getElementById('srcUrl-' + ticker).value : '';
-  comments[ticker] = note; comments[ticker + '_url'] = url; save();
-  var btn = event.target; var orig = btn.textContent;
-  btn.textContent = 'Saved ✓'; btn.style.background = 'var(--green)';
-  setTimeout(function() { btn.textContent = orig; btn.style.background = ''; }, 1500);
-}
-
-// ── TABLE ─────────────────────────────────────────────────────
-function renderTable() {
-  var body = document.getElementById('tableBody');
-  document.getElementById('cardSubtitle').textContent = watchlist.length + ' ticker' + (watchlist.length!==1?'s':'');
-  if (!watchlist.length) {
-    body.innerHTML = '<tr><td class="empty-cell" colspan="6"><div class="empty-icon">📊</div><div class="empty-text">Your watchlist is empty</div><div class="empty-sub">Type a ticker above and click + Add to get started</div></td></tr>';
-    return;
-  }
-  var order = {SELL:0,BUY:1,WATCH:2,HOLD:3};
-  var sorted = watchlist.slice().sort(function(a,b){
-    if(a.signal&&b.signal) return (order[a.signal]||4)-(order[b.signal]||4);
-    if(a.signal) return -1; if(b.signal) return 1; return 0;
-  });
-  var rows = '';
-  sorted.forEach(function(w) {
-    var p = prices[w.ticker];
-    var price = p&&p.price ? '$'+parseFloat(p.price).toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2}) : '—';
-    var sigCls = w.signal ? w.signal.toLowerCase() : 'pending';
-    var sc = !w.score?'nd':w.score>=7?'hi':w.score>=5?'mi':'lo';
-    var sbColor = !w.score?'#e5e4e2':w.score>=7?'#16a34a':w.score>=5?'#d97706':'#dc2626';
-    var sbWidth = w.score ? (w.score*10)+'%' : '0%';
-    var scoreTxt = w.scanning ? '...' : (w.score ? w.score.toFixed(1) : '—');
-    var isSel = selectedTicker === w.ticker;
-    var alertHtml = (w.signal&&w.prevSignal&&w.prevSignal!==w.signal) ? '<span class="alert-pill">⚡ '+w.prevSignal+'→'+w.signal+'</span>' : '';
-    rows +=
-      '<tr class="main-row'+(isSel?' selected':'')+'" id="row-'+w.ticker+'" data-ticker="'+w.ticker+'">' +
-      '<td><div class="ticker-name">'+w.ticker+alertHtml+'</div><div class="ticker-sub">'+(w.assetName||w.type).substring(0,26)+(w.scannedAt?' · '+timeAgo(w.scannedAt):'')+' </div></td>' +
-      '<td class="price-cell'+(w.scanning?' scanning':'')+'">'+( w.scanning?'...':price)+'</td>' +
-      '<td><div class="score-wrap"><div class="score-n '+sc+'">'+scoreTxt+'</div><div><div class="score-bar"><div class="score-fill" style="width:'+sbWidth+';background:'+sbColor+'"></div></div>'+(w.signal?'<span class="sig '+sigCls+'" style="margin-top:4px;display:inline-block">'+w.signal+'</span>':'')+'</div></div></td>' +
-      '<td style="text-align:center">'+sharesCell(w.ticker)+'</td>' +
-      '<td style="text-align:center">'+totalValueCell(w.ticker)+'</td>' +
-      '<td style="text-align:right;padding-right:12px"><button class="del-btn" data-ticker="'+w.ticker+'" title="Remove">&times;</button></td>' +
-      '</tr>';
-  });
-  body.innerHTML = rows;
-
-  // Attach listeners via data attributes (no inline onclick needed)
-  body.querySelectorAll('tr.main-row').forEach(function(row) {
-    var t = row.dataset.ticker;
-    row.addEventListener('click', function() { selectStock(t); });
-  });
-  body.querySelectorAll('.del-btn').forEach(function(btn) {
-    var t = btn.dataset.ticker;
-    btn.addEventListener('click', function(e) { e.stopPropagation(); removeTicker(t); });
-  });
-}
-
-
-// ── CHART ─────────────────────────────────────────────────────
-function updateChartLegend() {
-  var legend = document.getElementById('chartLegend');
-  var empty  = document.getElementById('chartEmpty');
-  var sub    = document.getElementById('chartSubtitle');
-  if (!legend) return;
-  if (!portfolio.length) {
-    legend.innerHTML = '';
-    if (empty) empty.style.display = 'block';
-    return;
-  }
-  if (empty) empty.style.display = 'none';
-  if (sub) sub.textContent = portfolio.length + ' stock' + (portfolio.length!==1?'s':'') + ' tracked';
-  legend.innerHTML = portfolio.map(function(p) {
-    var pts = p.points;
-    var first = pts[0] && pts[0].p;
-    var last  = pts[pts.length-1] && pts[pts.length-1].p;
-    var pnl   = first && last ? ((last - first) * (p.shares||1)) : null;
-    var pnlColor = pnl===null?'':pnl>=0?'color:var(--green)':'color:var(--red)';
-    var pnlStr = pnl!==null ? ' <span style="'+pnlColor+';font-weight:600">'+(pnl>=0?'+':'')+'$'+Math.abs(pnl).toFixed(2)+'</span>' : '';
-    return '<div class="chart-legend-item"><div class="chart-legend-dot" style="background:'+p.color+'"></div><span>'+p.ticker+pnlStr+'</span></div>';
-  }).join('');
-}
-
-function drawChart() {
-  var canvas = document.getElementById('portfolioChart');
-  if (!canvas) return;
-  var wrap = canvas.parentElement;
-  var W = wrap.clientWidth || 600, H = 200;
-  canvas.width = W * window.devicePixelRatio;
-  canvas.height = H * window.devicePixelRatio;
-  canvas.style.width = W + 'px'; canvas.style.height = H + 'px';
-  var ctx = canvas.getContext('2d');
-  ctx.scale(window.devicePixelRatio, window.devicePixelRatio);
-  ctx.clearRect(0, 0, W, H);
-
-  var visible = portfolio.filter(function(p) { return p.points && p.points.length >= 1; });
-  var pad = { top:16, right:20, bottom:32, left:52 };
-  var plotW = W - pad.left - pad.right;
-  var plotH = H - pad.top - pad.bottom;
-
-  // Draw grid
-  ctx.strokeStyle = '#e5e4e2'; ctx.lineWidth = 1;
-  for (var i = 0; i <= 4; i++) {
-    var y = pad.top + (i/4) * plotH;
-    ctx.beginPath(); ctx.moveTo(pad.left, y); ctx.lineTo(W-pad.right, y); ctx.stroke();
-  }
-
-  if (!visible.length || visible.every(function(p){return p.points.length < 2;})) return;
-
-  var vis2 = visible.filter(function(p){return p.points.length >= 2;});
-  if (!vis2.length) return;
-
-  var allPnl = [];
-  vis2.forEach(function(p) {
-    var base = p.points[0].p, sh = p.shares||1;
-    p.points.forEach(function(pt) { allPnl.push((pt.p-base)*sh); });
-  });
-  var minV = Math.min.apply(null, allPnl.concat([-0.5]));
-  var maxV = Math.max.apply(null, allPnl.concat([0.5]));
-  var range = maxV - minV || 1;
-
-  var allT = [];
-  vis2.forEach(function(p) { p.points.forEach(function(pt){allT.push(pt.t);}); });
-  var tMin = Math.min.apply(null, allT), tMax = Math.max.apply(null, allT);
-  var tRange = tMax - tMin || 1;
-
-  function toX(t) { return pad.left + ((t-tMin)/tRange)*plotW; }
-  function toY(v) { return pad.top + ((maxV-v)/range)*plotH; }
-
-  // Y-axis labels
-  ctx.fillStyle = '#9ca3af'; ctx.font = '10px Inter,sans-serif'; ctx.textAlign = 'right';
-  for (var i = 0; i <= 4; i++) {
-    var v = maxV - (i/4)*range;
-    var label = (Math.abs(v)>=1000?(v>=0?'+':'')+'$'+(v/1000).toFixed(1)+'k':(v>=0?'+':'')+'$'+v.toFixed(0));
-    ctx.fillText(label, pad.left-4, pad.top+(i/4)*plotH+3);
-  }
-
-  // Zero line
-  var zeroY = toY(0);
-  if (zeroY >= pad.top && zeroY <= pad.top+plotH) {
-    ctx.setLineDash([4,4]); ctx.strokeStyle='#d1d0cd'; ctx.lineWidth=1;
-    ctx.beginPath(); ctx.moveTo(pad.left,zeroY); ctx.lineTo(W-pad.right,zeroY); ctx.stroke();
-    ctx.setLineDash([]);
-  }
-
-  // Draw lines
-  vis2.forEach(function(p) {
-    var base = p.points[0].p, sh = p.shares||1;
-    var pts = p.points.map(function(pt){return{x:toX(pt.t),y:toY((pt.p-base)*sh)};});
-    var grad = ctx.createLinearGradient(0,pad.top,0,pad.top+plotH);
-    grad.addColorStop(0,p.color+'28'); grad.addColorStop(1,p.color+'00');
-    ctx.beginPath(); ctx.moveTo(pts[0].x,pts[0].y);
-    pts.forEach(function(pt){ctx.lineTo(pt.x,pt.y);});
-    ctx.lineTo(pts[pts.length-1].x,toY(0)); ctx.lineTo(pts[0].x,toY(0));
-    ctx.closePath(); ctx.fillStyle=grad; ctx.fill();
-    ctx.beginPath(); ctx.moveTo(pts[0].x,pts[0].y);
-    pts.forEach(function(pt){ctx.lineTo(pt.x,pt.y);});
-    ctx.strokeStyle=p.color; ctx.lineWidth=2; ctx.lineJoin='round'; ctx.stroke();
-    var last=pts[pts.length-1];
-    ctx.beginPath(); ctx.arc(last.x,last.y,4,0,Math.PI*2);
-    ctx.fillStyle=p.color; ctx.fill();
-    ctx.strokeStyle='#fff'; ctx.lineWidth=1.5; ctx.stroke();
-  });
-
-  // X-axis labels
-  ctx.fillStyle='#9ca3af'; ctx.font='10px Inter,sans-serif'; ctx.textAlign='center';
-  for (var i=0;i<=4;i++){
-    var t = tMin+(i/4)*(tMax-tMin);
-    var x = pad.left+(i/4)*plotW;
-    var d = new Date(t);
-    ctx.fillText(d.toLocaleTimeString('en-US',{hour:'numeric',minute:'2-digit',hour12:true}),x,H-8);
-  }
-}
-
-function filterChart(btn, range) {
-  document.querySelectorAll('.chart-range-btn').forEach(function(b){b.classList.remove('active');});
-  btn.classList.add('active');
-  var ms = {'1D':86400000,'1W':604800000,'1M':2592000000,'3M':7776000000};
-  var cutoff = Date.now() - ms[range];
-  var orig = portfolio;
-  portfolio = portfolio.map(function(p){return Object.assign({},p,{points:p.points.filter(function(pt){return pt.t>=cutoff;})});});
-  updateChartLegend(); drawChart();
-  portfolio = orig;
-}
-
-// ── UTILS ─────────────────────────────────────────────────────
-function timeAgo(iso) {
-  var s = Math.floor((Date.now()-new Date(iso))/1000);
-  if (s<60) return s+'s ago'; if (s<3600) return Math.floor(s/60)+'m ago';
-  if (s<86400) return Math.floor(s/3600)+'h ago'; return Math.floor(s/86400)+'d ago';
-}
-function sleep(ms) { return new Promise(function(r){setTimeout(r,ms);}); }
 
 
 // ── DEV TESTING ──────────────────────────────────────────────
