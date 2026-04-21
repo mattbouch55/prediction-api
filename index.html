@@ -405,6 +405,22 @@
 
 <script>
 var _timerSecs = 120; // global timer countdown
+setInterval(function() {
+  _timerSecs--;
+  var el = document.getElementById("priceTimer");
+  if (el) {
+    var m = Math.floor(_timerSecs / 60);
+    var s = _timerSecs % 60;
+    el.textContent = m + ":" + (s < 10 ? "0" : "") + s;
+    el.style.color = _timerSecs <= 15 ? "#dc2626" : "#1565ff";
+  }
+  if (_timerSecs <= 0) {
+    _timerSecs = 120;
+    if (typeof portfolio !== "undefined" && portfolio.length > 0 && typeof autoUpdatePortfolioPrices !== "undefined") {
+      autoUpdatePortfolioPrices();
+    }
+  }
+}, 1000);
 const API = 'https://prediction-api-production-ad66.up.railway.app';
 let watchlist = JSON.parse(localStorage.getItem('onyx_wl_v3') || '[]');
 let portfolio = JSON.parse(localStorage.getItem('onyx_portfolio') || '[]');
