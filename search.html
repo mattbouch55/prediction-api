@@ -773,8 +773,22 @@ function renderStockEffect(i, ticker, d) {
     '</div>' +
     '<div class="effect-summary">' + (d.summary||'') + '</div>' +
     '<div class="effect-scenarios">' +
-      '<div class="effect-scenario bull"><div class="effect-scenario-label">✓ If correct</div>' + (d.bull_scenario||'') + '</div>' +
-      '<div class="effect-scenario bear"><div class="effect-scenario-label">✗ If wrong</div>' + (d.bear_scenario||'') + '</div>' +
+      '<div class="effect-scenario bull">' +
+        '<div class="effect-scenario-label">✓ If correct</div>' +
+        '<div style="display:flex;align-items:center;gap:6px;margin-bottom:5px">' +
+          '<span style="font-size:13px;font-weight:800;color:var(--green)">' + (d.bull_price_direction==='Increase' ? '▲' : '▼') + '</span>' +
+          '<span style="font-size:12px;font-weight:700;color:var(--green)">' + (d.bull_price_magnitude||'') + '</span>' +
+        '</div>' +
+        '<div style="font-size:11px;color:var(--text2);line-height:1.5">' + (d.bull_scenario||'') + '</div>' +
+      '</div>' +
+      '<div class="effect-scenario bear">' +
+        '<div class="effect-scenario-label">✗ If wrong</div>' +
+        '<div style="display:flex;align-items:center;gap:6px;margin-bottom:5px">' +
+          '<span style="font-size:13px;font-weight:800;color:var(--red)">' + (d.bear_price_direction==='Decrease' ? '▼' : '▲') + '</span>' +
+          '<span style="font-size:12px;font-weight:700;color:var(--red)">' + (d.bear_price_magnitude||'') + '</span>' +
+        '</div>' +
+        '<div style="font-size:11px;color:var(--text2);line-height:1.5">' + (d.bear_scenario||'') + '</div>' +
+      '</div>' +
     '</div>' +
     (factors ? '<div class="effect-factors">' + factors + '</div>' : '') +
     '<div style="display:flex;justify-content:space-between;align-items:center;margin-top:8px">' +
