@@ -12,6 +12,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from models import PredictionRequest, InvestmentRequest
 from agent import PredictionAgent, InvestmentAgent
 from database import Database
+from ai_bar import inject as inject_ai_bar
 
 # ── App ────────────────────────────────────────────────────────
 app = FastAPI(title="Onyx AI")
@@ -29,11 +30,11 @@ HEADERS       = {"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleW
 # ── Pages ──────────────────────────────────────────────────────
 @app.get("/", response_class=HTMLResponse)
 def dashboard():
-    return open("index.html").read()
+    return inject_ai_bar(open("index.html").read())
 
 @app.get("/search", response_class=HTMLResponse)
 def research():
-    return open("search.html").read()
+    return inject_ai_bar(open("search.html").read())
 
 # ── Prices ─────────────────────────────────────────────────────
 @app.get("/prices")
