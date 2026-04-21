@@ -40,7 +40,7 @@
     /* ── SIDEBAR ────────────────────────────────────────────── */
     .sidebar { width: var(--sidebar-w); background: var(--surface); border-right: 1px solid var(--border); display: flex; flex-direction: column; position: fixed; top: 0; left: 0; height: 100vh; z-index: 50; }
 
-    .sidebar-logo { padding: 20px 16px 16px; border-bottom: 1px solid var(--border); }
+    .sidebar-logo { padding: 20px 16px 16px; border-bottom: 1px solid var(--border); margin-top: 34px; }
     .logo-row { display: flex; align-items: center; gap: 9px; }
     .logo-icon { width: 28px; height: 28px; background: var(--blue); border-radius: 6px; display: flex; align-items: center; justify-content: center; font-size: 13px; font-weight: 700; color: white; font-family: 'JetBrains Mono', monospace; flex-shrink: 0; }
     .logo-name { font-size: 14px; font-weight: 700; color: var(--text); letter-spacing: -0.01em; }
@@ -281,6 +281,25 @@
     .dev-btn { background:#1565ff; color:#fff; border:none; font-family:"Inter",sans-serif; font-size:11px; font-weight:600; padding:5px 10px; border-radius:5px; cursor:pointer; width:100%; margin-top:4px; }
     .dev-btn:hover { background:#1a6fff; }
     .dev-hint { font-size:10px; color:#555; margin-top:8px; line-height:1.5; }
+
+    /* ── AI AGENT BAR ── */
+    .ai-bar { width: var(--sidebar-w); background: var(--surface); border-right: 1px solid var(--border); border-bottom: 2px solid var(--border); flex-shrink: 0; display: flex; flex-direction: column; position: fixed; top: 0; left: 0; z-index: 200; }
+    .ai-bar-input-row { display: flex; align-items: center; padding: 7px 10px; gap: 6px; }
+    .ai-bar-dot { width: 5px; height: 5px; border-radius: 50%; background: var(--blue); flex-shrink: 0; animation: aipulse 2s ease-in-out infinite; }
+    @keyframes aipulse { 0%,100%{opacity:0.35;transform:scale(1)} 50%{opacity:1;transform:scale(1.3)} }
+    .ai-bar-input { flex: 1; background: none; border: none; outline: none; font-family: 'Inter', sans-serif; font-size: 11px; color: var(--text); min-width: 0; }
+    .ai-bar-input::placeholder { color: var(--grey); }
+    .ai-bar-send { background: none; border: none; cursor: pointer; color: var(--grey); padding: 2px; display: flex; align-items: center; transition: color 0.12s; flex-shrink: 0; }
+    .ai-bar-send:hover { color: var(--blue); }
+    .ai-bar-send:disabled { opacity: 0.3; cursor: not-allowed; }
+    .ai-bar-response { display: none; padding: 0 10px 9px; font-size: 11px; color: var(--text2); line-height: 1.65; border-top: 1px solid var(--border); max-height: 160px; overflow-y: auto; }
+    .ai-bar-response.active { display: block; }
+    .ai-bar-response::-webkit-scrollbar { width: 3px; }
+    .ai-bar-response::-webkit-scrollbar-thumb { background: var(--border2); border-radius: 2px; }
+    .ai-bar-meta { display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px; padding-top: 7px; }
+    .ai-bar-label { font-size: 9px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.1em; color: var(--blue); }
+    .ai-bar-clear { background: none; border: none; color: var(--grey); cursor: pointer; font-size: 10px; padding: 0; transition: color 0.12s; }
+    .ai-bar-clear:hover { color: var(--red); }
   </style>
 </head>
 <body>
@@ -1006,6 +1025,46 @@ devPopulateSelect();
 if(watchlist.length>0) refreshPrices();
 if(portfolio.length>0) setTimeout(autoUpdatePortfolioPrices,500);
 new ResizeObserver(function(){drawChart();}).observe(document.querySelector('.chart-card')||document.body);
+
+// ── AI AGENT BAR ──────────────────────────────────────────────
+document.getElementById('aiBarInput').addEventListener('keydown', function(e) {
+  if (e.key === 'Enter') askAI();
+  if (e.key === 'Escape') clearAI();
+});
+
+async function askAI() {
+  var q = document.getElementById('aiBarInput').value.trim();
+  if (!q) return;
+
+  var send = document.getElementById('aiBarSend');
+  var resp = document.getElementById('aiBarResponse');
+  var text = document.getElementById('aiBarText');
+
+  send.disabled = true;
+  resp.classList.add('active');
+  text.innerHTML = '<span style="color:var(--grey);font-style:italic">Searching...</span>';
+
+  try {
+    var res = await fetch('https://prediction-api-production-ad66.up.railway.app/ask', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ question: q })
+    });
+    var data = await res.json();
+    text.textContent = data.answer || 'No answer found.';
+  } catch(e) {
+    text.textContent = 'Error: ' + e.message;
+  } finally {
+    send.disabled = false;
+  }
+}
+
+function clearAI() {
+  document.getElementById('aiBarResponse').classList.remove('active');
+  document.getElementById('aiBarInput').value = '';
+  document.getElementById('aiBarText').textContent = '';
+}
+
 </script>
 
   <!-- Dev Price Tester (remove before production) -->
