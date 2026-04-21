@@ -332,14 +332,15 @@
       <table class="tbl">
         <thead>
           <tr>
-            <th style="width:45%">Ticker</th>
-            <th style="width:22%">Price</th>
-            <th style="width:25%">Score</th>
-            <th style="width:8%"></th>
+            <th style="width:38%">Ticker</th>
+            <th style="width:18%">Price</th>
+            <th style="width:18%">Score</th>
+            <th style="width:16%">Shares</th>
+            <th style="width:10%"></th>
           </tr>
         </thead>
         <tbody id="tableBody">
-          <tr><td class="empty-cell" colspan="4">
+          <tr><td class="empty-cell" colspan="5">
             <div class="empty-icon">📊</div>
             <div class="empty-text">Your watchlist is empty</div>
             <div class="empty-sub">Type a ticker above and click + Add to get started</div>
@@ -359,10 +360,10 @@
           <div style="display:flex;align-items:center;gap:16px">
             <div class="chart-legend" id="chartLegend"></div>
             <div class="chart-range-tabs">
-              <button class="chart-range-btn active" onclick="setChartRange('1D')">1D</button>
-              <button class="chart-range-btn" onclick="setChartRange('1W')">1W</button>
-              <button class="chart-range-btn" onclick="setChartRange('1M')">1M</button>
-              <button class="chart-range-btn" onclick="setChartRange('3M')">3M</button>
+              <button class="chart-range-btn active" onclick="filterChart(this,'1D')">1D</button>
+              <button class="chart-range-btn" onclick="filterChart(this,'1W')">1W</button>
+              <button class="chart-range-btn" onclick="filterChart(this,'1M')">1M</button>
+              <button class="chart-range-btn" onclick="filterChart(this,'3M')">3M</button>
             </div>
           </div>
         </div>
@@ -417,7 +418,9 @@ document.getElementById('mktTime').textContent = now.toLocaleDateString('en-US',
 document.getElementById('tickerInput').addEventListener('keydown', e => { if (e.key === 'Enter') addTicker(); });
 
 renderTable();
-if (watchlist.length > 0) refreshPrices();
+if (watchlist.length > 0) {
+  refreshPrices(); // fires immediately on page load
+}
 
 function save() {
   localStorage.setItem('onyx_wl_v3', JSON.stringify(watchlist));
@@ -646,7 +649,7 @@ function renderTable() {
   subtitle.textContent = `${watchlist.length} ticker${watchlist.length !== 1 ? 's' : ''}`;
 
   if (!watchlist.length) {
-    body.innerHTML = `<tr><td class="empty-cell" colspan="4"><div class="empty-icon">📊</div><div class="empty-text">Your watchlist is empty</div><div class="empty-sub">Type a ticker above and click + Add to get started</div></td></tr>`;
+    body.innerHTML = `<tr><td class="empty-cell" colspan="5"><div class="empty-icon">📊</div><div class="empty-text">Your watchlist is empty</div><div class="empty-sub">Type a ticker above and click + Add to get started</div></td></tr>`;
     return;
   }
 
@@ -687,7 +690,12 @@ function renderTable() {
             </div>
           </div>
         </td>
-        <td style="text-align:right;padding-right:16px" onclick="event.stopPropagation()"><button class="del-btn" id="del-${w.ticker}" title="Remove">&times;</button></td>
+        <td onclick="event.stopPropagation()" style="text-align:center">
+          ${getOwnedShares(w.ticker) > 0
+            ? `<span style="font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--blue);font-weight:600">${getOwnedShares(w.ticker)} sh</span>`
+            : `<span style="font-size:11px;color:var(--grey)">—</span>`}
+        </td>
+        <td style="text-align:right;padding-right:12px" onclick="event.stopPropagation()"><button class="del-btn" id="del-${w.ticker}" title="Remove">&times;</button></td>
       </tr>`;
   });
 
@@ -711,8 +719,324 @@ function timeAgo(iso) {
 function sleep(ms) { return new Promise(r=>setTimeout(r,ms)); }
 
 // ── PORTFOLIO CHART ───────────────────────────────────────────
+// Simple design: Buy records a price point. Every 5 min a new point is added. Chart draws the line.
+
+// portfolio = [{ticker, color, points: [{t, p}]}]
+// Loaded above in main state
+
+
+function getStockCurrentPrice(ticker) {
+  const p = prices[ticker];
+  return p?.price || null;
+}
+
+function getOwnedShares(ticker) {
+  const p = portfolio.find(p => p.ticker === ticker);
+  return p ? p.shares : 0;
+}
+
+function buyStock(ticker) {
+  const currentPrice = getStockCurrentPrice(ticker);
+  if (!currentPrice) {
+    alert('No price data for ' + ticker + ' yet. Click Scan first or wait for prices to load.');
+    return;
+  }
+
+  const existing = portfolio.find(p => p.ticker === ticker);
+  
+  // Show share input dialog
+  const sharesInput = prompt(`How many shares of ${ticker} would you like to buy?
+Current price: $${currentPrice}`, '1');
+  if (sharesInput === null) return; // cancelled
+  const shares = parseFloat(sharesInput);
+  if (isNaN(shares) || shares <= 0) {
+    alert('Please enter a valid number of shares.');
+    return;
+  }
+
+  if (existing) {
+    // Add more shares to existing position
+    existing.shares = (existing.shares || 0) + shares;
+    existing.points.push({ t: Date.now(), p: currentPrice });
+  } else {
+    const color = CHART_COLORS[portfolio.length % CHART_COLORS.length];
+    portfolio.push({
+      ticker,
+      color,
+      shares,
+      buyPrice: currentPrice,
+      points: [{ t: Date.now(), p: currentPrice }]
+    });
+  }
+
+  savePortfolio();
+  updateChartLegend();
+  drawChart();
+  renderTable(); // refresh shares column
+  const subtitle = document.getElementById('chartSubtitle');
+  if (subtitle) subtitle.textContent = portfolio.length + ' stock' + (portfolio.length !== 1 ? 's' : '') + ' tracked';
+}
+
+function sellStock(ticker) {
+  portfolio = portfolio.filter(p => p.ticker !== ticker);
+  savePortfolio();
+  updateChartLegend();
+  drawChart();
+  const subtitle = document.getElementById('chartSubtitle');
+  if (subtitle) {
+    subtitle.textContent = portfolio.length > 0
+      ? portfolio.length + ' stock' + (portfolio.length !== 1 ? 's' : '') + ' tracked'
+      : 'Add stocks to your portfolio using the Buy button';
+  }
+}
+
+function savePortfolio() {
+  localStorage.setItem('onyx_portfolio', JSON.stringify(portfolio));
+}
+
+function updateChartLegend() {
+  const legend = document.getElementById('chartLegend');
+  const empty = document.getElementById('chartEmpty');
+  if (!legend) return;
+
+  if (portfolio.length === 0) {
+    legend.innerHTML = '';
+    if (empty) empty.style.display = 'block';
+    const canvas = document.getElementById('portfolioChart');
+    if (canvas) {
+      const ctx = canvas.getContext('2d');
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+    }
+    return;
+  }
+
+  if (empty) empty.style.display = 'none';
+  legend.innerHTML = portfolio.map(p => {
+    const points = p.points;
+    const first = points[0]?.p;
+    const last = points[points.length - 1]?.p;
+    const shares = p.shares || 1;
+    const pnl = first && last ? ((last - first) * shares) : null;
+    const pnlStr = pnl !== null ? ` ${pnl >= 0 ? '+' : ''}$${Math.abs(pnl).toFixed(2)}` : '';
+    const pnlColor = pnl === null ? '' : pnl >= 0 ? 'color:var(--green)' : 'color:var(--red)';
+    return `<div class="chart-legend-item">
+      <div class="chart-legend-dot" style="background:${p.color}"></div>
+      <span>${p.ticker} <span style="${pnlColor};font-weight:600">${pnlStr}</span></span>
+    </div>`;
+  }).join('');
+}
+
+function drawChart() {
+  const canvas = document.getElementById('portfolioChart');
+  if (!canvas) return;
+  const wrap = canvas.parentElement;
+  const W = wrap.clientWidth || 600;
+  const H = 200;
+  canvas.width = W * window.devicePixelRatio;
+  canvas.height = H * window.devicePixelRatio;
+  canvas.style.width = W + 'px';
+  canvas.style.height = H + 'px';
+
+  const ctx = canvas.getContext('2d');
+  ctx.scale(window.devicePixelRatio, window.devicePixelRatio);
+  ctx.clearRect(0, 0, W, H);
+
+  const visible = portfolio.filter(p => p.points.length >= 2);
+  if (visible.length === 0) {
+    // Draw placeholder grid even with no data
+    drawGrid(ctx, W, H, null, null);
+    return;
+  }
+
+  const pad = { top: 16, right: 20, bottom: 32, left: 52 };
+  const plotW = W - pad.left - pad.right;
+  const plotH = H - pad.top - pad.bottom;
+
+  // Normalize to $ P&L per position (shares × price change)
+  const allPnl = [];
+  visible.forEach(p => {
+    const base = p.points[0].p;
+    const shares = p.shares || 1;
+    p.points.forEach(pt => allPnl.push((pt.p - base) * shares));
+  });
+
+  const minV = Math.min(...allPnl, -0.5);
+  const maxV = Math.max(...allPnl, 0.5);
+  const range = maxV - minV || 1;
+
+  // Time range across all series
+  const allT = visible.flatMap(p => p.points.map(pt => pt.t));
+  const tMin = Math.min(...allT);
+  const tMax = Math.max(...allT);
+  const tRange = tMax - tMin || 1;
+
+  const toX = t => pad.left + ((t - tMin) / tRange) * plotW;
+  const toY = v => pad.top + ((maxV - v) / range) * plotH;
+
+  drawGrid(ctx, W, H, { pad, plotH, maxV, range }, { tMin, tMax, plotW, pad });
+
+  // Draw each stock line
+  visible.forEach(p => {
+    const base = p.points[0].p;
+    const pts = p.points.map(pt => ({ x: toX(pt.t), y: toY((pt.p - base) * (p.shares || 1)) }));
+
+    // Gradient fill
+    const grad = ctx.createLinearGradient(0, pad.top, 0, pad.top + plotH);
+    grad.addColorStop(0, p.color + '30');
+    grad.addColorStop(1, p.color + '00');
+    ctx.beginPath();
+    ctx.moveTo(pts[0].x, pts[0].y);
+    pts.forEach(pt => ctx.lineTo(pt.x, pt.y));
+    ctx.lineTo(pts[pts.length-1].x, toY(0));
+    ctx.lineTo(pts[0].x, toY(0));
+    ctx.closePath();
+    ctx.fillStyle = grad;
+    ctx.fill();
+
+    // Line
+    ctx.beginPath();
+    ctx.moveTo(pts[0].x, pts[0].y);
+    pts.forEach(pt => ctx.lineTo(pt.x, pt.y));
+    ctx.strokeStyle = p.color;
+    ctx.lineWidth = 2;
+    ctx.lineJoin = 'round';
+    ctx.lineCap = 'round';
+    ctx.stroke();
+
+    // End dot
+    const last = pts[pts.length - 1];
+    ctx.beginPath();
+    ctx.arc(last.x, last.y, 4, 0, Math.PI * 2);
+    ctx.fillStyle = p.color;
+    ctx.fill();
+    ctx.strokeStyle = '#fff';
+    ctx.lineWidth = 1.5;
+    ctx.stroke();
+  });
+}
+
+function drawGrid(ctx, W, H, yInfo, xInfo) {
+  const pad = yInfo?.pad || { top: 16, right: 20, bottom: 32, left: 52 };
+  const plotH = yInfo?.plotH || (H - pad.top - pad.bottom);
+  const plotW = xInfo ? (W - pad.left - pad.right) : (W - pad.left - pad.right);
+
+  ctx.strokeStyle = '#e5e4e2';
+  ctx.lineWidth = 1;
+  for (let i = 0; i <= 4; i++) {
+    const y = pad.top + (i / 4) * plotH;
+    ctx.beginPath();
+    ctx.moveTo(pad.left, y);
+    ctx.lineTo(W - pad.right, y);
+    ctx.stroke();
+    if (yInfo) {
+      const v = yInfo.maxV - (i / 4) * yInfo.range;
+      ctx.fillStyle = '#9ca3af';
+      ctx.font = '10px Inter, sans-serif';
+      ctx.textAlign = 'right';
+      const label = Math.abs(v) >= 1000 ? (v >= 0 ? '+' : '') + '$' + (v/1000).toFixed(1) + 'k'
+                  : (v >= 0 ? '+' : '') + '$' + v.toFixed(0);
+      ctx.fillText(label, pad.left - 4, y + 3);
+    }
+  }
+
+  // Zero line
+  if (yInfo) {
+    const zeroY = pad.top + ((yInfo.maxV - 0) / yInfo.range) * plotH;
+    if (zeroY >= pad.top && zeroY <= pad.top + plotH) {
+      ctx.setLineDash([4, 4]);
+      ctx.strokeStyle = '#d1d0cd';
+      ctx.lineWidth = 1;
+      ctx.beginPath();
+      ctx.moveTo(pad.left, zeroY);
+      ctx.lineTo(W - pad.right, zeroY);
+      ctx.stroke();
+      ctx.setLineDash([]);
+    }
+  }
+
+  // X axis labels
+  if (xInfo) {
+    ctx.fillStyle = '#9ca3af';
+    ctx.font = '10px Inter, sans-serif';
+    ctx.textAlign = 'center';
+    for (let i = 0; i <= 4; i++) {
+      const t = xInfo.tMin + (i / 4) * (xInfo.tMax - xInfo.tMin);
+      const x = pad.left + (i / 4) * plotW;
+      const date = new Date(t);
+      const label = date.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true });
+      ctx.fillText(label, x, H - 8);
+    }
+  }
+}
+
+// Auto-update every 5 minutes: fetch new prices and add data points
+async function autoUpdatePrices() {
+  if (!watchlist.length) return;
+
+  try {
+    const tickers = watchlist.map(w => w.ticker).join(',');
+    const res = await fetch(`${API}/prices?tickers=${encodeURIComponent(tickers)}`);
+    if (res.ok) {
+      prices = await res.json();
+      renderTable();
+    }
+  } catch(e) {}
+
+  // Add new data point to each portfolio stock
+  const now = Date.now();
+  let updated = false;
+  portfolio.forEach(p => {
+    const price = prices[p.ticker]?.price;
+    if (price) {
+      p.points.push({ t: now, p: price });
+      // Keep max 288 points (24h at 5min intervals)
+      if (p.points.length > 288) p.points = p.points.slice(-288);
+      updated = true;
+    }
+  });
+
+  if (updated) {
+    savePortfolio();
+    updateChartLegend();
+    drawChart();
+    const subtitle = document.getElementById('chartSubtitle');
+    if (subtitle && portfolio.length > 0) {
+      const t = new Date().toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' });
+      subtitle.textContent = portfolio.length + ' stock' + (portfolio.length !== 1 ? 's' : '') + ' tracked · Updated ' + t;
+    }
+  }
+}
+
+
+function filterChart(btn, range) {
+  document.querySelectorAll('.chart-range-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  const ms = { '1D': 86400000, '1W': 604800000, '1M': 2592000000, '3M': 7776000000 };
+  const cutoff = Date.now() - ms[range];
+  // Temporarily filter points for display
+  const orig = portfolio;
+  const filtered = portfolio.map(p => ({ ...p, points: p.points.filter(pt => pt.t >= cutoff) }));
+  portfolio = filtered;
+  updateChartLegend();
+  drawChart();
+  portfolio = orig;
+}
+
+// Init chart on load
+updateChartLegend();
+drawChart();
+
+// Start auto-update every 5 minutes
+setInterval(autoUpdatePrices, 5 * 60 * 1000);
+
+// Redraw on resize
+new ResizeObserver(() => drawChart()).observe(document.querySelector('.chart-card') || document.body);
+
+
+function sleep(ms) { return new Promise(r=>setTimeout(r,ms)); }
+
+// ── PORTFOLIO CHART ───────────────────────────────────────────
 let portfolio = JSON.parse(localStorage.getItem('onyx_portfolio') || '[]');
-let priceHistory = JSON.parse(localStorage.getItem('onyx_price_history') || '{}');
 let hiddenTickers = new Set();
 let chartRange = '1D';
 
@@ -726,6 +1050,11 @@ function savePortfolio() {
 function getColor(ticker) {
   const idx = portfolio.findIndex(p => p.ticker === ticker);
   return idx >= 0 ? CHART_COLORS[idx % CHART_COLORS.length] : CHART_COLORS[0];
+}
+
+function getOwnedShares(ticker) {
+  const p = portfolio.find(p => p.ticker === ticker);
+  return p ? p.shares : 0;
 }
 
 function buyStock(ticker) {
