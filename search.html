@@ -191,6 +191,42 @@
     .clear-btn:hover { border-color: var(--red); color: var(--red); }
     .save-notes-btn { background: var(--blue); border: none; color: white; font-family: 'Inter', sans-serif; font-size: 11px; font-weight: 600; padding: 5px 14px; border-radius: 5px; cursor: pointer; transition: background 0.12s; }
     .save-notes-btn:hover { background: #1a6fff; }
+
+    /* Stock Effect Panel */
+    .stock-effect-wrap { border-top: 1px solid var(--border); margin-top: 10px; padding-top: 10px; }
+    .stock-effect-input-row { display: flex; gap: 6px; align-items: center; margin-bottom: 10px; }
+    .stock-ticker-input { background: var(--bg); border: 1px solid var(--border2); border-radius: 6px; color: var(--text); font-family: 'JetBrains Mono', monospace; font-size: 13px; font-weight: 600; padding: 6px 10px; outline: none; width: 120px; text-transform: uppercase; transition: border-color 0.15s; }
+    .stock-ticker-input:focus { border-color: var(--blue); box-shadow: 0 0 0 2px var(--blue-glow); }
+    .stock-ticker-input::placeholder { text-transform: none; font-family: 'Inter', sans-serif; font-weight: 400; color: var(--grey); font-size: 11px; }
+    .analyse-btn { background: var(--text); color: var(--surface); border: none; font-family: 'Inter', sans-serif; font-size: 12px; font-weight: 600; padding: 6px 16px; border-radius: 6px; cursor: pointer; transition: opacity 0.12s; white-space: nowrap; }
+    .analyse-btn:hover { opacity: 0.8; }
+    .analyse-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+    .effect-loading { font-size: 11px; color: var(--blue); font-family: 'JetBrains Mono', monospace; display: none; align-items: center; gap: 6px; }
+    .effect-loading.active { display: flex; }
+    .effect-mini-spin { width: 10px; height: 10px; border: 1.5px solid rgba(21,101,255,0.2); border-top-color: var(--blue); border-radius: 50%; animation: spin 0.7s linear infinite; }
+    .effect-result { display: none; background: var(--surface2); border: 1px solid var(--border); border-radius: 8px; padding: 12px 14px; }
+    .effect-result.active { display: block; }
+    .effect-header { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; }
+    .effect-ticker { font-family: 'JetBrains Mono', monospace; font-size: 16px; font-weight: 700; color: var(--text); }
+    .effect-company { font-size: 11px; color: var(--grey); }
+    .effect-direction { font-size: 11px; font-weight: 700; padding: 3px 10px; border-radius: 12px; letter-spacing: 0.05em; }
+    .effect-direction.Bullish { background: var(--green-dim); color: var(--green); }
+    .effect-direction.Bearish { background: var(--red-dim); color: var(--red); }
+    .effect-direction.Neutral { background: var(--surface2); color: var(--grey2); border: 1px solid var(--border); }
+    .effect-direction.Mixed { background: var(--yellow-dim); color: var(--yellow); }
+    .effect-score-bar { flex: 1; height: 6px; background: var(--border); border-radius: 3px; overflow: hidden; position: relative; }
+    .effect-score-fill { height: 6px; border-radius: 3px; position: absolute; top: 0; }
+    .effect-summary { font-size: 12px; color: var(--text2); line-height: 1.65; margin-bottom: 10px; }
+    .effect-scenarios { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 10px; }
+    .effect-scenario { padding: 8px 10px; border-radius: 6px; font-size: 11px; line-height: 1.5; }
+    .effect-scenario.bull { background: var(--green-dim); border-left: 3px solid var(--green); }
+    .effect-scenario.bear { background: var(--red-dim); border-left: 3px solid var(--red); }
+    .effect-scenario-label { font-weight: 700; font-size: 10px; text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 3px; }
+    .effect-scenario.bull .effect-scenario-label { color: var(--green); }
+    .effect-scenario.bear .effect-scenario-label { color: var(--red); }
+    .effect-factors { display: flex; flex-wrap: wrap; gap: 5px; }
+    .effect-factor { font-size: 10px; background: var(--surface); border: 1px solid var(--border); color: var(--text2); padding: 2px 8px; border-radius: 10px; }
+    .add-to-notes-btn { font-size: 11px; color: var(--blue); background: none; border: none; cursor: pointer; font-family: 'Inter', sans-serif; text-decoration: underline; margin-top: 8px; display: block; }
   </style>
 </head>
 <body>
@@ -520,7 +556,8 @@ function renderResults(data, topic, domain, horizon) {
   document.getElementById('overviewCard').classList.add('active');
 
   // Predictions
-  var preds = data.predictions || [];
+  predData = data.predictions || [];
+  var preds = predData;
   if (preds.length) {
     document.getElementById('predSection').style.display = 'block';
     document.getElementById('predList').innerHTML = preds.map(function(p, i) {
@@ -633,6 +670,119 @@ function renderSources() {
       '</div>' +
     '</div>';
   }).join('');
+}
+
+
+// ── STOCK EFFECT ──────────────────────────────────────────────
+var predData = []; // store prediction data globally for stock effect
+
+function toggleStockEffect(i) {
+  var wrap = document.getElementById('se-wrap-'+i);
+  if (wrap.style.display === 'none') {
+    wrap.style.display = 'block';
+    setTimeout(function() { document.getElementById('se-ticker-'+i).focus(); }, 100);
+  } else {
+    wrap.style.display = 'none';
+  }
+}
+
+// Press Enter in ticker input
+document.addEventListener('keydown', function(e) {
+  if (e.key === 'Enter' && e.target.classList.contains('stock-ticker-input')) {
+    var id = e.target.id.replace('se-ticker-', '');
+    runStockEffect(parseInt(id));
+  }
+});
+
+async function runStockEffect(i) {
+  var ticker = document.getElementById('se-ticker-'+i).value.trim().toUpperCase();
+  if (!ticker) { document.getElementById('se-ticker-'+i).focus(); return; }
+
+  var pred = predData[i];
+  if (!pred) return;
+
+  var loading = document.getElementById('se-loading-'+i);
+  var result  = document.getElementById('se-result-'+i);
+  var btn = document.querySelector('#se-wrap-'+i+' .analyse-btn');
+
+  loading.classList.add('active');
+  result.classList.remove('active');
+  if (btn) btn.disabled = true;
+
+  try {
+    var res = await fetch(API + '/stock-effect', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        prediction: pred.statement,
+        ticker: ticker,
+        confidence: pred.confidence,
+        topic: document.getElementById('topicInput').value.trim()
+      })
+    });
+    var data = await res.json();
+    if (data.error) throw new Error(data.error);
+    renderStockEffect(i, ticker, data);
+  } catch(e) {
+    result.innerHTML = '<div style="font-size:12px;color:var(--red)">Error: ' + e.message + '</div>';
+    result.classList.add('active');
+  } finally {
+    loading.classList.remove('active');
+    if (btn) btn.disabled = false;
+  }
+}
+
+function renderStockEffect(i, ticker, d) {
+  var result = document.getElementById('se-result-'+i);
+  var score = d.impact_score || 0;
+  var pct = Math.abs(score) / 10 * 100;
+  var fillColor = score > 0 ? 'var(--green)' : score < 0 ? 'var(--red)' : 'var(--grey)';
+  var fillLeft  = score >= 0 ? '50%' : (50 - pct/2) + '%';
+  var fillWidth = (pct/2) + '%';
+
+  var impactColor = d.impact === 'High' ? 'var(--red)' : d.impact === 'Medium' ? 'var(--yellow)' : 'var(--grey2)';
+
+  var factors = (d.key_factors || []).map(function(f) {
+    return '<span class="effect-factor">'+f+'</span>';
+  }).join('');
+
+  result.innerHTML =
+    '<div class="effect-header">' +
+      '<div>' +
+        '<div class="effect-ticker">' + (d.ticker||ticker) + '</div>' +
+        '<div class="effect-company">' + (d.company_name||'') + '</div>' +
+      '</div>' +
+      '<span class="effect-direction ' + (d.direction||'Neutral') + '">' + (d.direction||'Neutral') + '</span>' +
+      '<span style="font-size:10px;font-weight:700;color:'+impactColor+'">'+d.impact+' Impact</span>' +
+      '<div class="effect-score-bar" title="Impact score: ' + score + '/10">' +
+        '<div class="effect-score-fill" style="background:'+fillColor+';left:'+fillLeft+';width:'+fillWidth+'"></div>' +
+        '<div style="position:absolute;left:50%;top:0;width:1px;height:6px;background:var(--border2)"></div>' +
+      '</div>' +
+      '<span style="font-size:11px;font-family:JetBrains Mono,monospace;color:'+fillColor+';font-weight:700">' + (score > 0 ? '+' : '') + score + '</span>' +
+    '</div>' +
+    '<div class="effect-summary">' + (d.summary||'') + '</div>' +
+    '<div class="effect-scenarios">' +
+      '<div class="effect-scenario bull"><div class="effect-scenario-label">✓ If correct</div>' + (d.bull_scenario||'') + '</div>' +
+      '<div class="effect-scenario bear"><div class="effect-scenario-label">✗ If wrong</div>' + (d.bear_scenario||'') + '</div>' +
+    '</div>' +
+    (factors ? '<div class="effect-factors">' + factors + '</div>' : '') +
+    '<div style="display:flex;justify-content:space-between;align-items:center;margin-top:8px">' +
+      '<span style="font-size:10px;color:var(--grey);font-family:JetBrains Mono,monospace">Horizon: '+(d.time_horizon||'—')+' · Confidence: '+(d.confidence||'—')+'</span>' +
+      '<button class="add-to-notes-btn" style="margin:0" onclick="addEffectToNotes(''+ticker+'','+JSON.stringify(d).replace(/'/g,"\'")+')">+ Add to notes</button>' +
+    '</div>';
+
+  result.classList.add('active');
+}
+
+function addEffectToNotes(ticker, d) {
+  var editor = document.getElementById('notesArea');
+  editor.focus();
+  var html = '<br><strong>── Stock Effect: ' + ticker + ' [' + d.direction + ' · ' + d.impact + '] ──</strong><br>' +
+    d.summary + '<br>' +
+    '<em>If correct:</em> ' + d.bull_scenario + '<br>' +
+    '<em>If wrong:</em> ' + d.bear_scenario + '<br>';
+  document.execCommand('insertHTML', false, html);
+  updateCharCount();
 }
 
 // ── FORMATTING ──
