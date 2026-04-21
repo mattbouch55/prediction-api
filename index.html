@@ -690,11 +690,7 @@ function renderTable() {
             </div>
           </div>
         </td>
-        <td onclick="event.stopPropagation()" style="text-align:center">
-          ${getOwnedShares(w.ticker) > 0
-            ? `<span style="font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--blue);font-weight:600">${getOwnedShares(w.ticker)} sh</span>`
-            : `<span style="font-size:11px;color:var(--grey)">—</span>`}
-        </td>
+        <td onclick="event.stopPropagation()" style="text-align:center">${sharesCell(w.ticker)}</td>
         <td style="text-align:right;padding-right:12px" onclick="event.stopPropagation()"><button class="del-btn" id="del-${w.ticker}" title="Remove">&times;</button></td>
       </tr>`;
   });
@@ -732,7 +728,15 @@ function getStockCurrentPrice(ticker) {
 
 function getOwnedShares(ticker) {
   const p = portfolio.find(p => p.ticker === ticker);
-  return p ? p.shares : 0;
+  return p ? (p.shares || 0) : 0;
+}
+
+function sharesCell(ticker) {
+  const sh = getOwnedShares(ticker);
+  if (sh > 0) {
+    return '<span style="font-family:JetBrains Mono,monospace;font-size:11px;color:var(--blue);font-weight:600">' + sh + ' sh</span>';
+  }
+  return '<span style="font-size:11px;color:var(--grey)">—</span>';
 }
 
 function buyStock(ticker) {
@@ -1054,7 +1058,15 @@ function getColor(ticker) {
 
 function getOwnedShares(ticker) {
   const p = portfolio.find(p => p.ticker === ticker);
-  return p ? p.shares : 0;
+  return p ? (p.shares || 0) : 0;
+}
+
+function sharesCell(ticker) {
+  const sh = getOwnedShares(ticker);
+  if (sh > 0) {
+    return '<span style="font-family:JetBrains Mono,monospace;font-size:11px;color:var(--blue);font-weight:600">' + sh + ' sh</span>';
+  }
+  return '<span style="font-size:11px;color:var(--grey)">—</span>';
 }
 
 function buyStock(ticker) {
