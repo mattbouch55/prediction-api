@@ -599,10 +599,14 @@ function renderPanel(ticker) {
       </div>
       <div style="display:flex;align-items:flex-start;gap:6px;flex-shrink:0">
         <div>
-          <input class="shares-input" type="number" id="sharesInput-${ticker}" min="0.01" step="any" placeholder="Shares"/>
-          <div class="shares-label">qty</div>
+          <input class="shares-input" type="number" id="buyInput-${ticker}" min="0.01" step="any" placeholder="qty"/>
+          <div class="shares-label">buy qty</div>
         </div>
         <button class="panel-trade-btn" onclick="buyFromPanel('${ticker}')">Buy</button>
+        <div>
+          <input class="shares-input" type="number" id="sellInput-${ticker}" min="0.01" step="any" placeholder="qty"/>
+          <div class="shares-label">sell qty</div>
+        </div>
         <button class="panel-trade-btn" onclick="sellFromPanel('${ticker}')">Sell</button>
       </div>
     </div>
@@ -802,7 +806,7 @@ function totalValueCell(ticker) {
 }
 
 function buyFromPanel(ticker) {
-  var input = document.getElementById('sharesInput-' + ticker);
+  var input = document.getElementById('buyInput-' + ticker);
   var shares = input ? parseFloat(input.value) : NaN;
   if (isNaN(shares) || shares <= 0) {
     if (input) { input.focus(); input.style.borderColor = 'var(--red)'; setTimeout(function() { input.style.borderColor = ''; }, 1500); }
@@ -910,7 +914,7 @@ function confirmBuy() {
 
 
 function sellFromPanel(ticker) {
-  var input = document.getElementById('sharesInput-' + ticker);
+  var input = document.getElementById('sellInput-' + ticker);
   var shares = input ? parseFloat(input.value) : NaN;
   if (isNaN(shares) || shares <= 0) {
     if (input) { input.focus(); input.style.borderColor = 'var(--red)'; setTimeout(function() { input.style.borderColor = ''; }, 1500); }
@@ -1237,7 +1241,7 @@ function totalValueCell(ticker) {
 
 
 function sellFromPanel(ticker) {
-  var input = document.getElementById('sharesInput-' + ticker);
+  var input = document.getElementById('sellInput-' + ticker);
   var shares = input ? parseFloat(input.value) : NaN;
   if (isNaN(shares) || shares <= 0) {
     if (input) { input.focus(); input.style.borderColor = 'var(--red)'; setTimeout(function() { input.style.borderColor = ''; }, 1500); }
