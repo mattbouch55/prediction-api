@@ -79,8 +79,8 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:'Inter'
 
 /* CARDS */
 .card{background:var(--surface);border:1px solid var(--border);border-radius:10px;overflow:hidden;box-shadow:var(--shadow)}
-.card-header{padding:12px 16px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between}
-.card-title{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.08em;color:var(--text)}
+.card-header{padding:8px 14px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between}
+.card-title{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:0.08em;color:var(--text)}
 .card-sub{font-size:11px;color:var(--grey)}
 
 /* CATEGORY PILLS */
@@ -114,45 +114,45 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:'Inter'
 
 /* MARKET DETAIL */
 .detail-placeholder{padding:40px 20px;text-align:center}
-.detail-q{font-size:15px;font-weight:600;color:var(--text);line-height:1.5;margin-bottom:14px}
-.detail-odds{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:16px}
-.odds-box{padding:14px;border-radius:8px;text-align:center}
+.detail-q{font-size:13px;font-weight:600;color:var(--text);line-height:1.4;margin-bottom:10px}
+.detail-odds{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px}
+.odds-box{padding:8px 10px;border-radius:7px;text-align:center}
 .odds-box.yes{background:var(--green-dim);border:1px solid rgba(22,163,74,0.2)}
 .odds-box.no{background:var(--red-dim);border:1px solid rgba(220,38,38,0.2)}
-.odds-label{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:0.08em;margin-bottom:4px}
+.odds-label{font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:0.08em;margin-bottom:2px}
 .odds-box.yes .odds-label{color:var(--green)}
 .odds-box.no .odds-label{color:var(--red)}
-.odds-val{font-size:28px;font-weight:800;font-family:'JetBrains Mono',monospace}
+.odds-val{font-size:22px;font-weight:800;font-family:'JetBrains Mono',monospace}
 .odds-box.yes .odds-val{color:var(--green)}
 .odds-box.no .odds-val{color:var(--red)}
-.odds-cents{font-size:11px;color:var(--grey);margin-top:2px}
-.detail-bar{height:8px;background:var(--red-dim);border-radius:4px;overflow:hidden;margin-bottom:12px}
-.detail-bar-fill{height:8px;background:var(--green);border-radius:4px;transition:width 0.5s}
-.detail-section{margin-bottom:14px}
-.detail-label{font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:0.08em;color:var(--grey);margin-bottom:6px}
-.detail-text{font-size:12px;color:var(--text2);line-height:1.7;padding:10px;background:var(--surface2);border-radius:6px;border-left:3px solid var(--blue)}
-.trade-btn{width:100%;padding:10px;border:none;border-radius:7px;font-family:'Inter',sans-serif;font-size:13px;font-weight:700;cursor:pointer;transition:all 0.12s;display:flex;align-items:center;justify-content:center;gap:6px}
-.trade-btn.yes{background:var(--green);color:#fff;margin-bottom:8px}
+.odds-cents{font-size:10px;color:var(--grey);margin-top:1px}
+.detail-bar{height:5px;background:var(--red-dim);border-radius:3px;overflow:hidden;margin-bottom:8px}
+.detail-bar-fill{height:5px;background:var(--green);border-radius:3px;transition:width 0.5s}
+.detail-section{margin-bottom:8px}
+.detail-label{font-size:9px;font-weight:600;text-transform:uppercase;letter-spacing:0.08em;color:var(--grey);margin-bottom:4px}
+.detail-text{font-size:11px;color:var(--text2);line-height:1.6;padding:8px 10px;background:var(--surface2);border-radius:5px;border-left:3px solid var(--blue)}
+.trade-btn{width:100%;padding:7px;border:none;border-radius:6px;font-family:'Inter',sans-serif;font-size:12px;font-weight:700;cursor:pointer;transition:all 0.12s;display:flex;align-items:center;justify-content:center;gap:5px}
+.trade-btn.yes{background:var(--green);color:#fff;margin-bottom:5px}
 .trade-btn.yes:hover{background:#15803d}
 .trade-btn.no{background:var(--red);color:#fff}
 .trade-btn.no:hover{background:#b91c1c}
-.trade-note{font-size:10px;color:var(--grey);text-align:center;margin-top:8px;line-height:1.5}
+.trade-note{font-size:9px;color:var(--grey);text-align:center;margin-top:5px;line-height:1.4}
 
 /* AI PICKS */
-.picks-list{padding:10px 14px;display:flex;flex-direction:column;gap:8px;max-height:360px;overflow-y:auto}
-.pick-card{background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:11px 13px}
-.pick-header{display:flex;align-items:center;gap:8px;margin-bottom:6px}
+.picks-list{padding:8px 12px;display:flex;flex-direction:column;gap:6px;max-height:360px;overflow-y:auto}
+.pick-card{background:var(--surface2);border:1px solid var(--border);border-radius:7px;padding:8px 10px}
+.pick-header{display:flex;align-items:center;gap:6px;margin-bottom:4px}
 .pick-verdict{font-size:10px;font-weight:700;padding:2px 8px;border-radius:4px;text-transform:uppercase;letter-spacing:0.05em;flex-shrink:0}
 .pick-verdict.yes{background:var(--green-dim);color:var(--green)}
 .pick-verdict.no{background:var(--red-dim);color:var(--red)}
 .pick-verdict.skip{background:var(--surface2);color:var(--grey2);border:1px solid var(--border)}
 .pick-q{font-size:11px;font-weight:500;color:var(--text);flex:1;line-height:1.4}
-.pick-conf{font-size:10px;color:var(--grey);margin-bottom:4px}
-.pick-reason{font-size:11px;color:var(--text2);line-height:1.5}
-.pick-action{margin-top:8px}
+.pick-conf{font-size:9px;color:var(--grey);margin-bottom:2px}
+.pick-reason{font-size:11px;color:var(--text2);line-height:1.4}
+.pick-action{margin-top:5px}
 .pick-link{font-size:10px;color:var(--blue);text-decoration:none;font-weight:600}
 .pick-link:hover{text-decoration:underline}
-.ai-run-btn{width:100%;background:var(--text);color:var(--surface);border:none;font-family:'Inter',sans-serif;font-size:12px;font-weight:600;padding:9px;border-radius:7px;cursor:pointer;transition:opacity 0.12s;margin:10px 14px;width:calc(100% - 28px)}
+.ai-run-btn{width:calc(100% - 24px);background:var(--text);color:var(--surface);border:none;font-family:'Inter',sans-serif;font-size:11px;font-weight:600;padding:7px;border-radius:6px;cursor:pointer;transition:opacity 0.12s;margin:8px 12px}
 .ai-run-btn:hover{opacity:0.8}
 .ai-run-btn:disabled{opacity:0.4;cursor:not-allowed}
 
@@ -173,7 +173,7 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:'Inter'
 .pos-add-btn:hover{background:#1a6fff}
 
 /* STATUS BAR */
-.status-bar{display:none;align-items:center;gap:8px;padding:8px 14px;background:var(--blue-soft);border-bottom:1px solid rgba(21,101,255,0.15);font-size:11px;color:var(--blue);font-family:'JetBrains Mono',monospace}
+.status-bar{display:none;align-items:center;gap:6px;padding:6px 12px;background:var(--blue-soft);border-bottom:1px solid rgba(21,101,255,0.15);font-size:10px;color:var(--blue);font-family:'JetBrains Mono',monospace}
 .status-bar.active{display:flex}
 .spinner{width:12px;height:12px;border:2px solid rgba(21,101,255,0.2);border-top-color:var(--blue);border-radius:50%;animation:spin 0.7s linear infinite;flex-shrink:0}
 @keyframes spin{to{transform:rotate(360deg)}}
@@ -287,7 +287,7 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:'Inter'
         <div class="card-title">Market Detail</div>
         <span class="card-sub" id="detailSub">Select a market</span>
       </div>
-      <div style="padding:14px 16px" id="detailBody">
+      <div style="padding:10px 14px" id="detailBody">
         <div class="detail-placeholder">
           <div style="font-size:32px;margin-bottom:12px;opacity:0.12">📊</div>
           <div style="font-size:13px;font-weight:500;color:var(--text2);margin-bottom:6px">No market selected</div>
