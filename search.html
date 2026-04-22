@@ -1,4 +1,4 @@
-A<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8"/>
@@ -1527,25 +1527,6 @@ function renderSidebarPanels() {
       }
     }
   } catch(e) {}
-}
-
-function spGoStock(ticker) {
-  if (window.location.pathname === '/') {
-    if (typeof selectStock === 'function') selectStock(ticker);
-  } else {
-    window.location.href = '/';
-  }
-}
-
-function spGoResearch(sessionId) {
-  if (window.location.pathname === '/search') {
-    if (typeof loadSession === 'function') loadSession(sessionId);
-  } else {
-    window.location.href = '/search';
-  }
-}
-
-renderSidebarPanels();
 
   // Kalshi Bets
   try {
@@ -1569,7 +1550,28 @@ renderSidebarPanels();
         }).join('');
       }
     }
-  } catch(e) {}
+  } catch(e) {}}
+
+function spGoStock(ticker) {
+  if (window.location.pathname === '/') {
+    if (typeof selectStock === 'function') selectStock(ticker);
+  } else {
+    window.location.href = '/';
+  }
+}
+
+function spGoResearch(sessionId) {
+  if (window.location.pathname === '/search') {
+    if (typeof loadSession === 'function') loadSession(sessionId);
+  } else {
+    window.location.href = '/search';
+  }
+}
+
+try { renderSidebarPanels(); } catch(e) {}
+setTimeout(function(){ try { renderSidebarPanels(); } catch(e) {} }, 300);
+
+  
 setInterval(renderSidebarPanels, 30000);
 
 </script>
