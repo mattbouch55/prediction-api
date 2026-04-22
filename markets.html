@@ -329,15 +329,14 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:'Inter'
         </div>
 
         <!-- Optional: Mark as placed immediately -->
-        <div style="background:var(--green-dim);border:1px solid rgba(22,163,74,0.2);border-radius:7px;padding:9px 12px">
-          <div class="field-label" style="color:var(--green);margin-bottom:8px">Already placed? (optional)</div>
-          <div style="display:flex;gap:6px;align-items:center">
-            <button type="button" id="importSideYes" onclick="selectImportSide('YES')" style="flex:1;padding:6px;border-radius:5px;border:1px solid rgba(22,163,74,0.3);background:var(--surface);color:var(--grey2);font-family:Inter,sans-serif;font-size:11px;font-weight:700;cursor:pointer;transition:all 0.12s">YES</button>
-            <button type="button" id="importSideNo" onclick="selectImportSide('NO')" style="flex:1;padding:6px;border-radius:5px;border:1px solid rgba(220,38,38,0.3);background:var(--surface);color:var(--grey2);font-family:Inter,sans-serif;font-size:11px;font-weight:700;cursor:pointer;transition:all 0.12s">NO</button>
-            <input class="price-input" id="importAmount" type="number" min="1" placeholder="$ amount" style="flex:2;font-size:11px;padding:6px 9px;width:auto"/>
+        <div style="background:var(--green-dim);border:1px solid rgba(22,163,74,0.2);border-radius:7px;padding:8px 10px">
+          <div class="field-label" style="color:var(--green);margin-bottom:6px">Already placed? (optional)</div>
+          <div style="display:flex;gap:5px;margin-bottom:5px">
+            <button type="button" id="importSideYes" onclick="selectImportSide('YES')" style="flex:1;padding:5px;border-radius:5px;border:1px solid rgba(22,163,74,0.3);background:var(--surface);color:var(--grey2);font-family:Inter,sans-serif;font-size:11px;font-weight:700;cursor:pointer;transition:all 0.12s">YES</button>
+            <button type="button" id="importSideNo" onclick="selectImportSide('NO')" style="flex:1;padding:5px;border-radius:5px;border:1px solid rgba(220,38,38,0.3);background:var(--surface);color:var(--grey2);font-family:Inter,sans-serif;font-size:11px;font-weight:700;cursor:pointer;transition:all 0.12s">NO</button>
           </div>
+          <input class="price-input" id="importAmount" type="number" min="1" placeholder="$ amount bet" style="width:100%;font-size:11px;padding:5px 8px"/>
           <input type="hidden" id="importSide" value=""/>
-          <div style="font-size:10px;color:var(--grey);margin-top:6px">Leave blank if still researching this market</div>
         </div>
 
         <!-- Import -->
@@ -1234,15 +1233,14 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:'Inter'
         </div>
 
         <!-- Optional: Mark as placed immediately -->
-        <div style="background:var(--green-dim);border:1px solid rgba(22,163,74,0.2);border-radius:7px;padding:9px 12px">
-          <div class="field-label" style="color:var(--green);margin-bottom:8px">Already placed? (optional)</div>
-          <div style="display:flex;gap:6px;align-items:center">
-            <button type="button" id="importSideYes" onclick="selectImportSide('YES')" style="flex:1;padding:6px;border-radius:5px;border:1px solid rgba(22,163,74,0.3);background:var(--surface);color:var(--grey2);font-family:Inter,sans-serif;font-size:11px;font-weight:700;cursor:pointer;transition:all 0.12s">YES</button>
-            <button type="button" id="importSideNo" onclick="selectImportSide('NO')" style="flex:1;padding:6px;border-radius:5px;border:1px solid rgba(220,38,38,0.3);background:var(--surface);color:var(--grey2);font-family:Inter,sans-serif;font-size:11px;font-weight:700;cursor:pointer;transition:all 0.12s">NO</button>
-            <input class="price-input" id="importAmount" type="number" min="1" placeholder="$ amount" style="flex:2;font-size:11px;padding:6px 9px;width:auto"/>
+        <div style="background:var(--green-dim);border:1px solid rgba(22,163,74,0.2);border-radius:7px;padding:8px 10px">
+          <div class="field-label" style="color:var(--green);margin-bottom:6px">Already placed? (optional)</div>
+          <div style="display:flex;gap:5px;margin-bottom:5px">
+            <button type="button" id="importSideYes" onclick="selectImportSide('YES')" style="flex:1;padding:5px;border-radius:5px;border:1px solid rgba(22,163,74,0.3);background:var(--surface);color:var(--grey2);font-family:Inter,sans-serif;font-size:11px;font-weight:700;cursor:pointer;transition:all 0.12s">YES</button>
+            <button type="button" id="importSideNo" onclick="selectImportSide('NO')" style="flex:1;padding:5px;border-radius:5px;border:1px solid rgba(220,38,38,0.3);background:var(--surface);color:var(--grey2);font-family:Inter,sans-serif;font-size:11px;font-weight:700;cursor:pointer;transition:all 0.12s">NO</button>
           </div>
+          <input class="price-input" id="importAmount" type="number" min="1" placeholder="$ amount bet" style="width:100%;font-size:11px;padding:5px 8px"/>
           <input type="hidden" id="importSide" value=""/>
-          <div style="font-size:10px;color:var(--grey);margin-top:6px">Leave blank if still researching this market</div>
         </div>
 
         <!-- Import -->
