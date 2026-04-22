@@ -330,16 +330,14 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:'Inter'
 
         <!-- Optional: Mark as placed immediately -->
         <div style="background:var(--green-dim);border:1px solid rgba(22,163,74,0.2);border-radius:7px;padding:9px 12px">
-          <div class="field-label" style="color:var(--green);margin-bottom:6px">Already placed? (optional)</div>
+          <div class="field-label" style="color:var(--green);margin-bottom:8px">Already placed? (optional)</div>
           <div style="display:flex;gap:6px;align-items:center">
-            <select class="field-input" id="importSide" style="width:80px;padding:5px 7px;font-size:11px;flex-shrink:0">
-              <option value="">Side</option>
-              <option value="YES">YES</option>
-              <option value="NO">NO</option>
-            </select>
-            <input class="price-input" id="importAmount" type="number" min="1" placeholder="Amount $" style="flex:1;font-size:11px;padding:5px 9px;width:auto"/>
-            <div style="font-size:10px;color:var(--grey2);flex-shrink:0">Leave blank if still researching</div>
+            <button type="button" id="importSideYes" onclick="selectImportSide('YES')" style="flex:1;padding:6px;border-radius:5px;border:1px solid rgba(22,163,74,0.3);background:var(--surface);color:var(--grey2);font-family:Inter,sans-serif;font-size:11px;font-weight:700;cursor:pointer;transition:all 0.12s">YES</button>
+            <button type="button" id="importSideNo" onclick="selectImportSide('NO')" style="flex:1;padding:6px;border-radius:5px;border:1px solid rgba(220,38,38,0.3);background:var(--surface);color:var(--grey2);font-family:Inter,sans-serif;font-size:11px;font-weight:700;cursor:pointer;transition:all 0.12s">NO</button>
+            <input class="price-input" id="importAmount" type="number" min="1" placeholder="$ amount" style="flex:2;font-size:11px;padding:6px 9px;width:auto"/>
           </div>
+          <input type="hidden" id="importSide" value=""/>
+          <div style="font-size:10px;color:var(--grey);margin-top:6px">Leave blank if still researching this market</div>
         </div>
 
         <!-- Import -->
@@ -428,6 +426,19 @@ document.addEventListener('keydown',function(e){
   if(e.key==='Enter' && document.getElementById('importQ')===document.activeElement) importBet();
 });
 
+function selectImportSide(side) {
+  document.getElementById('importSide').value = side;
+  var yBtn = document.getElementById('importSideYes');
+  var nBtn = document.getElementById('importSideNo');
+  if(side === 'YES') {
+    yBtn.style.background = 'var(--green)'; yBtn.style.color = '#fff'; yBtn.style.borderColor = 'var(--green)';
+    nBtn.style.background = 'var(--surface)'; nBtn.style.color = 'var(--grey2)'; nBtn.style.borderColor = 'rgba(220,38,38,0.3)';
+  } else {
+    nBtn.style.background = 'var(--red)'; nBtn.style.color = '#fff'; nBtn.style.borderColor = 'var(--red)';
+    yBtn.style.background = 'var(--surface)'; yBtn.style.color = 'var(--grey2)'; yBtn.style.borderColor = 'rgba(22,163,74,0.3)';
+  }
+}
+
 function onUrlInput(url) {
   if(!url) return;
   var status = document.getElementById('urlStatus');
@@ -506,6 +517,9 @@ function importBet(){
     document.getElementById(id).value='';
   });
   document.getElementById('importSide').value = '';
+  var yBtn=document.getElementById('importSideYes'),nBtn=document.getElementById('importSideNo');
+  if(yBtn){yBtn.style.background='var(--surface)';yBtn.style.color='var(--grey2)';}
+  if(nBtn){nBtn.style.background='var(--surface)';nBtn.style.color='var(--grey2)';}
   document.getElementById('probPreview').style.display = 'none';
   document.getElementById('urlStatus').textContent = 'Paste a Kalshi market URL, then fill in the details below.';
   document.getElementById('urlStatus').style.color = 'var(--grey)';
@@ -560,13 +574,7 @@ function renderBetList(){
           '<div style="font-size:12px;font-weight:600;font-family:Inter,sans-serif;color:var(--text2)">'+(b.close||'—')+'</div>'+
         '</div>'+
       '</div>'+
-        '<div class="inv-meta-item" style="border:'+(placed?'1px solid rgba(22,163,74,0.25)':'1px solid var(--border)')+';background:'+(placed?'var(--green-dim)':'var(--surface)')+'">'+
-          '<div class="inv-meta-label" style="color:'+(placed?'var(--green)':'var(--grey)')+'">Bet Placed</div>'+
-          '<div style="font-size:12px;font-weight:700;font-family:Inter,sans-serif;color:'+(placed?'var(--green)':'var(--grey2)')+'">'+(placed?(b.placedSide||'')+' · $'+(b.placedAmount||''):'Not Owned')+'</div>'+
-        '</div>'+
-        '<div class="inv-meta-item">'+
-          '<div class="inv-meta-label">Closes</div>'+
-          '<div style="font-size:11px;font-weight:600;font-family:Inter,sans-serif;color:var(--text2)">'+(b.close||'—')+'</div>'+
+
         '</div>'+
       '</div>';
 
@@ -1163,16 +1171,14 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:'Inter'
 
         <!-- Optional: Mark as placed immediately -->
         <div style="background:var(--green-dim);border:1px solid rgba(22,163,74,0.2);border-radius:7px;padding:9px 12px">
-          <div class="field-label" style="color:var(--green);margin-bottom:6px">Already placed? (optional)</div>
+          <div class="field-label" style="color:var(--green);margin-bottom:8px">Already placed? (optional)</div>
           <div style="display:flex;gap:6px;align-items:center">
-            <select class="field-input" id="importSide" style="width:80px;padding:5px 7px;font-size:11px;flex-shrink:0">
-              <option value="">Side</option>
-              <option value="YES">YES</option>
-              <option value="NO">NO</option>
-            </select>
-            <input class="price-input" id="importAmount" type="number" min="1" placeholder="Amount $" style="flex:1;font-size:11px;padding:5px 9px;width:auto"/>
-            <div style="font-size:10px;color:var(--grey2);flex-shrink:0">Leave blank if still researching</div>
+            <button type="button" id="importSideYes" onclick="selectImportSide('YES')" style="flex:1;padding:6px;border-radius:5px;border:1px solid rgba(22,163,74,0.3);background:var(--surface);color:var(--grey2);font-family:Inter,sans-serif;font-size:11px;font-weight:700;cursor:pointer;transition:all 0.12s">YES</button>
+            <button type="button" id="importSideNo" onclick="selectImportSide('NO')" style="flex:1;padding:6px;border-radius:5px;border:1px solid rgba(220,38,38,0.3);background:var(--surface);color:var(--grey2);font-family:Inter,sans-serif;font-size:11px;font-weight:700;cursor:pointer;transition:all 0.12s">NO</button>
+            <input class="price-input" id="importAmount" type="number" min="1" placeholder="$ amount" style="flex:2;font-size:11px;padding:6px 9px;width:auto"/>
           </div>
+          <input type="hidden" id="importSide" value=""/>
+          <div style="font-size:10px;color:var(--grey);margin-top:6px">Leave blank if still researching this market</div>
         </div>
 
         <!-- Import -->
@@ -1261,6 +1267,19 @@ document.addEventListener('keydown',function(e){
   if(e.key==='Enter' && document.getElementById('importQ')===document.activeElement) importBet();
 });
 
+function selectImportSide(side) {
+  document.getElementById('importSide').value = side;
+  var yBtn = document.getElementById('importSideYes');
+  var nBtn = document.getElementById('importSideNo');
+  if(side === 'YES') {
+    yBtn.style.background = 'var(--green)'; yBtn.style.color = '#fff'; yBtn.style.borderColor = 'var(--green)';
+    nBtn.style.background = 'var(--surface)'; nBtn.style.color = 'var(--grey2)'; nBtn.style.borderColor = 'rgba(220,38,38,0.3)';
+  } else {
+    nBtn.style.background = 'var(--red)'; nBtn.style.color = '#fff'; nBtn.style.borderColor = 'var(--red)';
+    yBtn.style.background = 'var(--surface)'; yBtn.style.color = 'var(--grey2)'; yBtn.style.borderColor = 'rgba(22,163,74,0.3)';
+  }
+}
+
 function onUrlInput(url) {
   if(!url) return;
   var status = document.getElementById('urlStatus');
@@ -1339,6 +1358,9 @@ function importBet(){
     document.getElementById(id).value='';
   });
   document.getElementById('importSide').value = '';
+  var yBtn=document.getElementById('importSideYes'),nBtn=document.getElementById('importSideNo');
+  if(yBtn){yBtn.style.background='var(--surface)';yBtn.style.color='var(--grey2)';}
+  if(nBtn){nBtn.style.background='var(--surface)';nBtn.style.color='var(--grey2)';}
   document.getElementById('probPreview').style.display = 'none';
   document.getElementById('urlStatus').textContent = 'Paste a Kalshi market URL, then fill in the details below.';
   document.getElementById('urlStatus').style.color = 'var(--grey)';
@@ -1393,13 +1415,7 @@ function renderBetList(){
           '<div style="font-size:12px;font-weight:600;font-family:Inter,sans-serif;color:var(--text2)">'+(b.close||'—')+'</div>'+
         '</div>'+
       '</div>'+
-        '<div class="inv-meta-item" style="border:'+(placed?'1px solid rgba(22,163,74,0.25)':'1px solid var(--border)')+';background:'+(placed?'var(--green-dim)':'var(--surface)')+'">'+
-          '<div class="inv-meta-label" style="color:'+(placed?'var(--green)':'var(--grey)')+'">Bet Placed</div>'+
-          '<div style="font-size:12px;font-weight:700;font-family:Inter,sans-serif;color:'+(placed?'var(--green)':'var(--grey2)')+'">'+(placed?(b.placedSide||'')+' · $'+(b.placedAmount||''):'Not Owned')+'</div>'+
-        '</div>'+
-        '<div class="inv-meta-item">'+
-          '<div class="inv-meta-label">Closes</div>'+
-          '<div style="font-size:11px;font-weight:600;font-family:Inter,sans-serif;color:var(--text2)">'+(b.close||'—')+'</div>'+
+
         '</div>'+
       '</div>';
 
