@@ -174,7 +174,7 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:'Inter'
 .empty-sub{font-size:11px;color:var(--grey);line-height:1.6}
 
     /* Inventory grid */
-    .inv-grid { display: flex; flex-direction: column; gap: 10px; padding: 10px; }
+    .inv-grid { display: flex; flex-direction: column; gap: 10px; padding: 12px; }
     .inv-item { background: var(--surface2); border: 1px solid var(--border); border-radius: 9px; padding: 14px 16px; cursor: pointer; transition: all 0.15s; box-shadow: 0 1px 3px rgba(0,0,0,0.04); }
     .inv-item:hover { border-color: var(--blue); background: var(--surface); box-shadow: var(--shadow); }
     .inv-item.active { border-color: var(--blue); background: var(--blue-soft); }
@@ -531,12 +531,52 @@ function renderBetList(){
   }
   list.innerHTML = bets.map(function(b){
     var isActive = activeBet && activeBet.id===b.id;
-    return '<div class="bet-row'+(isActive?' active':'')+'" onclick="selectBet(\''+b.id+'\')">' +
-      '<div class="bet-q">'+b.q+'</div>' +
-      '<span class="bet-yes">'+b.yes+'¢</span>' +
-      '<span class="bet-no">'+b.no+'¢</span>' +
-      '<button class="bet-del" onclick="event.stopPropagation();deleteBet(\''+b.id+'\')" title="Remove">×</button>' +
-    '</div>';
+    var ai = aiResults[b.id];
+    var verdict = ai ? ai.verdict : null;
+    var vColor = verdict==='YES'?'var(--green)':verdict==='NO'?'var(--red)':'var(--grey)';
+    var placed = b.placed;
+    var daysLeft = '';
+    if(b.close){
+      var d = Math.ceil((new Date(b.close) - Date.now()) / 86400000);
+      daysLeft = d > 0 ? d+'d left' : 'closed';
+    }
+    var html = '<div class="inv-item'+(isActive?' active':'')+'" onclick="selectBet(\''+b.id+'\')">'+
+      '<div class="inv-top">'+
+        '<span class="inv-status open" style="background:var(--surface2);color:var(--grey2);border:1px solid var(--border)">'+b.cat+'</span>'+
+        (verdict?'<span class="inv-status" style="background:'+(verdict==='YES'?'var(--green-dim)':verdict==='NO'?'var(--red-dim)':'var(--surface2)')+';color:'+vColor+'">AI: '+verdict+'</span>':'')+
+        '<button class="inv-del" onclick="event.stopPropagation();deleteBet(\''+b.id+'\')">×</button>'+
+      '</div>'+
+      '<div class="inv-q">'+b.q+'</div>'+
+      '<div class="inv-meta" style="grid-template-columns:1fr 1fr 1fr">'+
+        '<div class="inv-meta-item">'+
+          '<div class="inv-meta-label">YES / NO</div>'+
+          '<div class="inv-meta-val"><span style="color:var(--green)">'+b.yes+'¢</span> <span style="color:var(--grey)">/</span> <span style="color:var(--red)">'+b.no+'¢</span></div>'+
+        '</div>'+
+        '<div class="inv-meta-item" style="border:'+(placed?'1px solid rgba(22,163,74,0.25)':'1px solid var(--border)')+';background:'+(placed?'var(--green-dim)':'var(--surface)')+'">'+
+          '<div class="inv-meta-label" style="color:'+(placed?'var(--green)':'var(--grey)')+'">Bet Placed</div>'+
+          '<div style="font-size:12px;font-weight:700;font-family:Inter,sans-serif;color:'+(placed?'var(--green)':'var(--grey2)')+'">'+(placed?(b.placedSide||'')+' · $'+(b.placedAmount||''):'Not Owned')+'</div>'+
+        '</div>'+
+        '<div class="inv-meta-item">'+
+          '<div class="inv-meta-label">Closes</div>'+
+          '<div style="font-size:11px;font-weight:600;font-family:Inter,sans-serif;color:var(--text2)">'+(b.close||'—')+'</div>'+
+        '</div>'+
+      '</div>';
+    if(!placed){
+      html += '<div style="display:flex;gap:6px;margin-top:12px;padding-top:12px;border-top:1px solid var(--border)" onclick="event.stopPropagation()">'+
+        '<select id="side-'+b.id+'" style="background:var(--bg);border:1px solid var(--border2);border-radius:5px;font-family:Inter,sans-serif;font-size:11px;padding:6px 8px;color:var(--text);outline:none;width:72px;flex-shrink:0">'+
+          '<option value="YES">YES</option><option value="NO">NO</option>'+
+        '</select>'+
+        '<input id="amt-'+b.id+'" type="number" min="1" placeholder="$ amount placed" style="flex:1;background:var(--bg);border:1px solid var(--border2);border-radius:5px;font-family:Inter,sans-serif;font-size:11px;padding:6px 9px;outline:none;color:var(--text)"/>'+
+        '<button onclick="markPlaced(\''+b.id+'\');" style="background:var(--green);color:#fff;border:none;font-family:Inter,sans-serif;font-size:11px;font-weight:600;padding:6px 12px;border-radius:5px;cursor:pointer;white-space:nowrap;flex-shrink:0">✓ Mark Placed</button>'+
+      '</div>';
+    } else {
+      html += '<div style="display:flex;align-items:center;justify-content:space-between;margin-top:10px;padding-top:10px;border-top:1px solid var(--border)">'+
+        '<span style="font-size:11px;color:var(--green);font-weight:500">✓ Placed on Kalshi</span>'+
+        '<button onclick="event.stopPropagation();unmarkPlaced(\''+b.id+'\');" style="background:none;border:1px solid var(--border);color:var(--grey2);cursor:pointer;font-size:10px;padding:3px 8px;border-radius:4px;font-family:Inter,sans-serif">Reset</button>'+
+      '</div>';
+    }
+    html += '</div>';
+    return html;
   }).join('');
 }
 
