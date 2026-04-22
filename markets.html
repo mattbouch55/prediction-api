@@ -70,7 +70,7 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:'Inter'
 /* THREE COLUMNS */
 .col-import{width:220px;flex-shrink:0;display:flex;flex-direction:column;gap:12px;overflow-y:auto}
 .col-research{flex:1;min-width:0;display:flex;flex-direction:column;gap:12px;overflow-y:auto}
-.col-tracker{width:220px;flex-shrink:0;display:flex;flex-direction:column;gap:12px;overflow-y:auto}
+.col-tracker{width:220px;flex-shrink:0;display:flex;flex-direction:column;gap:12px;overflow-y:auto;position:relative}
 
 /* CARDS */
 .card{background:var(--surface);border:1px solid var(--border);border-radius:10px;overflow:hidden;box-shadow:var(--shadow)}
@@ -406,9 +406,21 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:'Inter'
         <span class="ct">Bet Inventory</span>
         <div style="display:flex;align-items:center;gap:6px;margin-left:auto">
           <span class="cs" id="betCount">0 markets</span>
-          <div id="portfolioLinkWrap" style="display:flex;align-items:center;gap:4px">
-            <!-- Populated by JS -->
-          </div>
+          <button onclick="openKalshiPortfolio()" id="portfolioBtn"
+            style="background:var(--text);color:#fff;border:none;font-family:'Inter',sans-serif;font-size:10px;font-weight:600;padding:3px 9px;border-radius:4px;cursor:pointer;white-space:nowrap;transition:opacity 0.12s"
+            onmouseover="this.style.opacity=0.8" onmouseout="this.style.opacity=1"
+            title="Open your Kalshi portfolio">Kalshi Portfolio ↗</button>
+        </div>
+      </div>
+
+      <!-- Portfolio URL popup -->
+      <div id="portfolioPopup" style="display:none;position:absolute;top:44px;right:0;z-index:100;background:var(--surface);border:1px solid var(--border);border-radius:8px;box-shadow:var(--shadow);padding:12px 14px;width:260px">
+        <div style="font-size:11px;font-weight:600;color:var(--text);margin-bottom:8px">Set Kalshi Portfolio URL</div>
+        <input id="portfolioUrlInput" type="url" placeholder="https://kalshi.com/profile/..." style="width:100%;background:var(--bg);border:1px solid var(--border2);border-radius:5px;font-family:'Inter',sans-serif;font-size:11px;padding:5px 9px;outline:none;color:var(--text);margin-bottom:8px"/>
+        <div style="display:flex;gap:6px">
+          <button onclick="savePortfolioUrl()" style="flex:1;background:var(--text);color:#fff;border:none;font-family:'Inter',sans-serif;font-size:11px;font-weight:600;padding:5px;border-radius:5px;cursor:pointer">Save</button>
+          <button onclick="clearPortfolioUrl()" style="background:none;border:1px solid var(--border);color:var(--grey2);font-family:'Inter',sans-serif;font-size:11px;padding:5px 10px;border-radius:5px;cursor:pointer">Clear</button>
+          <button onclick="closePortfolioPopup()" style="background:none;border:none;color:var(--grey);cursor:pointer;font-size:16px;padding:0 4px">×</button>
         </div>
       </div>
 
@@ -973,45 +985,51 @@ function toggleImportPanel(){
 
 
 // ── KALSHI PORTFOLIO LINK ─────────────────────────────────────
-function renderPortfolioLink() {
-  var wrap = document.getElementById('portfolioLinkWrap');
-  if (!wrap) return;
+function openKalshiPortfolio() {
   var saved = localStorage.getItem('onyx_kalshi_portfolio_url') || '';
   if (saved) {
-    wrap.innerHTML =
-      '<a href="' + saved + '" target="_blank" style="font-size:10px;font-weight:600;color:var(--text);text-decoration:none;background:var(--surface2);border:1px solid var(--border);padding:2px 8px;border-radius:4px;white-space:nowrap">My Portfolio ↗</a>' +
-      '<button onclick="editPortfolioLink()" style="background:none;border:none;color:var(--grey);cursor:pointer;font-size:11px;padding:1px 4px;line-height:1" title="Change URL">✎</button>';
+    window.open(saved, '_blank');
   } else {
-    wrap.innerHTML =
-      '<button onclick="editPortfolioLink()" style="background:var(--surface2);border:1px solid var(--border);color:var(--grey2);font-family:Inter,sans-serif;font-size:10px;font-weight:500;padding:2px 8px;border-radius:4px;cursor:pointer;white-space:nowrap">+ Portfolio Link</button>';
+    // Show popup to enter URL
+    var popup = document.getElementById('portfolioPopup');
+    if (popup) {
+      popup.style.display = popup.style.display === 'none' ? 'block' : 'none';
+      var inp = document.getElementById('portfolioUrlInput');
+      if (inp) { inp.value = ''; inp.focus(); }
+    }
   }
 }
 
-function editPortfolioLink() {
-  var wrap = document.getElementById('portfolioLinkWrap');
-  if (!wrap) return;
-  var current = localStorage.getItem('onyx_kalshi_portfolio_url') || '';
-  wrap.innerHTML =
-    '<input id="portfolioUrlInput" type="url" value="' + current + '" placeholder="Paste Kalshi portfolio URL..." style="width:180px;background:var(--bg);border:1px solid var(--blue);border-radius:4px;font-family:Inter,sans-serif;font-size:10px;padding:2px 7px;outline:none;color:var(--text)"/>' +
-    '<button onclick="savePortfolioLink()" style="background:var(--text);color:#fff;border:none;font-family:Inter,sans-serif;font-size:10px;font-weight:600;padding:2px 8px;border-radius:4px;cursor:pointer">Save</button>' +
-    '<button onclick="clearPortfolioLink()" style="background:none;border:none;color:var(--grey);cursor:pointer;font-size:11px;padding:1px 4px" title="Remove">×</button>';
-  setTimeout(function(){ var el=document.getElementById('portfolioUrlInput'); if(el){el.focus();el.select();} }, 50);
+function savePortfolioUrl() {
+  var inp = document.getElementById('portfolioUrlInput');
+  var val = inp ? inp.value.trim() : '';
+  if (val) {
+    localStorage.setItem('onyx_kalshi_portfolio_url', val);
+    closePortfolioPopup();
+    window.open(val, '_blank');
+  } else {
+    if (inp) inp.focus();
+  }
 }
 
-function savePortfolioLink() {
-  var el = document.getElementById('portfolioUrlInput');
-  var val = el ? el.value.trim() : '';
-  if (val) localStorage.setItem('onyx_kalshi_portfolio_url', val);
-  renderPortfolioLink();
-}
-
-function clearPortfolioLink() {
+function clearPortfolioUrl() {
   localStorage.removeItem('onyx_kalshi_portfolio_url');
-  renderPortfolioLink();
+  closePortfolioPopup();
 }
 
-// Init on load
-renderPortfolioLink();
+function closePortfolioPopup() {
+  var popup = document.getElementById('portfolioPopup');
+  if (popup) popup.style.display = 'none';
+}
+
+// Close popup on outside click
+document.addEventListener('click', function(e) {
+  var popup = document.getElementById('portfolioPopup');
+  var btn = document.getElementById('portfolioBtn');
+  if (popup && btn && !popup.contains(e.target) && !btn.contains(e.target)) {
+    popup.style.display = 'none';
+  }
+});
 
 </script>
 </body>
@@ -1100,7 +1118,7 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:'Inter'
 /* THREE COLUMNS */
 .col-import{width:220px;flex-shrink:0;display:flex;flex-direction:column;gap:12px;overflow-y:auto}
 .col-research{flex:1;min-width:0;display:flex;flex-direction:column;gap:12px;overflow-y:auto}
-.col-tracker{width:220px;flex-shrink:0;display:flex;flex-direction:column;gap:12px;overflow-y:auto}
+.col-tracker{width:220px;flex-shrink:0;display:flex;flex-direction:column;gap:12px;overflow-y:auto;position:relative}
 
 /* CARDS */
 .card{background:var(--surface);border:1px solid var(--border);border-radius:10px;overflow:hidden;box-shadow:var(--shadow)}
@@ -1418,9 +1436,21 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:'Inter'
         <span class="ct">Bet Inventory</span>
         <div style="display:flex;align-items:center;gap:6px;margin-left:auto">
           <span class="cs" id="betCount">0 markets</span>
-          <div id="portfolioLinkWrap" style="display:flex;align-items:center;gap:4px">
-            <!-- Populated by JS -->
-          </div>
+          <button onclick="openKalshiPortfolio()" id="portfolioBtn"
+            style="background:var(--text);color:#fff;border:none;font-family:'Inter',sans-serif;font-size:10px;font-weight:600;padding:3px 9px;border-radius:4px;cursor:pointer;white-space:nowrap;transition:opacity 0.12s"
+            onmouseover="this.style.opacity=0.8" onmouseout="this.style.opacity=1"
+            title="Open your Kalshi portfolio">Kalshi Portfolio ↗</button>
+        </div>
+      </div>
+
+      <!-- Portfolio URL popup -->
+      <div id="portfolioPopup" style="display:none;position:absolute;top:44px;right:0;z-index:100;background:var(--surface);border:1px solid var(--border);border-radius:8px;box-shadow:var(--shadow);padding:12px 14px;width:260px">
+        <div style="font-size:11px;font-weight:600;color:var(--text);margin-bottom:8px">Set Kalshi Portfolio URL</div>
+        <input id="portfolioUrlInput" type="url" placeholder="https://kalshi.com/profile/..." style="width:100%;background:var(--bg);border:1px solid var(--border2);border-radius:5px;font-family:'Inter',sans-serif;font-size:11px;padding:5px 9px;outline:none;color:var(--text);margin-bottom:8px"/>
+        <div style="display:flex;gap:6px">
+          <button onclick="savePortfolioUrl()" style="flex:1;background:var(--text);color:#fff;border:none;font-family:'Inter',sans-serif;font-size:11px;font-weight:600;padding:5px;border-radius:5px;cursor:pointer">Save</button>
+          <button onclick="clearPortfolioUrl()" style="background:none;border:1px solid var(--border);color:var(--grey2);font-family:'Inter',sans-serif;font-size:11px;padding:5px 10px;border-radius:5px;cursor:pointer">Clear</button>
+          <button onclick="closePortfolioPopup()" style="background:none;border:none;color:var(--grey);cursor:pointer;font-size:16px;padding:0 4px">×</button>
         </div>
       </div>
 
