@@ -45,6 +45,9 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:'Inter'
 .main{flex:1;padding:24px;padding-top:131px;display:flex;gap:16px;overflow:hidden;height:100vh;align-items:stretch}
 .left-col{flex:3;min-width:0;display:flex;flex-direction:column;gap:16px;overflow:hidden}
 .left-col::-webkit-scrollbar{width:4px}
+.left-col::-webkit-scrollbar-track{background:transparent}
+.left-col::-webkit-scrollbar-thumb{background:var(--border2);border-radius:2px}
+.left-col::-webkit-scrollbar{width:4px}
 .left-col::-webkit-scrollbar-thumb{background:var(--border2);border-radius:2px}
 .right-panel{flex:3;min-width:320px;display:flex;flex-direction:column;gap:0;background:var(--surface);border:1px solid var(--border);border-radius:10px;overflow:hidden;box-shadow:var(--shadow)}
 
@@ -114,6 +117,9 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:'Inter'
 .chart-range-btn:hover{color:var(--text)}
 .chart-range-btn.active{background:var(--blue-soft);border-color:rgba(21,101,255,0.3);color:var(--blue)}
 .chart-canvas-wrap{padding:12px 16px;overflow-y:auto;flex:1;min-height:0}
+.chart-canvas-wrap::-webkit-scrollbar{width:4px}
+.chart-canvas-wrap::-webkit-scrollbar-track{background:transparent}
+.chart-canvas-wrap::-webkit-scrollbar-thumb{background:var(--border2);border-radius:2px}
 .chart-legend{display:flex;gap:12px;flex-wrap:wrap;padding:0 16px 10px;font-size:11px;color:var(--text2);flex-shrink:0}
 .chart-legend-item{display:flex;align-items:center;gap:5px}
 .chart-legend-dot{width:8px;height:8px;border-radius:50%}
