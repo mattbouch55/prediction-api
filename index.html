@@ -170,39 +170,27 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:'Inter'
 
     /* ── Sidebar panels ── */
     .sidebar-panels { padding: 10px; display: flex; flex-direction: column; gap: 8px; overflow-y: auto; flex: 1; min-height: 0; }
-    .sp-card { background: var(--surface2); border: 1px solid var(--border); border-radius: 8px; overflow: hidden; }
-    .sp-header { display: flex; align-items: center; justify-content: space-between; padding: 8px 10px; cursor: pointer; user-select: none; transition: background 0.1s; }
-    .sp-header:hover { background: var(--border); }
-    .sp-title { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em; color: var(--text2); }
-    .sp-count { font-size: 9px; color: var(--grey); font-family: 'JetBrains Mono', monospace; }
-    .sp-arrow { font-size: 9px; color: var(--grey); transition: transform 0.2s; }
-    .sp-card.open .sp-arrow { transform: rotate(90deg); }
-    .sp-body { display: none; border-top: 1px solid var(--border); }
-    .sp-card.open .sp-body { display: block;  overflow-y: auto; scrollbar-width: thin; scrollbar-color: var(--border2) transparent; }
-    .sp-stock-row { display: flex; align-items: center; gap: 6px; padding: 6px 10px; border-bottom: 1px solid var(--border); cursor: pointer; transition: background 0.1s; }
-    .sp-stock-row:last-child { border-bottom: none; }
-    .sp-stock-row:hover { background: var(--surface); }
-    .sp-ticker { font-family: 'JetBrains Mono', monospace; font-size: 11px; font-weight: 600; color: var(--text); min-width: 38px; }
-    .sp-price { font-size: 10px; color: var(--grey2); flex: 1; font-family: 'JetBrains Mono', monospace; }
-    .sp-sig { font-size: 8px; font-weight: 700; padding: 1px 5px; border-radius: 3px; text-transform: uppercase; flex-shrink: 0; }
-    .sp-sig.buy { background: var(--green-dim); color: var(--green); }
-    .sp-sig.sell { background: var(--red-dim); color: var(--red); }
-    .sp-sig.watch { background: var(--yellow-dim); color: var(--yellow); }
-    .sp-sig.hold { background: var(--surface); color: var(--grey2); border: 1px solid var(--border); }
-    .sp-log-row { padding: 7px 10px; border-bottom: 1px solid var(--border); cursor: pointer; transition: background 0.1s; }
-    .sp-log-row:last-child { border-bottom: none; }
-    .sp-log-row:hover { background: var(--surface); }
-    .sp-log-name { font-size: 11px; font-weight: 500; color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-    .sp-log-date { font-size: 9px; color: var(--grey); font-family: 'JetBrains Mono', monospace; margin-top: 1px; }
-    .sp-empty { padding: 12px 10px; font-size: 11px; color: var(--grey); font-style: italic; text-align: center; }
-
-    /* ── Global scrollbars ── */
-    *::-webkit-scrollbar { width: 4px; height: 4px; }
-    *::-webkit-scrollbar-track { background: transparent; }
-    *::-webkit-scrollbar-thumb { background: var(--border2); border-radius: 2px; }
-    *::-webkit-scrollbar-thumb:hover { background: var(--grey); }
-    * { scrollbar-width: thin; scrollbar-color: var(--border2) transparent; }
-</style>
+    .sp-card{background:var(--surface2);border:1px solid var(--border);border-radius:8px;overflow:hidden;min-width:0}
+    .sp-header{display:flex;align-items:center;justify-content:space-between;padding:8px 10px;cursor:pointer;user-select:none}
+    .sp-header:hover{background:rgba(0,0,0,0.03)}
+    .sp-title{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:0.08em;color:var(--text2)}
+    .sp-count{font-size:9px;color:var(--grey);font-family:'JetBrains Mono',monospace}
+    .sp-arrow{font-size:9px;color:var(--grey);transition:transform 0.2s}
+    .sp-card.open .sp-arrow{transform:rotate(90deg)}
+    .sp-body{display:none;border-top:1px solid var(--border)}
+    .sp-card.open .sp-body{display:block;overflow-y:auto;max-height:160px;scrollbar-width:thin;scrollbar-color:var(--border2) transparent}
+    .sp-empty{font-size:10px;color:var(--grey);font-style:italic;padding:10px 12px;text-align:center}
+    .sp-stock-row{display:flex;align-items:center;justify-content:space-between;padding:7px 12px;border-bottom:1px solid var(--border);cursor:pointer;transition:background 0.1s}
+    .sp-stock-row:last-child{border-bottom:none}
+    .sp-stock-row:hover{background:var(--surface)}
+    .sp-ticker{font-family:'JetBrains Mono',monospace;font-size:11px;font-weight:600;color:var(--text)}
+    .sp-price{font-size:11px;color:var(--grey);font-family:'JetBrains Mono',monospace}
+    .sp-log-row{padding:7px 12px;border-bottom:1px solid var(--border);cursor:pointer;transition:background 0.1s}
+    .sp-log-row:last-child{border-bottom:none}
+    .sp-log-row:hover{background:var(--surface)}
+    .sp-log-name{font-size:11px;font-weight:500;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-bottom:1px}
+    .sp-log-date{font-size:10px;color:var(--grey)}
+  </style>
 </head>
 <body>
 <div class="layout">
@@ -237,43 +225,28 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:'Inter'
         <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:0.1em;color:var(--grey);padding:6px 2px 4px">Portfolio</div>
       </div>
       <div class="sidebar-panels" id="sidebarPanels">
-        <div class="sp-card open" id="spWatchlist">
-          <div class="sp-header" onclick="toggleSP('spWatchlist')">
-            <span class="sp-title">Watchlist</span>
-            <div style="display:flex;align-items:center;gap:6px">
-              <span class="sp-count" id="spWlCount">0 stocks</span>
-              <span class="sp-arrow">▶</span>
-            </div>
-          </div>
-          <div class="sp-body" id="spWlBody">
-            <div class="sp-empty">No stocks added yet</div>
-          </div>
-        </div>
-        <div class="sp-card open" id="spResearch">
-          <div class="sp-header" onclick="toggleSP('spResearch')">
-            <span class="sp-title">Research Log</span>
-            <div style="display:flex;align-items:center;gap:6px">
-              <span class="sp-count" id="spRsCount">0 sessions</span>
-              <span class="sp-arrow">▶</span>
-            </div>
-          </div>
-          <div class="sp-body" id="spRsBody">
-            <div class="sp-empty">No research sessions yet</div>
-          </div>
-        </div>
+    <div class="sp-card open" id="spWatchlist">
+      <div class="sp-header" onclick="toggleSP('spWatchlist')">
+        <span class="sp-title">Watchlist</span>
+        <div style="display:flex;align-items:center;gap:6px"><span class="sp-count" id="spWlCount">0 stocks</span><span class="sp-arrow">▶</span></div>
       </div>
+      <div class="sp-body" id="spWlBody"><div class="sp-empty">No stocks added yet</div></div>
+    </div>
+    <div class="sp-card open" id="spResearch">
+      <div class="sp-header" onclick="toggleSP('spResearch')">
+        <span class="sp-title">Research Log</span>
+        <div style="display:flex;align-items:center;gap:6px"><span class="sp-count" id="spRsCount">0 sessions</span><span class="sp-arrow">▶</span></div>
+      </div>
+      <div class="sp-body" id="spRsBody"><div class="sp-empty">No research sessions yet</div></div>
+    </div>
     <div class="sp-card open" id="spBets">
       <div class="sp-header" onclick="toggleSP('spBets')">
         <span class="sp-title">Kalshi Bets</span>
-        <div style="display:flex;align-items:center;gap:6px">
-          <span class="sp-count" id="spBtCount">0 bets</span>
-          <span class="sp-arrow">▶</span>
-        </div>
+        <div style="display:flex;align-items:center;gap:6px"><span class="sp-count" id="spBtCount">0 bets</span><span class="sp-arrow">▶</span></div>
       </div>
-      <div class="sp-body" id="spBtBody">
-        <div class="sp-empty">No bets imported yet</div>
-      </div>
+      <div class="sp-body" id="spBtBody"><div class="sp-empty">No bets imported yet</div></div>
     </div>
+  </div>
   <div class="sidebar-footer">
     <div class="mkt-pill">
       <div class="dot" id="mktDot"></div>
@@ -883,96 +856,7 @@ if(watchlist.length>0) refreshPrices();
 if(portfolio.length>0) setTimeout(autoUpdatePortfolioPrices,500);
 new ResizeObserver(function(){drawChart();}).observe(document.querySelector('.chart-card')||document.body);
 
-// ── SIDEBAR PANELS ────────────────────────────────────────────
-function goToMarkets(){ window.location.href = "/markets"; }
-
-function toggleSP(id) {
-  var card = document.getElementById(id);
-  if (card) card.classList.toggle('open');
-}
-
-function renderSidebarPanels() {
-  // Mini Watchlist
-  try {
-    var wl = JSON.parse(localStorage.getItem('onyx_wl_v3') || '[]');
-    var wlCount = document.getElementById('spWlCount');
-    var wlBody  = document.getElementById('spWlBody');
-    if (wlCount) wlCount.textContent = wl.length + ' stock' + (wl.length !== 1 ? 's' : '');
-    if (wlBody) {
-      if (!wl.length) {
-        wlBody.innerHTML = '<div class="sp-empty">No stocks added yet</div>';
-      } else {
-        var portfolio = [];
-          try { portfolio = JSON.parse(localStorage.getItem('onyx_portfolio') || '[]'); } catch(e) {}
-          wlBody.innerHTML = wl.slice(0, 15).map(function(w) {
-          var port = portfolio.find(function(p) { return p.ticker === w.ticker; });
-          var totalVal = '';
-          if (port && port.shares && port.buyPrice) {
-            var lastPt = port.points && port.points.length ? port.points[port.points.length-1].p : port.buyPrice;
-            var total = port.shares * lastPt;
-            var pnl = (lastPt - port.buyPrice) * port.shares;
-            var color = pnl >= 0 ? 'var(--green)' : 'var(--red)';
-            var sign = pnl >= 0 ? '+' : '';
-            totalVal = '<span style="font-family:JetBrains Mono,monospace;font-size:10px;color:' + color + ';font-weight:600">'
-              + '$' + total.toFixed(2) + '</span>';
-          }
-          return '<div class="sp-stock-row" data-ticker="' + w.ticker + '">' +
-            '<span class="sp-ticker">' + w.ticker + '</span>' +
-            (totalVal || '<span class="sp-price">—</span>') +
-          '</div>';
-        }).join('');
-        wlBody.querySelectorAll('.sp-stock-row').forEach(function(row) {
-          row.addEventListener('click', function() { spGoStock(row.dataset.ticker); });
-        });
-      }
-    }
-  } catch(e) {}
-
-  // Research Log
-  try {
-    var sessions = JSON.parse(localStorage.getItem('onyx_sessions') || '[]');
-    var rsCount = document.getElementById('spRsCount');
-    var rsBody  = document.getElementById('spRsBody');
-    if (rsCount) rsCount.textContent = sessions.length + ' session' + (sessions.length !== 1 ? 's' : '');
-    if (rsBody) {
-      if (!sessions.length) {
-        rsBody.innerHTML = '<div class="sp-empty">No research sessions yet</div>';
-      } else {
-        var sorted = sessions.slice().reverse().slice(0, 10);
-        rsBody.innerHTML = sorted.map(function(s) {
-          var name = s.name || s.topic || 'Untitled';
-          var date = new Date(s.created).toLocaleDateString('en-US', {month:'short', day:'numeric'});
-          return '<div class="sp-log-row" data-sid="' + s.id + '">' +
-            '<div class="sp-log-name">' + name.substring(0, 28) + (name.length > 28 ? '...' : '') + '</div>' +
-            '<div class="sp-log-date">' + date + '</div>' +
-          '</div>';
-        }).join('');
-        rsBody.querySelectorAll('.sp-log-row').forEach(function(row) {
-          row.addEventListener('click', function() { spGoResearch(row.dataset.sid); });
-        });
-      }
-    }
-  } catch(e) {}
-}
-
-function spGoStock(ticker) {
-  if (window.location.pathname === '/') {
-    if (typeof selectStock === 'function') selectStock(ticker);
-  } else {
-    window.location.href = '/';
-  }
-}
-
-function spGoResearch(sessionId) {
-  if (window.location.pathname === '/search') {
-    if (typeof loadSession === 'function') loadSession(sessionId);
-  } else {
-    window.location.href = '/search';
-  }
-}
-
-try { renderSidebarPanels(); } catch(e) {}
-setTimeout(function(){ try { renderSidebarPanels(); } catch(e) {} }, 300);
+// ── SIDEBAR PANELS ──────────────────────────────────────────── } catch(e) {} }, 300);
 
   // Kalshi Bets
   try {
@@ -997,8 +881,86 @@ setTimeout(function(){ try { renderSidebarPanels(); } catch(e) {} }, 300);
       }
     }
   } catch(e) {}
-setInterval(renderSidebarPanels, 30000);
 
+
+function renderSidebarPanels(){
+  // ── Watchlist ──
+  try{
+    var wl=JSON.parse(localStorage.getItem('onyx_wl_v3')||'[]');
+    var portfolio=[];
+    try{portfolio=JSON.parse(localStorage.getItem('onyx_portfolio')||'[]');}catch(e){}
+    var wlC=document.getElementById('spWlCount');
+    if(wlC) wlC.textContent=wl.length+' stock'+(wl.length!==1?'s':'');
+    var wb=document.getElementById('spWlBody');
+    if(wb){
+      if(!wl.length){ wb.innerHTML='<div class="sp-empty">No stocks added yet</div>'; }
+      else {
+        wb.innerHTML=wl.slice(0,15).map(function(w){
+          var p=portfolio.find(function(x){return x.ticker===w.ticker;});
+          var val='<span class="sp-price">—</span>';
+          if(p&&p.shares&&p.buyPrice){
+            var lp=p.points&&p.points.length?p.points[p.points.length-1].p:p.buyPrice;
+            var pnl=(lp-p.buyPrice)*p.shares;
+            val='<span style="font-family:JetBrains Mono,monospace;font-size:11px;font-weight:600;color:'+(pnl>=0?'var(--green)':'var(--red)')+'">$'+(p.shares*lp).toFixed(2)+'</span>';
+          }
+          return '<div class="sp-stock-row" data-ticker="'+w.ticker+'"><span class="sp-ticker">'+w.ticker+'</span>'+val+'</div>';
+        }).join('');
+        wb.querySelectorAll('.sp-stock-row').forEach(function(row){
+          row.addEventListener('click',function(){spGoStock(row.dataset.ticker);});
+        });
+      }
+    }
+  }catch(e){}
+  // ── Research Log ──
+  try{
+    var sess=JSON.parse(localStorage.getItem('onyx_sessions')||'[]');
+    var rsC=document.getElementById('spRsCount');
+    if(rsC) rsC.textContent=sess.length+' session'+(sess.length!==1?'s':'');
+    var rb=document.getElementById('spRsBody');
+    if(rb){
+      if(!sess.length){ rb.innerHTML='<div class="sp-empty">No research sessions yet</div>'; }
+      else {
+        rb.innerHTML=sess.slice().reverse().slice(0,8).map(function(s){
+          var name=s.name||s.topic||'Untitled';
+          var date=new Date(s.created).toLocaleDateString('en-US',{month:'short',day:'numeric'});
+          return '<div class="sp-log-row" data-sid="'+s.id+'"><div class="sp-log-name">'+name.substring(0,28)+(name.length>28?'...':'')+'</div><div class="sp-log-date">'+date+'</div></div>';
+        }).join('');
+        rb.querySelectorAll('.sp-log-row').forEach(function(row){
+          row.addEventListener('click',function(){spGoResearch(row.dataset.sid);});
+        });
+      }
+    }
+  }catch(e){}
+  // ── Kalshi Bets ──
+  try{
+    var sb=JSON.parse(localStorage.getItem('onyx_mkt_bets')||'[]');
+    var btC=document.getElementById('spBtCount');
+    if(btC) btC.textContent=sb.length+' bet'+(sb.length!==1?'s':'');
+    var btB=document.getElementById('spBtBody');
+    if(btB){
+      if(!sb.length){ btB.innerHTML='<div class="sp-empty">No bets imported yet</div>'; }
+      else {
+        btB.innerHTML=sb.slice(0,8).map(function(b){
+          var q=b.q||'';
+          var short=q.length>30?q.substring(0,30)+'...':q;
+          var odds='<span style="color:var(--blue)">'+b.yes+'</span>/<span style="color:var(--yellow)">'+b.no+'</span>';
+          var side=b.placed?'<span style="color:'+(b.placedSide==='YES'?'var(--blue)':'var(--yellow)')+';font-weight:700"> '+b.placedSide+'</span>':'';
+          return '<div class="sp-log-row"><div class="sp-log-name">'+short+'</div><div class="sp-log-date">'+odds+side+'</div></div>';
+        }).join('');
+        btB.querySelectorAll('.sp-log-row').forEach(function(row){
+          row.addEventListener('click',function(){goToMarkets();});
+        });
+      }
+    }
+  }catch(e){}
+}
+function toggleSP(id){var c=document.getElementById(id);if(c)c.classList.toggle('open');}
+function spGoStock(ticker){if(window.location.pathname==='/'){{if(typeof selectStock==='function')selectStock(ticker);}}else{{window.location.href='/';}}  }
+function spGoResearch(sid){if(window.location.pathname==='/search'){{if(typeof loadSession==='function')loadSession(sid);}}else{{window.location.href='/search';}}  }
+function goToMarkets(){window.location.href='/markets';}
+try{renderSidebarPanels();}catch(e){}
+setTimeout(function(){try{renderSidebarPanels();}catch(e){}},300);
+setInterval(function(){try{renderSidebarPanels();}catch(e){}},30000);
 </script>
 </body>
 </html>
