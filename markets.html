@@ -987,7 +987,7 @@ function renderSidebarPanels(){
       else {
         btB.innerHTML=sb.slice(0,8).map(function(b){
           var q=b.q||'';
-          var short=q.length>30?q.substring(0,30)+'...':q;
+          var short=q.length>30?q.substring(0,30).trimEnd()+'...':q;
           var odds='<span style="color:var(--blue)">'+b.yes+'</span>/<span style="color:var(--yellow)">'+b.no+'</span>';
           var side=b.placed?'<span style="color:'+(b.placedSide==='YES'?'var(--blue)':'var(--yellow)')+';font-weight:700"> '+b.placedSide+'</span>':'';
           return '<div class="sp-log-row" onclick="goToMarkets()"><div class="sp-log-name">'+short+'</div><div class="sp-log-date">'+odds+side+'</div></div>';
@@ -1203,7 +1203,7 @@ function renderSidebarPanels(){
       else {
         btB.innerHTML=sb.slice(0,8).map(function(b){
           var q=b.q||'';
-          var short=q.length>30?q.substring(0,30)+'...':q;
+          var short=q.length>30?q.substring(0,30).trimEnd()+'...':q;
           var odds='<span style="color:var(--blue)">'+b.yes+'</span>/<span style="color:var(--yellow)">'+b.no+'</span>';
           var side=b.placed?'<span style="color:'+(b.placedSide==='YES'?'var(--blue)':'var(--yellow)')+';font-weight:700"> '+b.placedSide+'</span>':'';
           return '<div class="sp-log-row"><div class="sp-log-name">'+short+'</div><div class="sp-log-date">'+odds+side+'</div></div>';
