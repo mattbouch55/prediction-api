@@ -48,7 +48,7 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:'Inter'
 .sp-arrow{font-size:9px;color:var(--grey);transition:transform 0.2s}
 .sp-card.open .sp-arrow{transform:rotate(90deg)}
 .sp-body{display:none;border-top:1px solid var(--border)}
-.sp-card.open .sp-body{display:block overflow-y: auto; scrollbar-width: thin; scrollbar-color: var(--border2) transparent; }
+.sp-card.open .sp-body{display:block; overflow-y:auto; max-height:160px; scrollbar-width:thin; scrollbar-color:var(--border2) transparent;}
 .sp-row{display:flex;align-items:center;gap:6px;padding:6px 10px;border-bottom:1px solid var(--border);cursor:pointer}
 .sp-row:last-child{border-bottom:none}
 .sp-row:hover{background:var(--surface)}
@@ -269,6 +269,13 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:'Inter'
         <div style="display:flex;align-items:center;gap:6px"><span class="sp-count" id="spRsCount">0 sessions</span><span class="sp-arrow">▶</span></div>
       </div>
       <div class="sp-body" id="spRsBody"><div class="sp-empty">No research sessions yet</div></div>
+    </div>
+    <div class="sp-card open" id="spBets">
+      <div class="sp-header" onclick="toggleSP('spBets')">
+        <span class="sp-title">Kalshi Bets</span>
+        <div style="display:flex;align-items:center;gap:6px"><span class="sp-count" id="spBtCount">0 bets</span><span class="sp-arrow">▶</span></div>
+      </div>
+      <div class="sp-body" id="spBtBody"><div class="sp-empty">No bets imported yet</div></div>
     </div>
   </div>
   <div class="sidebar-footer">
