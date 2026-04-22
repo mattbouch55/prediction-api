@@ -262,6 +262,18 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:'Inter'
           </div>
         </div>
       </div>
+    <div class="sp-card open" id="spBets">
+      <div class="sp-header" onclick="toggleSP('spBets')">
+        <span class="sp-title">Kalshi Bets</span>
+        <div style="display:flex;align-items:center;gap:6px">
+          <span class="sp-count" id="spBtCount">0 bets</span>
+          <span class="sp-arrow">▶</span>
+        </div>
+      </div>
+      <div class="sp-body" id="spBtBody">
+        <div class="sp-empty">No bets imported yet</div>
+      </div>
+    </div>
   <div class="sidebar-footer">
     <div class="mkt-pill">
       <div class="dot" id="mktDot"></div>
@@ -958,6 +970,34 @@ function spGoResearch(sessionId) {
 }
 
 renderSidebarPanels();
+
+  // Kalshi Bets
+  try {
+    var bets = JSON.parse(localStorage.getItem('onyx_mkt_bets') || '[]');
+    var btCount = document.getElementById('spBtCount');
+    var btBody  = document.getElementById('spBtBody');
+    if(btCount) btCount.textContent = bets.length + ' bet'+(bets.length!==1?'s':'');
+    if(btBody){
+      if(!bets.length){ btBody.innerHTML='<div class="sp-empty">No bets imported yet</div>'; }
+      else {
+        btBody.innerHTML = bets.slice(0,10).map(function(b){
+          var placed = b.placed;
+          var sideColor = b.placedSide==='YES'?'var(--blue)':'var(--yellow)';
+          return '<div class="sp-row" onclick="window.location.href=\'/markets\'">' +
+            '<div style="flex:1;min-width:0">' +
+              '<div style="font-size:10px;font-weight:600;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'+b.q.substring(0,28)+'...</div>' +
+              '<div style="font-size:9px;color:var(--grey);font-family:JetBrains Mono,monospace;margin-top:1px">' +
+                '<span style="color:var(--blue)">YES '+b.yes+'</span>' +
+                '<span style="color:var(--grey)"> / </span>' +
+                '<span style="color:var(--yellow)">NO '+b.no+'</span>' +
+              '</div>' +
+            '</div>' +
+            (placed ? '<span style="font-size:9px;font-weight:700;color:'+sideColor+';flex-shrink:0">'+b.placedSide+'</span>' : '<span style="font-size:9px;color:var(--grey);flex-shrink:0">—</span>') +
+          '</div>';
+        }).join('');
+      }
+    }
+  } catch(e) {}
 setInterval(renderSidebarPanels, 30000);
 
 </script>
