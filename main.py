@@ -301,61 +301,53 @@ def get_predictions(limit: int = 10):
 
 @app.get("/kalshi-market")
 async def get_kalshi_market(url: str = "", ticker: str = ""):
-    """Fetch live market data from Kalshi's public API."""
-    import re
-
-    # Extract ticker from URL if provided
+    """Fetch live Kalshi market data via AI web search (Kalshi API blocks server IPs)."""
+    # Extract ticker from URL
     if url and not ticker:
-        # Kalshi URL format: https://kalshi.com/markets/{event}/{TICKER}
-        parts = url.rstrip('/').split('/')
-        ticker = parts[-1].upper()
+        parts = url.rstrip("/").split("/")
+        ticker = parts[-1]
 
-    if not ticker:
-        return {"error": "No ticker or URL provided"}
+    if not ticker and not url:
+        return {"error": "No URL provided"}
 
-    # Try Kalshi public API
-    kalshi_headers = {
-        "Accept": "application/json",
-        "User-Agent": "Mozilla/5.0 (compatible; OnyxAI/1.0)",
-    }
+    market_ref = url or ticker
+    client = anthropic.Anthropic(api_key=ANTHROPIC_KEY)
 
-    endpoints = [
-        f"https://api.elections.kalshi.com/trade-api/v2/markets/{ticker}",
-        f"https://trading-api.kalshi.com/trade-api/v2/markets/{ticker}",
-    ]
+    prompt = f"""Search the web for this Kalshi prediction market and extract its current data:
 
-    for endpoint in endpoints:
-        try:
-            r = requests.get(endpoint, headers=kalshi_headers, timeout=8)
-            if r.status_code == 200:
-                data = r.json()
-                m = data.get("market", data)
-                # Normalise prices — Kalshi returns cents (0-99)
-                yes_price = m.get("yes_bid") or m.get("last_price") or 50
-                no_price = 100 - int(yes_price) if yes_price else 50
-                close_time = m.get("close_time", "")
-                if close_time:
-                    try:
-                        from datetime import datetime
-                        dt = datetime.fromisoformat(close_time.replace("Z", "+00:00"))
-                        close_time = dt.strftime("%b %d, %Y")
-                    except Exception:
-                        pass
-                return {
-                    "ticker": ticker,
-                    "title": m.get("title") or m.get("subtitle") or "",
-                    "yes": int(yes_price),
-                    "no": int(no_price),
-                    "close": close_time,
-                    "volume": m.get("volume") or m.get("volume_24h") or 0,
-                    "category": m.get("category") or "market",
-                    "url": url or f"https://kalshi.com/markets/{ticker.lower()}",
-                    "status": m.get("status", "open"),
-                }
-        except Exception:
-            continue
+URL: {market_ref}
 
-    return {"error": f"Could not fetch market data for ticker: {ticker}. Check the URL and try again."}
+Find the current YES price (in cents, 1-99), NO price, market question/title, close date, and volume.
+Return ONLY valid JSON with no extra text:
+{{
+  "title": "Full market question",
+  "yes": 62,
+  "no": 38,
+  "close": "Jun 18, 2025",
+  "volume": "$1.2M",
+  "category": "finance|politics|crypto|macro|tech|sports",
+  "ticker": "{ticker}"
+}}"""
+
+    try:
+        resp = client.messages.create(
+            model="claude-sonnet-4-5",
+            max_tokens=400,
+            tools=[{{"type": "web_search_20250305", "name": "web_search"}}],
+            messages=[{{"role": "user", "content": prompt}}]
+        )
+        text = "".join(b.text for b in resp.content if hasattr(b, "text") and b.text)
+        s, e = text.find("{{"), text.rfind("}}") + 1
+        if s >= 0 and e > s:
+            result = json.loads(text[s:e])
+            result["url"] = url or f"https://kalshi.com/markets/{ticker}"
+            # Ensure yes+no = 100
+            if result.get("yes") and not result.get("no"):
+                result["no"] = 100 - int(result["yes"])
+            return result
+        return {{"error": "Could not parse market data. Check the URL and try again."}}
+    except Exception as ex:
+        return {{"error": str(ex)}}
 
 @app.get("/health")
 def health():
