@@ -175,11 +175,11 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:'Inter'
 
     /* Inventory grid */
     .inv-grid { display: flex; flex-direction: column; gap: 0; }
-    .inv-item { padding: 10px 14px; border-bottom: 1px solid var(--border); cursor: pointer; transition: background 0.1s; }
+    .inv-item { padding: 13px 14px; border-bottom: 1px solid var(--border); cursor: pointer; transition: all 0.12s; }
     .inv-item:last-child { border-bottom: none; }
     .inv-item:hover { background: var(--surface2); }
     .inv-item.active { background: var(--blue-soft); }
-    .inv-top { display: flex; align-items: center; gap: 6px; margin-bottom: 5px; }
+    .inv-top { display: flex; align-items: center; gap: 6px; margin-bottom: 7px; }
     .inv-side { font-size: 9px; font-weight: 800; padding: 2px 7px; border-radius: 3px; text-transform: uppercase; letter-spacing: 0.04em; flex-shrink: 0; }
     .inv-side.yes { background: var(--green); color: #fff; }
     .inv-side.no { background: var(--red); color: #fff; }
@@ -189,8 +189,8 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:'Inter'
     .inv-status.lost { background: var(--red-dim); color: var(--red); }
     .inv-del { background: none; border: none; color: var(--grey); cursor: pointer; font-size: 14px; padding: 0 2px; flex-shrink: 0; }
     .inv-del:hover { color: var(--red); }
-    .inv-q { font-size: 11px; font-weight: 500; color: var(--text); line-height: 1.4; margin-bottom: 6px; }
-    .inv-meta { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+    .inv-q { font-size: 12px; font-weight: 500; color: var(--text); line-height: 1.45; margin-bottom: 8px; }
+    .inv-meta { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin-top: 2px; }
     .inv-price { font-size: 10px; font-family: 'JetBrains Mono', monospace; color: var(--grey2); }
     .inv-pnl { font-size: 11px; font-weight: 700; font-family: 'JetBrains Mono', monospace; margin-left: auto; }
     .inv-actions { display: flex; gap: 4px; margin-top: 6px; }
@@ -369,12 +369,7 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:'Inter'
         <span class="cs" id="betCount">0 markets</span>
       </div>
 
-      <!-- Summary strip -->
-      <div class="pnl-strip" id="pnlSummary">
-        <div class="pnl-box"><div class="pnl-val" style="color:var(--grey)">$0</div><div class="pnl-lbl">P&L</div></div>
-        <div class="pnl-box"><div class="pnl-val" style="color:var(--green)">0</div><div class="pnl-lbl">Won</div></div>
-        <div class="pnl-box"><div class="pnl-val" style="color:var(--red)">0</div><div class="pnl-lbl">Lost</div></div>
-      </div>
+
 
       <!-- Inventory list -->
       <div style="flex:1;overflow-y:auto;border-top:1px solid var(--border)">
@@ -581,11 +576,9 @@ function renderResearchWorkspace(){
       '<textarea class="notes-area" id="betNotes" placeholder="Write your research notes, thesis, reasons to bet YES or NO...">'+notes+'</textarea>' +
     '</div>' +
 
-    // Decision + Kalshi link
-    '<div style="padding:10px 14px;border-top:1px solid var(--border);display:flex;flex-direction:column;gap:6px">' +
-      '<div style="font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:0.06em;color:var(--grey)">Ready to bet?</div>' +
-      '<a href="'+(b.url||'https://kalshi.com')+'" target="_blank" class="kalshi-btn">🔗 Bet on Kalshi →</a>' +
-      '<div style="font-size:9px;color:var(--grey);text-align:center">Onyx is for research only. All bets are placed on Kalshi.</div>' +
+    // Kalshi link — single clean button at the bottom
+    '<div style="padding:10px 14px;border-top:1px solid var(--border)">' +
+      '<a href="'+(b.url||'https://kalshi.com')+'" target="_blank" class="kalshi-btn">🔗 Open on Kalshi to Bet →</a>' +
     '</div>';
 }
 
@@ -718,24 +711,31 @@ function renderPositions(){
   }).join('');
 }
 
-function renderPnl(){
-  var el = document.getElementById('pnlSummary');
-  var won=0, lost=0, totalPnl=0;
-  positions.forEach(function(p){
-    var currentPrice = p.side==='YES' ? p.yes : p.no;
-    var pnl = ((currentPrice - p.entryPrice)/100)*p.amount;
-    if(p.status==='won') won++;
-    else if(p.status==='lost') lost++;
-    totalPnl += pnl;
-  });
-  var pnlColor = totalPnl>=0 ? 'var(--green)' : 'var(--red)';
-  el.innerHTML =
-    '<div class="pnl-box"><div class="pnl-val" style="color:'+pnlColor+'">'+(totalPnl>=0?'+':'')+'$'+Math.abs(totalPnl).toFixed(2)+'</div><div class="pnl-lbl">P&L</div></div>' +
-    '<div class="pnl-box"><div class="pnl-val" style="color:var(--green)">'+won+'</div><div class="pnl-lbl">Won</div></div>' +
-    '<div class="pnl-box"><div class="pnl-val" style="color:var(--red)">'+lost+'</div><div class="pnl-lbl">Lost</div></div>';
-}
+function renderPnl(){ /* removed - Kalshi tracks P&L */ }
 
 // ── SIDEBAR ───────────────────────────────────────────────────
+function markPlaced(id){
+  var b = bets.find(function(b){return b.id===id;});
+  if(!b) return;
+  var side = document.getElementById('side-'+id);
+  var amt  = document.getElementById('amt-'+id);
+  if(!amt || !amt.value){ if(amt) amt.focus(); return; }
+  b.placed = true;
+  b.placedSide = side ? side.value : 'YES';
+  b.placedAmount = parseFloat(amt.value).toFixed(2);
+  localStorage.setItem('onyx_mkt_bets', JSON.stringify(bets));
+  renderBetList();
+  if(activeBet && activeBet.id===id) renderResearchWorkspace();
+}
+
+function unmarkPlaced(id){
+  var b = bets.find(function(b){return b.id===id;});
+  if(!b) return;
+  b.placed = false; b.placedSide = null; b.placedAmount = null;
+  localStorage.setItem('onyx_mkt_bets', JSON.stringify(bets));
+  renderBetList();
+}
+
 function selectBetFromInventory(marketId){
   var bet = bets.find(function(b){return b.id===marketId;});
   if(bet){ activeBet=bet; renderBetList(); renderResearchWorkspace(); }
