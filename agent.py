@@ -18,7 +18,7 @@ class PredictionAgent:
         if not api_key:
             raise ValueError("ANTHROPIC_API_KEY is not set")
         self.client = anthropic.Anthropic(api_key=api_key)
-        self.model = "claude-sonnet-4-5"
+        self.model = "claude-sonnet-4-5-20250929"
 
     async def run(self, topic: str, domain: str, time_horizon: str, custom_source: str = None) -> PredictionResponse:
         loop = asyncio.get_event_loop()
@@ -142,7 +142,7 @@ class InvestmentAgent:
         if not api_key:
             raise ValueError("ANTHROPIC_API_KEY is not set")
         self.client = anthropic.Anthropic(api_key=api_key)
-        self.model = "claude-sonnet-4-5"
+        self.model = "claude-sonnet-4-5-20250929"
 
     async def run(self, ticker: str, asset_type: str, custom_source: str = None) -> InvestmentResponse:
         loop = asyncio.get_event_loop()
