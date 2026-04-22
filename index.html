@@ -971,7 +971,8 @@ function spGoResearch(sessionId) {
   }
 }
 
-renderSidebarPanels();
+try { renderSidebarPanels(); } catch(e) {}
+setTimeout(function(){ try { renderSidebarPanels(); } catch(e) {} }, 300);
 
   // Kalshi Bets
   try {
