@@ -89,7 +89,7 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:'Inter'
 .price-input:focus{border-color:var(--blue)}
 .import-btn{width:100%;background:var(--text);color:#fff;border:none;font-family:'Inter',sans-serif;font-size:11px;font-weight:600;padding:7px;border-radius:6px;cursor:pointer;transition:opacity 0.12s}
 .import-btn:hover{opacity:0.8}
-.kalshi-hint{font-size:10px;color:var(--grey);line-height:1.5;padding:8px 14px;border-top:1px solid var(--border);background:var(--surface2)}
+.kalshi-hint{display:none}
 
 /* IMPORTED BETS LIST */
 .bet-list{display:flex;flex-direction:column;gap:0}
@@ -291,14 +291,14 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:'Inter'
         <span class="ct">Import from Kalshi</span>
         <a href="https://kalshi.com" target="_blank" style="font-size:10px;color:var(--blue);font-weight:600;text-decoration:none;background:var(--blue-soft);border:1px solid rgba(21,101,255,0.2);padding:2px 8px;border-radius:4px;white-space:nowrap">Kalshi ↗</a>
       </div>
-      <div class="import-form" style="flex:1;gap:10px">
+      <div class="import-form" style="flex:1;gap:10px;display:flex;flex-direction:column">
 
         <!-- Kalshi URL -->
         <div>
           <div style="margin-bottom:4px">
             <div class="field-label">Kalshi Market URL</div>
           </div>
-          <input class="field-input" id="importUrl" type="url" placeholder="https://kalshi.com/markets/..." oninput="onUrlInput(this.value)"/>
+          <textarea class="field-input" id="importUrl" rows="3" placeholder="https://kalshi.com/markets/..." oninput="onUrlInput(this.value)" style="resize:none;line-height:1.6;flex:1;min-height:60px"></textarea>
           <div id="urlStatus" style="font-size:10px;color:var(--grey);margin-top:4px;line-height:1.4;display:none"></div>
         </div>
 
@@ -370,9 +370,7 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:'Inter'
         <button class="import-btn" style="margin-top:4px" onclick="importBet()">+ Add to Research Inventory</button>
 
       </div>
-      <div class="kalshi-hint" style="background:var(--yellow-dim);border-top:1px solid var(--border)">
-        <strong style="color:var(--yellow)">How to import:</strong> Go to Kalshi, find your market, copy the URL + question + YES/NO prices into the fields above. Onyx does the rest.
-      </div>
+
     </div>
 
 
@@ -1121,7 +1119,7 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:'Inter'
 .price-input:focus{border-color:var(--blue)}
 .import-btn{width:100%;background:var(--text);color:#fff;border:none;font-family:'Inter',sans-serif;font-size:11px;font-weight:600;padding:7px;border-radius:6px;cursor:pointer;transition:opacity 0.12s}
 .import-btn:hover{opacity:0.8}
-.kalshi-hint{font-size:10px;color:var(--grey);line-height:1.5;padding:8px 14px;border-top:1px solid var(--border);background:var(--surface2)}
+.kalshi-hint{display:none}
 
 /* IMPORTED BETS LIST */
 .bet-list{display:flex;flex-direction:column;gap:0}
@@ -1305,14 +1303,14 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:'Inter'
         <span class="ct">Import from Kalshi</span>
         <a href="https://kalshi.com" target="_blank" style="font-size:10px;color:var(--blue);font-weight:600;text-decoration:none;background:var(--blue-soft);border:1px solid rgba(21,101,255,0.2);padding:2px 8px;border-radius:4px;white-space:nowrap">Kalshi ↗</a>
       </div>
-      <div class="import-form" style="flex:1;gap:10px">
+      <div class="import-form" style="flex:1;gap:10px;display:flex;flex-direction:column">
 
         <!-- Kalshi URL -->
         <div>
           <div style="margin-bottom:4px">
             <div class="field-label">Kalshi Market URL</div>
           </div>
-          <input class="field-input" id="importUrl" type="url" placeholder="https://kalshi.com/markets/..." oninput="onUrlInput(this.value)"/>
+          <textarea class="field-input" id="importUrl" rows="3" placeholder="https://kalshi.com/markets/..." oninput="onUrlInput(this.value)" style="resize:none;line-height:1.6;flex:1;min-height:60px"></textarea>
           <div id="urlStatus" style="font-size:10px;color:var(--grey);margin-top:4px;line-height:1.4;display:none"></div>
         </div>
 
@@ -1384,9 +1382,7 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:'Inter'
         <button class="import-btn" style="margin-top:4px" onclick="importBet()">+ Add to Research Inventory</button>
 
       </div>
-      <div class="kalshi-hint" style="background:var(--yellow-dim);border-top:1px solid var(--border)">
-        <strong style="color:var(--yellow)">How to import:</strong> Go to Kalshi, find your market, copy the URL + question + YES/NO prices into the fields above. Onyx does the rest.
-      </div>
+
     </div>
 
 
