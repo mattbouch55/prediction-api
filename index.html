@@ -884,6 +884,16 @@ new ResizeObserver(function(){drawChart();}).observe(document.querySelector('.ch
 
 
 function renderSidebarPanels(){
+  // Restore collapsed state
+  try{
+    var spState=JSON.parse(localStorage.getItem('onyx_sp_state')||'{}');
+    ['spWatchlist','spResearch','spBets'].forEach(function(id){
+      var el=document.getElementById(id);
+      if(!el) return;
+      if(spState[id]===false) el.classList.remove('open');
+      else el.classList.add('open');
+    });
+  }catch(e){}
   // ── Watchlist ──
   try{
     var wl=JSON.parse(localStorage.getItem('onyx_wl_v3')||'[]');
@@ -957,7 +967,15 @@ function renderSidebarPanels(){
     }
   }catch(e){}
 }
-function toggleSP(id){var c=document.getElementById(id);if(c)c.classList.toggle('open');}
+function toggleSP(id){
+  var c=document.getElementById(id);
+  if(!c) return;
+  c.classList.toggle('open');
+  var state={};
+  try{state=JSON.parse(localStorage.getItem('onyx_sp_state')||'{}');}catch(e){}
+  state[id]=c.classList.contains('open');
+  localStorage.setItem('onyx_sp_state',JSON.stringify(state));
+}
 function spGoStock(ticker){
   if(window.location.pathname==='/'){if(typeof selectStock==='function')selectStock(ticker);}
   else{sessionStorage.setItem('onyx_select_ticker',ticker);window.location.href='/';}
