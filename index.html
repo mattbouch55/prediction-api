@@ -149,9 +149,9 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:'Inter'
 .panel-li.up::before{content:"↑ ";color:var(--green)}
 .panel-li.dn::before{content:"↓ ";color:var(--red)}
 .panel-divider{border:none;border-top:1px solid var(--border);margin:14px 0}
-.panel-hist-notes{display:grid;grid-template-columns:1fr 1fr;gap:12px;flex:1;min-height:0}
+.panel-hist-notes{display:flex;flex-direction:column;gap:10px;flex:1;min-height:0}
 .panel-section-label{font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:0.08em;color:var(--grey);margin-bottom:8px}
-.panel-hist-scroll{max-height:none;overflow-y:auto;flex:1}
+.panel-hist-scroll{max-height:120px;overflow-y:auto;}
 .panel-hist-scroll::-webkit-scrollbar{width:3px}
 .panel-hist-scroll::-webkit-scrollbar-thumb{background:var(--border2);border-radius:2px}
 .phist-entry{padding:8px 0;border-bottom:1px solid var(--border)}
@@ -162,12 +162,12 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:'Inter'
 .phist-time{font-size:10px;color:var(--grey);margin-left:auto}
 .phist-sum{font-size:11px;color:var(--text2);line-height:1.5}
 .no-phist{font-size:11px;color:var(--grey);font-style:italic}
-.notes-col{display:flex;flex-direction:column;gap:6px;height:100%}
+.notes-col{display:flex;flex-direction:column;gap:6px;}
 .notes-url-input{width:100%;background:var(--bg);border:1px solid var(--border2);border-radius:5px;color:var(--text);font-family:'Inter',sans-serif;font-size:11px;padding:6px 8px;outline:none;transition:border-color 0.15s}
 .notes-url-input:focus{border-color:var(--blue)}
 .notes-url-input::placeholder{color:var(--grey)}
 .notes-url-hint{font-size:10px;color:var(--grey);margin-top:2px}
-.notes-textarea{width:100%;background:var(--bg);border:1px solid var(--border2);border-radius:5px;color:var(--text);font-family:'Inter',sans-serif;font-size:12px;padding:8px 10px;resize:none;outline:none;line-height:1.6;min-height:200px;flex:1;transition:border-color 0.15s}
+.notes-textarea{width:100%;background:var(--bg);border:1px solid var(--border2);border-radius:6px;color:var(--text);font-family:'Inter',sans-serif;font-size:12px;padding:10px 12px;resize:none;outline:none;line-height:1.7;min-height:220px;transition:border-color 0.15s}
 .notes-textarea:focus{border-color:var(--blue)}
 .notes-textarea::placeholder{color:var(--grey)}
 .notes-save-btn{background:var(--blue);border:none;color:#fff;font-family:'Inter',sans-serif;font-size:11px;font-weight:600;padding:5px 12px;border-radius:5px;cursor:pointer;transition:background 0.12s}
@@ -693,22 +693,18 @@ function renderPanel(ticker){
         '<div class="notes-url-hint">AI factors this into next scan</div>'+
       '</div>'+
     '</div>'+
-    ((w.catalysts&&w.catalysts.length)||(w.risks&&w.risks.length)?'<div class="panel-two-col">'+
-      (w.catalysts&&w.catalysts.length?'<div class="panel-list-card"><div class="panel-list-title green">↑ Catalysts</div><ul class="panel-ul">'+w.catalysts.map(function(c){return '<li class="panel-li up">'+c+'</li>';}).join('')+'</ul></div>':'')+
-      (w.risks&&w.risks.length?'<div class="panel-list-card"><div class="panel-list-title red">↓ Risks</div><ul class="panel-ul">'+w.risks.map(function(r){return '<li class="panel-li dn">'+r+'</li>';}).join('')+'</ul></div>':'')+
-    '</div>':'')
+    ''
     :'<div style="font-size:12px;color:var(--grey2);margin-bottom:16px;padding:12px;background:var(--surface2);border-radius:6px">No scan data yet — click <strong>Scan</strong>.</div>'
 
   document.getElementById('panelBody').innerHTML=
-    '<div class="panel-hist-notes">'+
-      '<div><div class="panel-section-label">Scan History</div><div class="panel-hist-scroll">'+histHTML+'</div></div>'+
-      '<div class="notes-col">'+
-        '<div style="display:flex;flex-direction:column;flex:1;gap:6px">'+
-          '<div class="panel-section-label">Notes</div>'+
-          '<textarea class="notes-textarea" id="cmt-'+ticker+'" placeholder="Your notes, thesis, trade plan...">'+comment+'</textarea>'+
-          '<button class="notes-save-btn" onclick="saveNotes(this.dataset.ticker)" data-ticker="'+ticker+'">Save</button>'+
-        '</div>'+
-      '</div>'+
+    '<div class="panel-section-label" style="margin-bottom:6px">Scan History</div>'+
+    '<div class="panel-hist-scroll">'+histHTML+'</div>'+
+    '<hr class="panel-divider" style="margin:10px 0"/>'+
+    '<div class="panel-section-label" style="margin-bottom:6px">Notes</div>'+
+    '<textarea class="notes-textarea" id="cmt-'+ticker+'" placeholder="Your notes, thesis, trade plan, price targets, risks to watch...">'+comment+'</textarea>'+
+    '<div style="display:flex;gap:8px;margin-top:6px;align-items:center">'+
+      '<input class="notes-url-input" style="flex:1" type="url" id="srcUrl-'+ticker+'" value="'+srcUrl+'" placeholder="Custom source URL for AI to use..."/>'+
+      '<button class="notes-save-btn" onclick="saveNotes(this.dataset.ticker)" data-ticker="'+ticker+'" style="flex-shrink:0">Save</button>'+
     '</div>'+
     '<hr class="panel-divider"/>'+
     scoreHTML
