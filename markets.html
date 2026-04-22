@@ -649,7 +649,23 @@ function renderResearchWorkspace(){
       '</div>' +
       '<textarea class="notes-area" id="betNotes" placeholder="Write your research notes, thesis, reasons to bet YES or NO...">'+notes+'</textarea>' +
     '</div>' +
-    '<div style="padding:10px 14px;border-top:1px solid var(--border)">' +
+    '<div style="padding:10px 14px;border-top:1px solid var(--border);display:flex;flex-direction:column;gap:8px">' +
+
+      // Mark as placed section
+      '<div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:0.06em;color:var(--grey)">Bet Status</div>' +
+      (!b.placed ?
+        '<div style="display:flex;gap:6px;align-items:center">' +
+          '<button id="rwSideYes" onclick="rwSelectSide(\'YES\')" style="flex:1;padding:7px;border-radius:5px;border:1px solid rgba(22,163,74,0.3);background:var(--surface);color:var(--grey2);font-family:Inter,sans-serif;font-size:12px;font-weight:700;cursor:pointer;transition:all 0.12s">YES</button>' +
+          '<button id="rwSideNo" onclick="rwSelectSide(\'NO\')" style="flex:1;padding:7px;border-radius:5px;border:1px solid rgba(220,38,38,0.3);background:var(--surface);color:var(--grey2);font-family:Inter,sans-serif;font-size:12px;font-weight:700;cursor:pointer;transition:all 0.12s">NO</button>' +
+          '<input id="rwAmount" type="number" min="1" placeholder="$ amount bet" style="flex:2;background:var(--bg);border:1px solid var(--border2);border-radius:5px;font-family:Inter,sans-serif;font-size:12px;padding:7px 10px;outline:none;color:var(--text)"/>' +
+          '<button onclick="rwMarkPlaced()" style="background:var(--green);color:#fff;border:none;font-family:Inter,sans-serif;font-size:11px;font-weight:700;padding:7px 14px;border-radius:5px;cursor:pointer;white-space:nowrap;flex-shrink:0">✓ Mark Placed</button>' +
+        '</div>'
+      :
+        '<div style="display:flex;align-items:center;justify-content:space-between;background:var(--green-dim);border:1px solid rgba(22,163,74,0.2);border-radius:6px;padding:8px 12px">' +
+          '<span style="font-size:13px;font-weight:700;color:var(--green)">✓ Placed ' + (b.placedSide||'') + ' · $' + (b.placedAmount||'') + '</span>' +
+          '<button onclick="rwUnmarkPlaced()" style="background:none;border:1px solid var(--border);color:var(--grey2);cursor:pointer;font-size:10px;padding:3px 8px;border-radius:4px;font-family:Inter,sans-serif">Reset</button>' +
+        '</div>') +
+
       '<a href="'+(b.url||'https://kalshi.com')+'" target="_blank" class="kalshi-btn">🔗 Open on Kalshi to Bet →</a>' +
     '</div>';
 }
@@ -744,6 +760,47 @@ function updateBetPrices(id, yes, no){
   var fill=document.getElementById('rwProbFill'); if(fill) fill.style.width=b.yes+'%';
   localStorage.setItem('onyx_mkt_bets', JSON.stringify(bets));
   renderBetList();
+}
+
+function rwSelectSide(side){
+  var y=document.getElementById('rwSideYes'), n=document.getElementById('rwSideNo');
+  if(!y||!n) return;
+  if(side==='YES'){
+    y.style.background='var(--green)'; y.style.color='#fff'; y.style.borderColor='var(--green)';
+    n.style.background='var(--surface)'; n.style.color='var(--grey2)'; n.style.borderColor='rgba(220,38,38,0.3)';
+  } else {
+    n.style.background='var(--red)'; n.style.color='#fff'; n.style.borderColor='var(--red)';
+    y.style.background='var(--surface)'; y.style.color='var(--grey2)'; y.style.borderColor='rgba(22,163,74,0.3)';
+  }
+  y.dataset.selected = side==='YES'?'1':'';
+  n.dataset.selected = side==='NO'?'1':'';
+}
+
+function rwMarkPlaced(){
+  if(!activeBet) return;
+  var yBtn=document.getElementById('rwSideYes');
+  var nBtn=document.getElementById('rwSideNo');
+  var amt=document.getElementById('rwAmount');
+  var side = (yBtn&&yBtn.dataset.selected==='1')?'YES':(nBtn&&nBtn.dataset.selected==='1')?'NO':'';
+  var amount = amt?parseFloat(amt.value):0;
+  if(!side){ alert('Select YES or NO first'); return; }
+  if(!amount||amount<=0){ if(amt) amt.focus(); return; }
+  activeBet.placed = true;
+  activeBet.placedSide = side;
+  activeBet.placedAmount = amount.toFixed(2);
+  var idx=bets.findIndex(function(b){return b.id===activeBet.id;}); if(idx>=0) bets[idx]=activeBet;
+  localStorage.setItem('onyx_mkt_bets', JSON.stringify(bets));
+  renderBetList();
+  renderResearchWorkspace();
+}
+
+function rwUnmarkPlaced(){
+  if(!activeBet) return;
+  activeBet.placed = false; activeBet.placedSide = null; activeBet.placedAmount = null;
+  var idx=bets.findIndex(function(b){return b.id===activeBet.id;}); if(idx>=0) bets[idx]=activeBet;
+  localStorage.setItem('onyx_mkt_bets', JSON.stringify(bets));
+  renderBetList();
+  renderResearchWorkspace();
 }
 
 function savePrices(){
@@ -1499,7 +1556,23 @@ function renderResearchWorkspace(){
     '</div>' +
 
     // Kalshi link — single clean button at the bottom
-    '<div style="padding:10px 14px;border-top:1px solid var(--border)">' +
+    '<div style="padding:10px 14px;border-top:1px solid var(--border);display:flex;flex-direction:column;gap:8px">' +
+
+      // Mark as placed section
+      '<div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:0.06em;color:var(--grey)">Bet Status</div>' +
+      (!b.placed ?
+        '<div style="display:flex;gap:6px;align-items:center">' +
+          '<button id="rwSideYes" onclick="rwSelectSide(\'YES\')" style="flex:1;padding:7px;border-radius:5px;border:1px solid rgba(22,163,74,0.3);background:var(--surface);color:var(--grey2);font-family:Inter,sans-serif;font-size:12px;font-weight:700;cursor:pointer;transition:all 0.12s">YES</button>' +
+          '<button id="rwSideNo" onclick="rwSelectSide(\'NO\')" style="flex:1;padding:7px;border-radius:5px;border:1px solid rgba(220,38,38,0.3);background:var(--surface);color:var(--grey2);font-family:Inter,sans-serif;font-size:12px;font-weight:700;cursor:pointer;transition:all 0.12s">NO</button>' +
+          '<input id="rwAmount" type="number" min="1" placeholder="$ amount bet" style="flex:2;background:var(--bg);border:1px solid var(--border2);border-radius:5px;font-family:Inter,sans-serif;font-size:12px;padding:7px 10px;outline:none;color:var(--text)"/>' +
+          '<button onclick="rwMarkPlaced()" style="background:var(--green);color:#fff;border:none;font-family:Inter,sans-serif;font-size:11px;font-weight:700;padding:7px 14px;border-radius:5px;cursor:pointer;white-space:nowrap;flex-shrink:0">✓ Mark Placed</button>' +
+        '</div>'
+      :
+        '<div style="display:flex;align-items:center;justify-content:space-between;background:var(--green-dim);border:1px solid rgba(22,163,74,0.2);border-radius:6px;padding:8px 12px">' +
+          '<span style="font-size:13px;font-weight:700;color:var(--green)">✓ Placed ' + (b.placedSide||'') + ' · $' + (b.placedAmount||'') + '</span>' +
+          '<button onclick="rwUnmarkPlaced()" style="background:none;border:1px solid var(--border);color:var(--grey2);cursor:pointer;font-size:10px;padding:3px 8px;border-radius:4px;font-family:Inter,sans-serif">Reset</button>' +
+        '</div>') +
+
       '<a href="'+(b.url||'https://kalshi.com')+'" target="_blank" class="kalshi-btn">🔗 Open on Kalshi to Bet →</a>' +
     '</div>';
 }
@@ -1651,6 +1724,47 @@ function updateBetPrices(id, yes, no){
   var fill=document.getElementById('rwProbFill'); if(fill) fill.style.width=b.yes+'%';
   localStorage.setItem('onyx_mkt_bets', JSON.stringify(bets));
   renderBetList();
+}
+
+function rwSelectSide(side){
+  var y=document.getElementById('rwSideYes'), n=document.getElementById('rwSideNo');
+  if(!y||!n) return;
+  if(side==='YES'){
+    y.style.background='var(--green)'; y.style.color='#fff'; y.style.borderColor='var(--green)';
+    n.style.background='var(--surface)'; n.style.color='var(--grey2)'; n.style.borderColor='rgba(220,38,38,0.3)';
+  } else {
+    n.style.background='var(--red)'; n.style.color='#fff'; n.style.borderColor='var(--red)';
+    y.style.background='var(--surface)'; y.style.color='var(--grey2)'; y.style.borderColor='rgba(22,163,74,0.3)';
+  }
+  y.dataset.selected = side==='YES'?'1':'';
+  n.dataset.selected = side==='NO'?'1':'';
+}
+
+function rwMarkPlaced(){
+  if(!activeBet) return;
+  var yBtn=document.getElementById('rwSideYes');
+  var nBtn=document.getElementById('rwSideNo');
+  var amt=document.getElementById('rwAmount');
+  var side = (yBtn&&yBtn.dataset.selected==='1')?'YES':(nBtn&&nBtn.dataset.selected==='1')?'NO':'';
+  var amount = amt?parseFloat(amt.value):0;
+  if(!side){ alert('Select YES or NO first'); return; }
+  if(!amount||amount<=0){ if(amt) amt.focus(); return; }
+  activeBet.placed = true;
+  activeBet.placedSide = side;
+  activeBet.placedAmount = amount.toFixed(2);
+  var idx=bets.findIndex(function(b){return b.id===activeBet.id;}); if(idx>=0) bets[idx]=activeBet;
+  localStorage.setItem('onyx_mkt_bets', JSON.stringify(bets));
+  renderBetList();
+  renderResearchWorkspace();
+}
+
+function rwUnmarkPlaced(){
+  if(!activeBet) return;
+  activeBet.placed = false; activeBet.placedSide = null; activeBet.placedAmount = null;
+  var idx=bets.findIndex(function(b){return b.id===activeBet.id;}); if(idx>=0) bets[idx]=activeBet;
+  localStorage.setItem('onyx_mkt_bets', JSON.stringify(bets));
+  renderBetList();
+  renderResearchWorkspace();
 }
 
 function savePrices(){
