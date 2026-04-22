@@ -666,10 +666,7 @@ function renderResearchWorkspace(){
 
     '<div class="bet-detail-header">' +
       '<div class="bet-detail-q">'+b.q+'</div>' +
-      '<div style="margin-bottom:8px;padding:0 14px">' +
-        '<div style="font-size:9px;font-weight:600;text-transform:uppercase;letter-spacing:0.07em;color:var(--grey);margin-bottom:3px">Bet Description</div>' +
-        '<textarea id="rwDesc" style="width:100%;background:var(--surface2);border:1px solid var(--border);border-radius:5px;font-family:Inter,sans-serif;font-size:11px;color:var(--text2);padding:6px 9px;resize:none;outline:none;line-height:1.6;min-height:52px;" placeholder="Paste resolution criteria or bet description from Kalshi..." oninput="saveRwDesc()">'+(b.desc||'')+'</textarea>' +
-      '</div>' +
+
       '<div style="display:flex;align-items:center">' +
         '<div style="display:flex;align-items:center;gap:4px">' +
           '<span class="yes-pill" style="min-width:52px;text-align:center" id="rwYesPill">YES '+b.yes+'¢</span>' +
@@ -688,6 +685,10 @@ function renderResearchWorkspace(){
       '</div>' +
       '<div class="prob-bar" style="margin-top:8px"><div class="prob-fill" id="rwProbFill" style="width:'+b.yes+'%"></div></div>' +
       '<div class="prob-label"><span id="rwYesLbl">YES '+b.yes+'%</span><span id="rwNoLbl">NO '+b.no+'%</span></div>' +
+      '<div style="margin-top:8px">' +
+        '<div style="font-size:9px;font-weight:600;text-transform:uppercase;letter-spacing:0.07em;color:var(--grey);margin-bottom:3px">Bet Description</div>' +
+        '<textarea id="rwDesc" style="width:100%;background:var(--surface2);border:1px solid var(--border);border-radius:5px;font-family:Inter,sans-serif;font-size:11px;color:var(--text2);padding:6px 9px;resize:none;outline:none;line-height:1.6;min-height:52px;" placeholder="Paste resolution criteria from Kalshi..." oninput="saveRwDesc()">'+(b.desc||'')+'</textarea>' +
+      '</div>' +
     '</div>' +
     '<div class="ai-section">' +
       '<div style="display:flex;align-items:center;gap:8px">' +
@@ -1644,10 +1645,7 @@ function renderResearchWorkspace(){
     // Market header
     '<div class="bet-detail-header">' +
       '<div class="bet-detail-q">'+b.q+'</div>' +
-      '<div style="margin-bottom:8px;padding:0 14px">' +
-        '<div style="font-size:9px;font-weight:600;text-transform:uppercase;letter-spacing:0.07em;color:var(--grey);margin-bottom:3px">Bet Description</div>' +
-        '<textarea id="rwDesc" style="width:100%;background:var(--surface2);border:1px solid var(--border);border-radius:5px;font-family:Inter,sans-serif;font-size:11px;color:var(--text2);padding:6px 9px;resize:none;outline:none;line-height:1.6;min-height:52px;" placeholder="Paste resolution criteria or bet description from Kalshi..." oninput="saveRwDesc()">'+(b.desc||'')+'</textarea>' +
-      '</div>' +
+
       '<div class="bet-meta">' +
         '<div class="odds-strip">' +
           '<span class="yes-pill">YES '+b.yes+'¢</span>' +
@@ -1728,10 +1726,11 @@ async function runAnalysis(){
 
   try {
     var b = activeBet;
+    var descText = document.getElementById('rwDesc') ? document.getElementById('rwDesc').value.trim() : (b.desc||'');
     var res = await fetch(API+'/ask', {
       method:'POST', headers:{'Content-Type':'application/json'},
       body: JSON.stringify({
-        question: 'You are a prediction market analyst. Analyse this Kalshi market and give a trading recommendation.\n\nMarket: '+b.q+'\nCurrent odds: YES '+b.yes+'¢ ('+b.yes+'% implied), NO '+b.no+'¢ ('+b.no+'% implied)\nCloses: '+(b.close||'unknown')+'\nCategory: '+b.cat+'\n\nSearch the web for the most current information on this topic. Then return ONLY valid JSON:\n{"verdict":"YES|NO|SKIP","confidence":"High|Medium|Low","reasoning":"2-3 sentence explanation","signals":["signal 1","signal 2","signal 3"]}'
+        question: 'You are a prediction market analyst. Analyse this Kalshi market and give a trading recommendation.\n\nMarket: '+b.q+'\nCurrent odds: YES '+b.yes+'¢ ('+b.yes+'% implied), NO '+b.no+'¢ ('+b.no+'% implied)\nCloses: '+(b.close||'unknown')+'\nCategory: '+b.cat+(descText?'\nResolution criteria: '+descText:'')+'\n\nSearch the web for the most current information on this topic. Then return ONLY valid JSON:\n{"verdict":"YES|NO|SKIP","confidence":"High|Medium|Low","reasoning":"2-3 sentence explanation","signals":["signal 1","signal 2","signal 3"]}'
       })
     });
     var data = await res.json();
