@@ -1034,6 +1034,24 @@ document.addEventListener('click', function(e) {
 });
 
 
+
+function renderAIResult(d){
+  var vClass = d.verdict==='YES'?'yes':d.verdict==='NO'?'no':'skip';
+  var vColor = d.verdict==='YES'?'var(--blue)':d.verdict==='NO'?'var(--yellow)':'var(--grey2)';
+  var confColor = d.confidence==='High'?'var(--green)':d.confidence==='Medium'?'var(--yellow)':'var(--red)';
+  var signals = (d.signals||[]).map(function(s){
+    return '<div class="ai-signal"><div class="ai-signal-dot"></div><div>'+s+'</div></div>';
+  }).join('');
+  return '<div class="ai-result">' +
+    '<div class="ai-verdict">' +
+      '<span class="verdict-badge '+vClass+'" style="background:'+(d.verdict==='YES'?'var(--blue)':d.verdict==='NO'?'var(--yellow)':'var(--surface2)')+';color:'+(d.verdict==='NO'?'var(--text)':'#fff')+'">'+d.verdict+'</span>' +
+      '<span class="verdict-conf" style="color:'+confColor+'">'+d.confidence+' confidence</span>' +
+    '</div>' +
+    '<div class="ai-reasoning">'+d.reasoning+'</div>' +
+    (signals?'<div class="ai-signals">'+signals+'</div>':'') +
+  '</div>';
+}
+
 // ── AI ANALYSIS ───────────────────────────────────────────────
 async function runAnalysis(){
   if(!activeBet) return;
