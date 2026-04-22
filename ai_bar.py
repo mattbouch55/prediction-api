@@ -20,7 +20,7 @@ AI_BAR_CSS = """
     .ai-topbar-send:disabled { background: var(--border2); cursor: not-allowed; }
 
     /* Middle: response panel */
-    .ai-response-panel { flex: 1; display: flex; flex-direction: column; justify-content: center; padding: 12px 18px; min-width: 0; border-right: 1px solid var(--border); }
+    .ai-response-panel { flex: 1; display: flex; flex-direction: column; justify-content: center; padding: 12px 18px; min-width: 0; border-right: 1px solid var(--border); overflow-y: auto; }
     .ai-response-top { display: flex; align-items: center; justify-content: space-between; margin-bottom: 6px; }
     .ai-response-label { font-size: 9px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.1em; color: var(--grey); }
     .ai-topbar-clear { background: none; border: none; color: var(--grey); cursor: pointer; font-size: 13px; padding: 0; transition: color 0.12s; display: none; line-height: 1; }
@@ -41,7 +41,7 @@ AI_BAR_CSS = """
     .ai-suggest-label { font-size: 9px; color: var(--grey); text-align: center; line-height: 1.4; }
 
     /* Suggestions dropdown */
-    .ai-suggest-dropdown { position: fixed; top: 107px; right: 0; width: 320px; background: var(--surface); border: 1px solid var(--border); border-top: none; border-radius: 0 0 10px 10px; box-shadow: 0 8px 24px rgba(0,0,0,0.1); z-index: 99; display: none; }
+    .ai-suggest-dropdown { position: fixed; top: 107px; right: 0; width: 320px; max-height: 320px; overflow-y: auto; background: var(--surface); border: 1px solid var(--border); border-top: none; border-radius: 0 0 10px 10px; box-shadow: 0 8px 24px rgba(0,0,0,0.1); z-index: 99; display: none; }
     .ai-suggest-dropdown.open { display: block; }
     .ai-suggest-header { padding: 12px 16px 8px; font-size: 10px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.1em; color: var(--grey); border-bottom: 1px solid var(--border); }
     .ai-suggest-list { padding: 6px 0; }
