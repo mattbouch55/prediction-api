@@ -2,19 +2,19 @@
 
 AI_BAR_CSS = """
     /* ── AI AGENT TOP BAR ── */
-    .ai-topbar { position: fixed; top: 0; left: var(--sidebar-w); right: 0; height: 71px; background: var(--surface); border-bottom: 1px solid var(--border); display: flex; flex-direction: column; z-index: 100; }
-    .ai-topbar-row1 { display: flex; align-items: center; gap: 10px; padding: 8px 20px 6px; flex-shrink: 0; }
+    .ai-topbar { position: fixed; top: 0; left: var(--sidebar-w); right: 0; height: 107px; background: var(--surface); border-bottom: 1px solid var(--border); display: flex; flex-direction: column; z-index: 100; }
+    .ai-topbar-row1 { display: flex; align-items: center; gap: 10px; padding: 14px 24px 8px; flex-shrink: 0; }
     .ai-topbar-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--blue); flex-shrink: 0; animation: aipulse 2s ease-in-out infinite; }
     @keyframes aipulse { 0%,100%{opacity:0.3;transform:scale(1)} 50%{opacity:1;transform:scale(1.25)} }
     .ai-topbar-label { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.1em; color: var(--grey); white-space: nowrap; flex-shrink: 0; }
-    .ai-topbar-input { flex: 1; background: var(--surface2); border: 1px solid transparent; border-radius: 6px; outline: none; font-family: "Inter", sans-serif; font-size: 12px; color: var(--text); padding: 5px 12px; transition: border-color 0.15s, box-shadow 0.15s; }
+    .ai-topbar-input { flex: 1; background: var(--surface2); border: 1px solid transparent; border-radius: 6px; outline: none; font-family: "Inter", sans-serif; font-size: 13px; color: var(--text); padding: 7px 14px; transition: border-color 0.15s, box-shadow 0.15s; }
     .ai-topbar-input:focus { border-color: var(--blue); box-shadow: 0 0 0 2px rgba(21,101,255,0.08); background: var(--surface); }
     .ai-topbar-input::placeholder { color: var(--grey); }
-    .ai-topbar-send { background: var(--blue); border: none; border-radius: 5px; width: 28px; height: 28px; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: background 0.12s; flex-shrink: 0; }
+    .ai-topbar-send { background: var(--blue); border: none; border-radius: 6px; width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: background 0.12s; flex-shrink: 0; }
     .ai-topbar-send:hover { background: #1a6fff; }
     .ai-topbar-send:disabled { background: var(--border2); cursor: not-allowed; }
-    .ai-topbar-row2 { flex: 1; display: flex; align-items: flex-start; gap: 8px; padding: 0 20px 7px; overflow: hidden; }
-    .ai-topbar-response { flex: 1; font-size: 11px; color: var(--text2); line-height: 1.45; overflow: hidden; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; }
+    .ai-topbar-row2 { flex: 1; display: flex; align-items: flex-start; gap: 8px; padding: 0 24px 14px; overflow: hidden; }
+    .ai-topbar-response { flex: 1; font-size: 11.5px; color: var(--text2); line-height: 1.45; overflow: hidden; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; }
     .ai-topbar-clear { background: none; border: none; color: var(--grey); cursor: pointer; font-size: 12px; padding: 0; transition: color 0.12s; flex-shrink: 0; line-height: 1; display: none; margin-top: 1px; }
     .ai-topbar-clear:hover { color: var(--red); }
     .ai-topbar-thinking { color: var(--grey); font-style: italic; }
