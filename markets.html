@@ -263,16 +263,16 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:'Inter'
 <!-- MAIN -->
 <div class="main">
 
-  <!-- COL 1: IMPORT + BET LIST -->
-  <div class="col-import">
+  <!-- COL 1: IMPORT -->
+  <div class="col-import" style="display:flex;flex-direction:column">
 
     <!-- Import form -->
-    <div class="card">
+    <div class="card" style="flex:1;display:flex;flex-direction:column">
       <div class="ch">
         <span class="ct">Import from Kalshi</span>
         <a href="https://kalshi.com" target="_blank" style="font-size:10px;color:var(--blue);font-weight:600;text-decoration:none">Open Kalshi ↗</a>
       </div>
-      <div class="import-form">
+      <div class="import-form" style="flex:1">
         <div>
           <div class="field-label">Market Question</div>
           <input class="field-input" id="importQ" type="text" placeholder="e.g. Will the Fed cut rates in June?"/>
@@ -311,20 +311,7 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:'Inter'
       <div class="kalshi-hint">Find a market on Kalshi, copy the details above, then use Onyx AI to research before you bet.</div>
     </div>
 
-    <!-- Imported bets list -->
-    <div class="card">
-      <div class="ch">
-        <span class="ct">My Markets</span>
-        <span class="cs" id="betCount">0 markets</span>
-      </div>
-      <div id="betList">
-        <div class="empty-state">
-          <div class="empty-icon">📋</div>
-          <div class="empty-text">No markets yet</div>
-          <div class="empty-sub">Import a Kalshi market above to start researching</div>
-        </div>
-      </div>
-    </div>
+
 
   </div>
 
@@ -352,7 +339,7 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:'Inter'
       <!-- Header with P&L strip -->
       <div class="ch">
         <span class="ct">Bet Inventory</span>
-        <span class="cs" id="posCount">0 bets</span>
+        <span class="cs" id="betCount">0 markets</span>
       </div>
 
       <!-- Summary strip -->
@@ -364,26 +351,12 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:'Inter'
 
       <!-- Inventory list -->
       <div style="flex:1;overflow-y:auto;border-top:1px solid var(--border)">
-        <div class="inv-grid" id="posList">
+        <div class="inv-grid" id="betList">
           <div class="sp-empty" style="padding:24px">No bets tracked yet.<br>Place a bet on Kalshi then log it below.</div>
         </div>
       </div>
 
-      <!-- Add bet form -->
-      <div class="add-pos-form">
-        <div style="font-size:10px;font-weight:700;color:var(--grey);text-transform:uppercase;letter-spacing:0.06em">Log a Kalshi bet</div>
-        <select class="field-input" id="posMarket" style="font-size:11px;padding:5px 8px"></select>
-        <div style="display:flex;gap:5px">
-          <select class="field-input" id="posSide" style="font-size:11px;padding:5px 8px;flex:1">
-            <option value="YES">YES</option>
-            <option value="NO">NO</option>
-          </select>
-          <input class="price-input" id="posEntry" type="number" min="1" max="99" placeholder="Entry ¢" style="flex:1;font-size:11px;padding:5px 8px;width:auto"/>
-          <input class="price-input" id="posAmount" type="number" min="1" placeholder="Stake $" style="flex:1;font-size:11px;padding:5px 8px;width:auto"/>
-        </div>
-        <button class="import-btn" style="font-size:11px;padding:6px" onclick="addPosition()">+ Log Bet</button>
-        <div style="font-size:9px;color:var(--grey);line-height:1.4;text-align:center">Onyx tracks only. All bets placed on <a href="https://kalshi.com" target="_blank" style="color:var(--blue)">Kalshi</a>.</div>
-      </div>
+
 
     </div>
   </div>
@@ -450,10 +423,6 @@ function deleteBet(id){
 function renderBetList(){
   var list = document.getElementById('betList');
   document.getElementById('betCount').textContent = bets.length + ' market'+(bets.length!==1?'s':'');
-  // Populate position dropdown
-  var sel = document.getElementById('posMarket');
-  sel.innerHTML = '<option value="">Select market...</option>' +
-    bets.map(function(b){ return '<option value="'+b.id+'">'+b.q.substring(0,35)+'...</option>'; }).join('');
   if(!bets.length){
     list.innerHTML = '<div class="empty-state"><div class="empty-icon">📋</div><div class="empty-text">No markets yet</div><div class="empty-sub">Import a Kalshi market above to start researching</div></div>';
     return;
