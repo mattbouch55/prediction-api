@@ -295,13 +295,19 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:'Inter'
             <div class="field-label">Kalshi Market URL</div>
           </div>
           <input class="field-input" id="importUrl" type="url" placeholder="https://kalshi.com/markets/..." oninput="onUrlInput(this.value)"/>
-          <div id="urlStatus" style="font-size:10px;color:var(--grey);margin-top:4px;line-height:1.4">Paste a Kalshi market URL, then fill in the details below.</div>
+          <div id="urlStatus" style="font-size:10px;color:var(--grey);margin-top:4px;line-height:1.4;display:none"></div>
         </div>
 
         <!-- Market Question -->
         <div>
           <div class="field-label">Market Question</div>
           <textarea class="field-input" id="importQ" rows="2" placeholder="Copy the market question from Kalshi..." style="resize:none;line-height:1.5"></textarea>
+        </div>
+
+        <!-- Bet Description -->
+        <div>
+          <div class="field-label">Bet Description</div>
+          <textarea class="field-input" id="importDesc" rows="2" placeholder="Paste the resolution criteria or bet description from Kalshi..." style="resize:none;line-height:1.5;font-size:10px"></textarea>
         </div>
 
         <!-- YES / NO prices -->
@@ -525,18 +531,19 @@ function importBet(){
   var cat    = document.getElementById('importCat').value;
   var url    = document.getElementById('importUrl').value.trim();
   var side   = document.getElementById('importSide').value;
+  var desc   = document.getElementById('importDesc').value.trim();
   var amount = parseFloat(document.getElementById('importAmount').value);
   if(!q){ document.getElementById('importQ').focus(); return; }
   if(!yes||!no){ alert('Please enter YES and NO prices'); return; }
   var bet = {
-    id: Date.now().toString(), q, yes, no, close, cat, url, created: Date.now(),
+    id: Date.now().toString(), q, yes, no, close, cat, url, desc, created: Date.now(),
     placed: !!(side && amount),
     placedSide: side || null,
     placedAmount: (side && amount) ? amount.toFixed(2) : null
   };
   bets.unshift(bet);
   localStorage.setItem('onyx_mkt_bets', JSON.stringify(bets));
-  ['importQ','importYes','importNo','importClose','importUrl','importAmount'].forEach(function(id){
+  ['importQ','importYes','importNo','importClose','importUrl','importAmount','importDesc'].forEach(function(id){
     document.getElementById(id).value='';
   });
   document.getElementById('importSide').value = '';
@@ -659,6 +666,7 @@ function renderResearchWorkspace(){
 
     '<div class="bet-detail-header">' +
       '<div class="bet-detail-q">'+b.q+'</div>' +
+      (b.desc ? '<div style="font-size:11px;color:var(--text2);line-height:1.6;padding:6px 10px;background:var(--surface2);border-radius:5px;border-left:2px solid var(--border2);margin-bottom:6px">'+b.desc+'</div>' : '') +
       '<div style="display:flex;align-items:center">' +
         '<div style="display:flex;align-items:center;gap:4px">' +
           '<span class="yes-pill" style="min-width:52px;text-align:center" id="rwYesPill">YES '+b.yes+'¢</span>' +
@@ -1272,13 +1280,19 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:'Inter'
             <div class="field-label">Kalshi Market URL</div>
           </div>
           <input class="field-input" id="importUrl" type="url" placeholder="https://kalshi.com/markets/..." oninput="onUrlInput(this.value)"/>
-          <div id="urlStatus" style="font-size:10px;color:var(--grey);margin-top:4px;line-height:1.4">Paste a Kalshi market URL, then fill in the details below.</div>
+          <div id="urlStatus" style="font-size:10px;color:var(--grey);margin-top:4px;line-height:1.4;display:none"></div>
         </div>
 
         <!-- Market Question -->
         <div>
           <div class="field-label">Market Question</div>
           <textarea class="field-input" id="importQ" rows="2" placeholder="Copy the market question from Kalshi..." style="resize:none;line-height:1.5"></textarea>
+        </div>
+
+        <!-- Bet Description -->
+        <div>
+          <div class="field-label">Bet Description</div>
+          <textarea class="field-input" id="importDesc" rows="2" placeholder="Paste the resolution criteria or bet description from Kalshi..." style="resize:none;line-height:1.5;font-size:10px"></textarea>
         </div>
 
         <!-- YES / NO prices -->
@@ -1502,18 +1516,19 @@ function importBet(){
   var cat    = document.getElementById('importCat').value;
   var url    = document.getElementById('importUrl').value.trim();
   var side   = document.getElementById('importSide').value;
+  var desc   = document.getElementById('importDesc').value.trim();
   var amount = parseFloat(document.getElementById('importAmount').value);
   if(!q){ document.getElementById('importQ').focus(); return; }
   if(!yes||!no){ alert('Please enter YES and NO prices'); return; }
   var bet = {
-    id: Date.now().toString(), q, yes, no, close, cat, url, created: Date.now(),
+    id: Date.now().toString(), q, yes, no, close, cat, url, desc, created: Date.now(),
     placed: !!(side && amount),
     placedSide: side || null,
     placedAmount: (side && amount) ? amount.toFixed(2) : null
   };
   bets.unshift(bet);
   localStorage.setItem('onyx_mkt_bets', JSON.stringify(bets));
-  ['importQ','importYes','importNo','importClose','importUrl','importAmount'].forEach(function(id){
+  ['importQ','importYes','importNo','importClose','importUrl','importAmount','importDesc'].forEach(function(id){
     document.getElementById(id).value='';
   });
   document.getElementById('importSide').value = '';
@@ -1617,6 +1632,7 @@ function renderResearchWorkspace(){
     // Market header
     '<div class="bet-detail-header">' +
       '<div class="bet-detail-q">'+b.q+'</div>' +
+      (b.desc ? '<div style="font-size:11px;color:var(--text2);line-height:1.6;padding:6px 10px;background:var(--surface2);border-radius:5px;border-left:2px solid var(--border2);margin-bottom:6px">'+b.desc+'</div>' : '') +
       '<div class="bet-meta">' +
         '<div class="odds-strip">' +
           '<span class="yes-pill">YES '+b.yes+'¢</span>' +
