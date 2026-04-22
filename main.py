@@ -185,7 +185,7 @@ Return ONLY valid JSON:
 
     try:
         resp = client.messages.create(
-            model="claude-sonnet-4-5", max_tokens=800,
+            model="claude-sonnet-4-5-20250929", max_tokens=800,
             tools=[{"type": "web_search_20250305", "name": "web_search"}],
             messages=[{"role": "user", "content": prompt}]
         )
@@ -232,7 +232,7 @@ Be conversational and helpful. If buying/selling, confirm what you did."""
 
     try:
         resp = client.messages.create(
-            model="claude-sonnet-4-5", max_tokens=400,
+            model="claude-sonnet-4-5-20250929", max_tokens=400,
             tools=[{"type": "web_search_20250305", "name": "web_search"}],
             system=system,
             messages=[{"role": "user", "content":
@@ -261,7 +261,7 @@ async def suggest(request: dict):
     client = anthropic.Anthropic(api_key=ANTHROPIC_KEY)
     try:
         resp = client.messages.create(
-            model="claude-sonnet-4-5", max_tokens=500,
+            model="claude-sonnet-4-5-20250929", max_tokens=500,
             tools=[{"type": "web_search_20250305", "name": "web_search"}],
             messages=[{"role": "user", "content": f"""You are Onyx, an AI investment assistant.
 
@@ -322,7 +322,7 @@ async def get_kalshi_market(url: str = "", ticker: str = ""):
 
     try:
         resp = client.messages.create(
-            model="claude-sonnet-4-5",
+            model="claude-sonnet-4-5-20250929",
             max_tokens=500,
             tools=[{"type": "web_search_20250305", "name": "web_search"}],
             messages=[{"role": "user", "content": prompt}]
@@ -355,7 +355,7 @@ async def analyse_market(request: dict):
     client = anthropic.Anthropic(api_key=ANTHROPIC_KEY)
     try:
         resp = client.messages.create(
-            model="claude-sonnet-4-5", max_tokens=600,
+            model="claude-sonnet-4-5-20250929", max_tokens=600,
             tools=[{"type": "web_search_20250305", "name": "web_search"}],
             messages=[{"role": "user", "content": question}]
         )
