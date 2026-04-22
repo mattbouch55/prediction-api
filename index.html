@@ -42,13 +42,13 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:'Inter'
 
 /* MAIN */
 .main{flex:1;padding:24px;padding-top:131px;display:flex;gap:16px;overflow:hidden;height:100vh}
-.left-col{flex:3;min-width:0;display:flex;flex-direction:column;gap:16px;overflow-y:auto}
+.left-col{flex:3;min-width:0;display:flex;flex-direction:column;gap:16px;overflow:visible}
 .left-col::-webkit-scrollbar{width:4px}
 .left-col::-webkit-scrollbar-thumb{background:var(--border2);border-radius:2px}
 .right-panel{flex:3;min-width:320px;display:flex;flex-direction:column;gap:0;background:var(--surface);border:1px solid var(--border);border-radius:10px;overflow:hidden;box-shadow:var(--shadow)}
 
 /* CARDS */
-.card{background:var(--surface);border:1px solid var(--border);border-radius:10px;overflow:hidden;box-shadow:var(--shadow)}
+.card{background:var(--surface);border:1px solid var(--border);border-radius:10px;overflow:visible;box-shadow:var(--shadow)}
 .card-header{padding:14px 16px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;gap:8px}
 .card-title{font-size:12px;font-weight:600;text-transform:uppercase;letter-spacing:0.08em;color:var(--text)}
 .card-sub{font-size:11px;color:var(--grey)}
@@ -244,7 +244,7 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:'Inter'
         <div class="progress-bar"><div class="progress-fill" id="progressFill" style="width:0%"></div></div>
         <div class="progress-txt" id="progressTxt">Scanning...</div>
       </div>
-      <div style="overflow-y:auto;max-height:180px;border-top:1px solid var(--border)">
+      <div style="overflow-y:scroll;max-height:174px;border-top:1px solid var(--border)">
         <table class="tbl">
           <thead>
             <tr>
