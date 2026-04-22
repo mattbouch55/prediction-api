@@ -114,7 +114,7 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:'Inter'
 .close-badge{font-size:10px;color:var(--grey);font-family:'JetBrains Mono',monospace}
 .cat-badge{font-size:9px;font-weight:700;text-transform:uppercase;padding:2px 6px;border-radius:3px;background:var(--surface2);color:var(--grey2);border:1px solid var(--border)}
 .prob-bar{height:5px;background:var(--red-dim);border-radius:3px;overflow:hidden;margin:10px 0 4px}
-.prob-fill{height:5px;background:var(--green);border-radius:3px;transition:width 0.5s}
+.prob-fill{height:5px;background:var(--blue);border-radius:3px;transition:width 0.5s}
 .prob-label{font-size:10px;color:var(--grey);display:flex;justify-content:space-between}
 
 /* AI ANALYSIS */
@@ -147,8 +147,8 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:'Inter'
 .pos-card:last-child{border-bottom:none}
 .pos-top{display:flex;align-items:center;gap:6px}
 .pos-side{font-size:9px;font-weight:700;padding:1px 6px;border-radius:3px;text-transform:uppercase;flex-shrink:0}
-.pos-side.yes{background:var(--green-dim);color:var(--green)}
-.pos-side.no{background:var(--red-dim);color:var(--red)}
+.pos-side.yes{background:var(--blue-soft);color:var(--blue)}
+.pos-side.no{background:var(--yellow-dim);color:var(--yellow)}
 .pos-q{font-size:11px;font-weight:500;color:var(--text);flex:1;line-height:1.3;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .pos-del{background:none;border:none;color:var(--grey);cursor:pointer;font-size:13px;padding:0;flex-shrink:0}
 .pos-del:hover{color:var(--red)}
@@ -156,8 +156,8 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:'Inter'
 .pos-pnl{font-weight:700}
 .pos-status{font-size:9px;font-weight:600;padding:1px 6px;border-radius:3px;flex-shrink:0}
 .pos-status.open{background:var(--blue-soft);color:var(--blue)}
-.pos-status.won{background:var(--green-dim);color:var(--green)}
-.pos-status.lost{background:var(--red-dim);color:var(--red)}
+.pos-status.won{background:var(--blue-soft);color:var(--blue)}
+.pos-status.lost{background:var(--yellow-dim);color:var(--yellow)}
 
 /* STATUS */
 .status-bar{display:none;align-items:center;gap:6px;padding:6px 12px;background:var(--blue-soft);border-bottom:1px solid rgba(21,101,255,0.15);font-size:10px;color:var(--blue);font-family:'JetBrains Mono',monospace}
@@ -332,8 +332,8 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:'Inter'
         <div style="background:var(--green-dim);border:1px solid rgba(22,163,74,0.2);border-radius:7px;padding:8px 10px">
           <div class="field-label" style="color:var(--green);margin-bottom:6px">Already placed? (optional)</div>
           <div style="display:flex;gap:5px;margin-bottom:5px">
-            <button type="button" id="importSideYes" onclick="selectImportSide('YES')" style="flex:1;padding:5px;border-radius:5px;border:1px solid rgba(22,163,74,0.3);background:var(--surface);color:var(--grey2);font-family:Inter,sans-serif;font-size:11px;font-weight:700;cursor:pointer;transition:all 0.12s">YES</button>
-            <button type="button" id="importSideNo" onclick="selectImportSide('NO')" style="flex:1;padding:5px;border-radius:5px;border:1px solid rgba(220,38,38,0.3);background:var(--surface);color:var(--grey2);font-family:Inter,sans-serif;font-size:11px;font-weight:700;cursor:pointer;transition:all 0.12s">NO</button>
+            <button type="button" id="importSideYes" onclick="selectImportSide('YES')" style="flex:1;padding:5px;border-radius:5px;border:1px solid rgba(21,101,255,0.3);background:var(--surface);color:var(--grey2);font-family:Inter,sans-serif;font-size:11px;font-weight:700;cursor:pointer;transition:all 0.12s">YES</button>
+            <button type="button" id="importSideNo" onclick="selectImportSide('NO')" style="flex:1;padding:5px;border-radius:5px;border:1px solid rgba(217,119,6,0.3);background:var(--surface);color:var(--grey2);font-family:Inter,sans-serif;font-size:11px;font-weight:700;cursor:pointer;transition:all 0.12s">NO</button>
           </div>
           <input class="price-input" id="importAmount" type="number" min="1" placeholder="$ amount bet" style="width:100%;font-size:11px;padding:5px 8px"/>
           <input type="hidden" id="importSide" value=""/>
@@ -432,10 +432,10 @@ function selectImportSide(side) {
   var yBtn = document.getElementById('importSideYes');
   var nBtn = document.getElementById('importSideNo');
   if(side === 'YES') {
-    yBtn.style.background = 'var(--green)'; yBtn.style.color = '#fff'; yBtn.style.borderColor = 'var(--green)';
+    yBtn.style.background = 'var(--blue)'; yBtn.style.color = '#fff'; yBtn.style.borderColor = 'var(--blue)';
     nBtn.style.background = 'var(--surface)'; nBtn.style.color = 'var(--grey2)'; nBtn.style.borderColor = 'rgba(220,38,38,0.3)';
   } else {
-    nBtn.style.background = 'var(--red)'; nBtn.style.color = '#fff'; nBtn.style.borderColor = 'var(--red)';
+    nBtn.style.background = 'var(--yellow)'; nBtn.style.color = '#fff'; nBtn.style.borderColor = 'var(--yellow)';
     yBtn.style.background = 'var(--surface)'; yBtn.style.color = 'var(--grey2)'; yBtn.style.borderColor = 'rgba(22,163,74,0.3)';
   }
 }
@@ -619,14 +619,14 @@ function renderResearchWorkspace(){
         '<div style="display:flex;align-items:center;gap:4px">' +
           '<span class="yes-pill" style="min-width:52px;text-align:center" id="rwYesPill">YES '+b.yes+'¢</span>' +
           '<div style="display:flex;flex-direction:column;gap:1px">' +
-            '<button onclick="adjustPrice(1,0)" style="background:none;border:none;cursor:pointer;color:var(--green);font-size:10px;line-height:1;padding:1px 3px" title="YES +1">▲</button>' +
+            '<button onclick="adjustPrice(1,0)" style="background:none;border:none;cursor:pointer;color:var(--blue);font-size:10px;line-height:1;padding:1px 3px" title="YES +1">▲</button>' +
             '<button onclick="adjustPrice(-1,0)" style="background:none;border:none;cursor:pointer;color:var(--grey);font-size:10px;line-height:1;padding:1px 3px" title="YES -1">▼</button>' +
           '</div>' +
         '</div>' +
         '<div style="display:flex;align-items:center;gap:4px">' +
           '<span class="no-pill" style="min-width:52px;text-align:center" id="rwNoPill">NO '+b.no+'¢</span>' +
           '<div style="display:flex;flex-direction:column;gap:1px">' +
-            '<button onclick="adjustPrice(0,1)" style="background:none;border:none;cursor:pointer;color:var(--red);font-size:10px;line-height:1;padding:1px 3px" title="NO +1">▲</button>' +
+            '<button onclick="adjustPrice(0,1)" style="background:none;border:none;cursor:pointer;color:var(--yellow);font-size:10px;line-height:1;padding:1px 3px" title="NO +1">▲</button>' +
             '<button onclick="adjustPrice(0,-1)" style="background:none;border:none;cursor:pointer;color:var(--grey);font-size:10px;line-height:1;padding:1px 3px" title="NO -1">▼</button>' +
           '</div>' +
         '</div>' +
@@ -657,8 +657,8 @@ function renderResearchWorkspace(){
       '<div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:0.06em;color:var(--grey)">Bet Status</div>' +
       (!b.placed ?
         '<div style="display:flex;gap:6px;align-items:center">' +
-          '<button id="rwSideYes" onclick="rwSelectSide(\'YES\')" style="flex:1;padding:7px;border-radius:5px;border:1px solid rgba(22,163,74,0.3);background:var(--surface);color:var(--grey2);font-family:Inter,sans-serif;font-size:12px;font-weight:700;cursor:pointer;transition:all 0.12s">YES</button>' +
-          '<button id="rwSideNo" onclick="rwSelectSide(\'NO\')" style="flex:1;padding:7px;border-radius:5px;border:1px solid rgba(220,38,38,0.3);background:var(--surface);color:var(--grey2);font-family:Inter,sans-serif;font-size:12px;font-weight:700;cursor:pointer;transition:all 0.12s">NO</button>' +
+          '<button id="rwSideYes" onclick="rwSelectSide(\'YES\')" style="flex:1;padding:7px;border-radius:5px;border:1px solid rgba(21,101,255,0.3);background:var(--surface);color:var(--grey2);font-family:Inter,sans-serif;font-size:12px;font-weight:700;cursor:pointer;transition:all 0.12s">YES</button>' +
+          '<button id="rwSideNo" onclick="rwSelectSide(\'NO\')" style="flex:1;padding:7px;border-radius:5px;border:1px solid rgba(217,119,6,0.3);background:var(--surface);color:var(--grey2);font-family:Inter,sans-serif;font-size:12px;font-weight:700;cursor:pointer;transition:all 0.12s">NO</button>' +
           '<input id="rwAmount" type="number" min="1" placeholder="$ amount bet" style="flex:2;background:var(--bg);border:1px solid var(--border2);border-radius:5px;font-family:Inter,sans-serif;font-size:12px;padding:7px 10px;outline:none;color:var(--text)"/>' +
           '<button onclick="rwMarkPlaced()" style="background:var(--green);color:#fff;border:none;font-family:Inter,sans-serif;font-size:11px;font-weight:700;padding:7px 14px;border-radius:5px;cursor:pointer;white-space:nowrap;flex-shrink:0">✓ Mark Placed</button>' +
         '</div>'
@@ -784,10 +784,10 @@ function rwSelectSide(side){
   var y=document.getElementById('rwSideYes'), n=document.getElementById('rwSideNo');
   if(!y||!n) return;
   if(side==='YES'){
-    y.style.background='var(--green)'; y.style.color='#fff'; y.style.borderColor='var(--green)';
+    y.style.background='var(--blue)'; y.style.color='#fff'; y.style.borderColor='var(--blue)';
     n.style.background='var(--surface)'; n.style.color='var(--grey2)'; n.style.borderColor='rgba(220,38,38,0.3)';
   } else {
-    n.style.background='var(--red)'; n.style.color='#fff'; n.style.borderColor='var(--red)';
+    n.style.background='var(--yellow)'; n.style.color='#fff'; n.style.borderColor='var(--yellow)';
     y.style.background='var(--surface)'; y.style.color='var(--grey2)'; y.style.borderColor='rgba(22,163,74,0.3)';
   }
   y.dataset.selected = side==='YES'?'1':'';
@@ -1018,7 +1018,7 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:'Inter'
 .close-badge{font-size:10px;color:var(--grey);font-family:'JetBrains Mono',monospace}
 .cat-badge{font-size:9px;font-weight:700;text-transform:uppercase;padding:2px 6px;border-radius:3px;background:var(--surface2);color:var(--grey2);border:1px solid var(--border)}
 .prob-bar{height:5px;background:var(--red-dim);border-radius:3px;overflow:hidden;margin:10px 0 4px}
-.prob-fill{height:5px;background:var(--green);border-radius:3px;transition:width 0.5s}
+.prob-fill{height:5px;background:var(--blue);border-radius:3px;transition:width 0.5s}
 .prob-label{font-size:10px;color:var(--grey);display:flex;justify-content:space-between}
 
 /* AI ANALYSIS */
@@ -1051,8 +1051,8 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:'Inter'
 .pos-card:last-child{border-bottom:none}
 .pos-top{display:flex;align-items:center;gap:6px}
 .pos-side{font-size:9px;font-weight:700;padding:1px 6px;border-radius:3px;text-transform:uppercase;flex-shrink:0}
-.pos-side.yes{background:var(--green-dim);color:var(--green)}
-.pos-side.no{background:var(--red-dim);color:var(--red)}
+.pos-side.yes{background:var(--blue-soft);color:var(--blue)}
+.pos-side.no{background:var(--yellow-dim);color:var(--yellow)}
 .pos-q{font-size:11px;font-weight:500;color:var(--text);flex:1;line-height:1.3;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .pos-del{background:none;border:none;color:var(--grey);cursor:pointer;font-size:13px;padding:0;flex-shrink:0}
 .pos-del:hover{color:var(--red)}
@@ -1060,8 +1060,8 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:'Inter'
 .pos-pnl{font-weight:700}
 .pos-status{font-size:9px;font-weight:600;padding:1px 6px;border-radius:3px;flex-shrink:0}
 .pos-status.open{background:var(--blue-soft);color:var(--blue)}
-.pos-status.won{background:var(--green-dim);color:var(--green)}
-.pos-status.lost{background:var(--red-dim);color:var(--red)}
+.pos-status.won{background:var(--blue-soft);color:var(--blue)}
+.pos-status.lost{background:var(--yellow-dim);color:var(--yellow)}
 
 /* STATUS */
 .status-bar{display:none;align-items:center;gap:6px;padding:6px 12px;background:var(--blue-soft);border-bottom:1px solid rgba(21,101,255,0.15);font-size:10px;color:var(--blue);font-family:'JetBrains Mono',monospace}
@@ -1236,8 +1236,8 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:'Inter'
         <div style="background:var(--green-dim);border:1px solid rgba(22,163,74,0.2);border-radius:7px;padding:8px 10px">
           <div class="field-label" style="color:var(--green);margin-bottom:6px">Already placed? (optional)</div>
           <div style="display:flex;gap:5px;margin-bottom:5px">
-            <button type="button" id="importSideYes" onclick="selectImportSide('YES')" style="flex:1;padding:5px;border-radius:5px;border:1px solid rgba(22,163,74,0.3);background:var(--surface);color:var(--grey2);font-family:Inter,sans-serif;font-size:11px;font-weight:700;cursor:pointer;transition:all 0.12s">YES</button>
-            <button type="button" id="importSideNo" onclick="selectImportSide('NO')" style="flex:1;padding:5px;border-radius:5px;border:1px solid rgba(220,38,38,0.3);background:var(--surface);color:var(--grey2);font-family:Inter,sans-serif;font-size:11px;font-weight:700;cursor:pointer;transition:all 0.12s">NO</button>
+            <button type="button" id="importSideYes" onclick="selectImportSide('YES')" style="flex:1;padding:5px;border-radius:5px;border:1px solid rgba(21,101,255,0.3);background:var(--surface);color:var(--grey2);font-family:Inter,sans-serif;font-size:11px;font-weight:700;cursor:pointer;transition:all 0.12s">YES</button>
+            <button type="button" id="importSideNo" onclick="selectImportSide('NO')" style="flex:1;padding:5px;border-radius:5px;border:1px solid rgba(217,119,6,0.3);background:var(--surface);color:var(--grey2);font-family:Inter,sans-serif;font-size:11px;font-weight:700;cursor:pointer;transition:all 0.12s">NO</button>
           </div>
           <input class="price-input" id="importAmount" type="number" min="1" placeholder="$ amount bet" style="width:100%;font-size:11px;padding:5px 8px"/>
           <input type="hidden" id="importSide" value=""/>
@@ -1336,10 +1336,10 @@ function selectImportSide(side) {
   var yBtn = document.getElementById('importSideYes');
   var nBtn = document.getElementById('importSideNo');
   if(side === 'YES') {
-    yBtn.style.background = 'var(--green)'; yBtn.style.color = '#fff'; yBtn.style.borderColor = 'var(--green)';
+    yBtn.style.background = 'var(--blue)'; yBtn.style.color = '#fff'; yBtn.style.borderColor = 'var(--blue)';
     nBtn.style.background = 'var(--surface)'; nBtn.style.color = 'var(--grey2)'; nBtn.style.borderColor = 'rgba(220,38,38,0.3)';
   } else {
-    nBtn.style.background = 'var(--red)'; nBtn.style.color = '#fff'; nBtn.style.borderColor = 'var(--red)';
+    nBtn.style.background = 'var(--yellow)'; nBtn.style.color = '#fff'; nBtn.style.borderColor = 'var(--yellow)';
     yBtn.style.background = 'var(--surface)'; yBtn.style.color = 'var(--grey2)'; yBtn.style.borderColor = 'rgba(22,163,74,0.3)';
   }
 }
@@ -1574,8 +1574,8 @@ function renderResearchWorkspace(){
       '<div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:0.06em;color:var(--grey)">Bet Status</div>' +
       (!b.placed ?
         '<div style="display:flex;gap:6px;align-items:center">' +
-          '<button id="rwSideYes" onclick="rwSelectSide(\'YES\')" style="flex:1;padding:7px;border-radius:5px;border:1px solid rgba(22,163,74,0.3);background:var(--surface);color:var(--grey2);font-family:Inter,sans-serif;font-size:12px;font-weight:700;cursor:pointer;transition:all 0.12s">YES</button>' +
-          '<button id="rwSideNo" onclick="rwSelectSide(\'NO\')" style="flex:1;padding:7px;border-radius:5px;border:1px solid rgba(220,38,38,0.3);background:var(--surface);color:var(--grey2);font-family:Inter,sans-serif;font-size:12px;font-weight:700;cursor:pointer;transition:all 0.12s">NO</button>' +
+          '<button id="rwSideYes" onclick="rwSelectSide(\'YES\')" style="flex:1;padding:7px;border-radius:5px;border:1px solid rgba(21,101,255,0.3);background:var(--surface);color:var(--grey2);font-family:Inter,sans-serif;font-size:12px;font-weight:700;cursor:pointer;transition:all 0.12s">YES</button>' +
+          '<button id="rwSideNo" onclick="rwSelectSide(\'NO\')" style="flex:1;padding:7px;border-radius:5px;border:1px solid rgba(217,119,6,0.3);background:var(--surface);color:var(--grey2);font-family:Inter,sans-serif;font-size:12px;font-weight:700;cursor:pointer;transition:all 0.12s">NO</button>' +
           '<input id="rwAmount" type="number" min="1" placeholder="$ amount bet" style="flex:2;background:var(--bg);border:1px solid var(--border2);border-radius:5px;font-family:Inter,sans-serif;font-size:12px;padding:7px 10px;outline:none;color:var(--text)"/>' +
           '<button onclick="rwMarkPlaced()" style="background:var(--green);color:#fff;border:none;font-family:Inter,sans-serif;font-size:11px;font-weight:700;padding:7px 14px;border-radius:5px;cursor:pointer;white-space:nowrap;flex-shrink:0">✓ Mark Placed</button>' +
         '</div>'
@@ -1758,10 +1758,10 @@ function rwSelectSide(side){
   var y=document.getElementById('rwSideYes'), n=document.getElementById('rwSideNo');
   if(!y||!n) return;
   if(side==='YES'){
-    y.style.background='var(--green)'; y.style.color='#fff'; y.style.borderColor='var(--green)';
+    y.style.background='var(--blue)'; y.style.color='#fff'; y.style.borderColor='var(--blue)';
     n.style.background='var(--surface)'; n.style.color='var(--grey2)'; n.style.borderColor='rgba(220,38,38,0.3)';
   } else {
-    n.style.background='var(--red)'; n.style.color='#fff'; n.style.borderColor='var(--red)';
+    n.style.background='var(--yellow)'; n.style.color='#fff'; n.style.borderColor='var(--yellow)';
     y.style.background='var(--surface)'; y.style.color='var(--grey2)'; y.style.borderColor='rgba(22,163,74,0.3)';
   }
   y.dataset.selected = side==='YES'?'1':'';
