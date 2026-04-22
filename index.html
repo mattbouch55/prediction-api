@@ -28,7 +28,7 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:'Inter'
 .logo-icon{width:42px;height:42px;background:var(--blue);border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:20px;font-weight:700;color:#fff;font-family:'JetBrains Mono',monospace;flex-shrink:0}
 .logo-name{font-size:17px;font-weight:700;color:var(--text);margin-left:10px}
 .logo-sub{font-size:11px;color:var(--grey);letter-spacing:0.07em;text-transform:uppercase;margin-top:3px}
-.sidebar-nav{padding:12px 10px;flex:1;overflow-y:auto}
+.sidebar-nav{padding:12px 10px;flex-shrink:0;overflow-y:auto}
 .nav-sec{font-size:10px;font-weight:600;letter-spacing:0.1em;text-transform:uppercase;color:var(--grey);padding:10px 10px 5px}
 .nav-item{display:flex;align-items:center;gap:10px;padding:9px 12px;border-radius:7px;color:var(--grey2);text-decoration:none;font-size:13px;font-weight:500;transition:all 0.12s;margin-bottom:2px}
 .nav-item:hover{background:var(--surface2);color:var(--text)}
@@ -174,7 +174,7 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:'Inter'
 .notes-save-btn:hover{background:#1a6fff}
 
     /* ── Sidebar panels ── */
-    .sidebar-panels { padding: 10px; display: flex; flex-direction: column; gap: 8px; overflow-y: auto; }
+    .sidebar-panels { padding: 10px; display: flex; flex-direction: column; gap: 8px; overflow-y: auto; flex: 1; }
     .sidebar-panels::-webkit-scrollbar { width: 3px; }
     .sidebar-panels::-webkit-scrollbar-thumb { background: var(--border2); border-radius: 2px; }
     .sp-card { background: var(--surface2); border: 1px solid var(--border); border-radius: 8px; overflow: hidden; }
