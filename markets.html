@@ -16,7 +16,7 @@
   --green:#16a34a;--green-dim:rgba(22,163,74,0.08);
   --red:#dc2626;--red-dim:rgba(220,38,38,0.08);
   --yellow:#d97706;--yellow-dim:rgba(217,119,6,0.08);
-  --shadow:0 2px 8px rgba(0,0,0,0.08),0 1px 3px rgba(0,0,0,0.05);
+  --shadow:0 2px 8px rgba(0,0,0,0.08),0 1px 3px rgba(12, 4, 4, 0.05);
   --sidebar-w:300px;
 }
 html,body{height:100%;background:var(--bg);color:var(--text);font-family:'Inter',sans-serif;font-size:13px;overflow:hidden}
@@ -270,43 +270,65 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:'Inter'
         <span class="ct">Import from Kalshi</span>
         <a href="https://kalshi.com" target="_blank" style="font-size:10px;color:var(--blue);font-weight:600;text-decoration:none">Open Kalshi ↗</a>
       </div>
-      <div class="import-form" style="flex:1">
+      <div class="import-form" style="flex:1;gap:10px">
+        <!-- Step 1: Paste URL -->
+        <div style="background:var(--blue-soft);border:1px solid rgba(21,101,255,0.2);border-radius:7px;padding:10px 12px">
+          <div class="field-label" style="color:var(--blue);margin-bottom:5px">Step 1 — Paste Kalshi Market URL</div>
+          <div style="display:flex;gap:6px">
+            <input class="field-input" id="importUrl" type="url" placeholder="https://kalshi.com/markets/..." style="flex:1"/>
+            <button onclick="fetchKalshiMarket()" id="fetchBtn" style="background:var(--blue);color:#fff;border:none;font-family:'Inter',sans-serif;font-size:11px;font-weight:600;padding:6px 12px;border-radius:5px;cursor:pointer;white-space:nowrap;flex-shrink:0">Fetch ↗</button>
+          </div>
+          <div id="fetchStatus" style="font-size:10px;color:var(--grey);margin-top:5px">Find a market on Kalshi and paste the URL above to auto-load all data.</div>
+        </div>
+
+        <!-- Divider -->
+        <div style="display:flex;align-items:center;gap:8px;margin:2px 0">
+          <div style="flex:1;height:1px;background:var(--border)"></div>
+          <span style="font-size:10px;color:var(--grey)">Step 2 — Review & Edit</span>
+          <div style="flex:1;height:1px;background:var(--border)"></div>
+        </div>
+
+        <!-- Auto-filled fields -->
         <div>
           <div class="field-label">Market Question</div>
-          <input class="field-input" id="importQ" type="text" placeholder="e.g. Will the Fed cut rates in June?"/>
+          <input class="field-input" id="importQ" type="text" placeholder="Auto-filled from Kalshi..."/>
         </div>
-        <div class="field-row">
+        <div style="display:flex;gap:6px">
           <div style="flex:1">
-            <div class="field-label">YES price (¢)</div>
-            <input class="price-input" id="importYes" type="number" min="1" max="99" placeholder="62"/>
+            <div class="field-label">YES (¢)</div>
+            <input class="price-input" id="importYes" type="number" min="1" max="99" placeholder="—" style="width:100%"/>
           </div>
           <div style="flex:1">
-            <div class="field-label">NO price (¢)</div>
-            <input class="price-input" id="importNo" type="number" min="1" max="99" placeholder="38"/>
+            <div class="field-label">NO (¢)</div>
+            <input class="price-input" id="importNo" type="number" min="1" max="99" placeholder="—" style="width:100%"/>
+          </div>
+          <div style="flex:1">
+            <div class="field-label">Volume</div>
+            <input class="field-input" id="importVol" type="text" placeholder="—" style="padding:6px 8px;font-size:11px"/>
           </div>
         </div>
-        <div>
-          <div class="field-label">Close Date</div>
-          <input class="field-input" id="importClose" type="text" placeholder="e.g. Jun 18, 2025"/>
+        <div style="display:flex;gap:6px">
+          <div style="flex:1">
+            <div class="field-label">Close Date</div>
+            <input class="field-input" id="importClose" type="text" placeholder="e.g. Jun 18, 2025"/>
+          </div>
+          <div style="flex:1">
+            <div class="field-label">Category</div>
+            <select class="field-input" id="importCat" style="padding:6px 8px;font-size:11px">
+              <option value="finance">Finance</option>
+              <option value="politics">Politics</option>
+              <option value="crypto">Crypto</option>
+              <option value="macro">Macro</option>
+              <option value="tech">Tech</option>
+              <option value="sports">Sports</option>
+            </select>
+          </div>
         </div>
-        <div>
-          <div class="field-label">Category</div>
-          <select class="field-input" id="importCat">
-            <option value="finance">Finance</option>
-            <option value="politics">Politics</option>
-            <option value="crypto">Crypto</option>
-            <option value="macro">Macro</option>
-            <option value="tech">Tech</option>
-            <option value="sports">Sports</option>
-          </select>
-        </div>
-        <div>
-          <div class="field-label">Kalshi Market URL</div>
-          <input class="field-input" id="importUrl" type="url" placeholder="https://kalshi.com/markets/..."/>
-        </div>
-        <button class="import-btn" onclick="importBet()">+ Import Market</button>
+
+        <!-- Import button -->
+        <button class="import-btn" style="margin-top:4px" onclick="importBet()">+ Add to Research Inventory</button>
       </div>
-      <div class="kalshi-hint">Find a market on Kalshi, copy the details above, then use Onyx AI to research before you bet.</div>
+      <div class="kalshi-hint">Paste any Kalshi market URL to auto-load live odds, volume, and close date. Edit if needed, then import.</div>
     </div>
 
 
@@ -387,8 +409,42 @@ renderSidebarPanels();
 
 // ── IMPORT ────────────────────────────────────────────────────
 document.addEventListener('keydown',function(e){
+  if(e.key==='Enter' && document.getElementById('importUrl')===document.activeElement){ fetchKalshiMarket(); return; }
   if(e.key==='Enter' && document.getElementById('importQ')===document.activeElement) importBet();
 });
+
+async function fetchKalshiMarket(){
+  var url = document.getElementById('importUrl').value.trim();
+  if(!url){ document.getElementById('importUrl').focus(); return; }
+  var btn = document.getElementById('fetchBtn');
+  var status = document.getElementById('fetchStatus');
+  btn.disabled = true;
+  btn.textContent = '...';
+  status.textContent = 'Fetching live data from Kalshi...';
+  status.style.color = 'var(--blue)';
+  try {
+    var res = await fetch(API + '/kalshi-market?url=' + encodeURIComponent(url));
+    var data = await res.json();
+    if(data.error){ throw new Error(data.error); }
+    document.getElementById('importQ').value     = data.title || '';
+    document.getElementById('importYes').value   = data.yes   || '';
+    document.getElementById('importNo').value    = data.no    || '';
+    document.getElementById('importClose').value = data.close || '';
+    document.getElementById('importVol').value   = data.volume ? '$'+Number(data.volume).toLocaleString() : '';
+    // Set category
+    var catMap = {'finance':'finance','politics':'politics','crypto':'crypto','macro':'macro','tech':'tech','sports':'sports'};
+    var cat = (data.category||'').toLowerCase();
+    for(var k in catMap){ if(cat.includes(k)){ document.getElementById('importCat').value=k; break; } }
+    status.textContent = '✓ Loaded: '+data.ticker+' · YES '+data.yes+'¢ · NO '+data.no+'¢';
+    status.style.color = 'var(--green)';
+  } catch(e) {
+    status.textContent = '⚠ ' + e.message;
+    status.style.color = 'var(--red)';
+  } finally {
+    btn.disabled = false;
+    btn.textContent = 'Fetch ↗';
+  }
+}
 
 function importBet(){
   var q     = document.getElementById('importQ').value.trim();
