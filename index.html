@@ -244,16 +244,16 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:'Inter'
         <div class="progress-bar"><div class="progress-fill" id="progressFill" style="width:0%"></div></div>
         <div class="progress-txt" id="progressTxt">Scanning...</div>
       </div>
-      <div style="overflow-y:auto;max-height:220px">
-        <table class="tbl" style="position:relative">
-          <thead style="position:sticky;top:0;z-index:1">
+      <div style="overflow-y:auto;max-height:180px;border-top:1px solid var(--border)">
+        <table class="tbl">
+          <thead>
             <tr>
-              <th>Ticker</th>
-              <th>Price</th>
-              <th>AI Score</th>
-              <th>Shares</th>
-              <th>Total Value</th>
-              <th></th>
+              <th style="position:sticky;top:0;background:var(--surface2);z-index:1">Ticker</th>
+              <th style="position:sticky;top:0;background:var(--surface2);z-index:1">Price</th>
+              <th style="position:sticky;top:0;background:var(--surface2);z-index:1">AI Score</th>
+              <th style="position:sticky;top:0;background:var(--surface2);z-index:1">Shares</th>
+              <th style="position:sticky;top:0;background:var(--surface2);z-index:1">Total Value</th>
+              <th style="position:sticky;top:0;background:var(--surface2);z-index:1"></th>
             </tr>
           </thead>
           <tbody id="tableBody"></tbody>
