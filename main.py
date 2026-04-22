@@ -202,21 +202,89 @@ Return ONLY valid JSON:
 @app.post("/ask")
 async def ask(request: dict):
     question = (request.get("question") or "").strip()
+    context  = request.get("context") or {}
     if not question:
-        return {"answer": "Please ask a question."}
+        return {"answer": "Please ask a question.", "action": None}
 
+    client = anthropic.Anthropic(api_key=ANTHROPIC_KEY)
+
+    system = """You are Onyx, an AI agent embedded in a stock investment dashboard.
+You can answer questions AND control the dashboard by returning actions.
+
+If the user wants to:
+- Add a stock to watchlist: action={"type":"addTicker","ticker":"TSLA"}
+- Buy a stock: action={"type":"buy","ticker":"TSLA","shares":5}
+- Sell a stock: action={"type":"sell","ticker":"TSLA","shares":5}
+- Scan/analyse a stock: action={"type":"scan","ticker":"TSLA"}
+- Go to research page: action={"type":"navigate","page":"research"}
+- Go to dashboard: action={"type":"navigate","page":"dashboard"}
+- Search a topic: action={"type":"research","topic":"Federal Reserve rates"}
+- No action needed: action=null
+
+Always respond with JSON:
+{"answer": "your 1-3 sentence response", "action": null or action object}
+
+Be conversational and helpful. If buying/selling, confirm what you did."""
+
+    try:
+        resp = client.messages.create(
+            model="claude-sonnet-4-5", max_tokens=400,
+            tools=[{"type": "web_search_20250305", "name": "web_search"}],
+            system=system,
+            messages=[{"role": "user", "content":
+                f"User context: {json.dumps(context)}\n\nQuestion/Command: {question}"}]
+        )
+        text = "".join(b.text for b in resp.content if hasattr(b, "text") and b.text)
+        # Try to parse JSON response
+        s, e = text.find("{"), text.rfind("}") + 1
+        if s >= 0 and e > s:
+            try:
+                parsed = json.loads(text[s:e])
+                return {
+                    "answer": parsed.get("answer", text.strip()),
+                    "action": parsed.get("action", None)
+                }
+            except Exception:
+                pass
+        return {"answer": text.strip() or "No answer found.", "action": None}
+    except Exception as ex:
+        return {"answer": f"Error: {str(ex)}", "action": None}
+
+@app.post("/suggest")
+async def suggest(request: dict):
+    """Generate smart next-step suggestions based on user context."""
+    context = request.get("context") or {}
     client = anthropic.Anthropic(api_key=ANTHROPIC_KEY)
     try:
         resp = client.messages.create(
-            model="claude-sonnet-4-5", max_tokens=300,
+            model="claude-sonnet-4-5", max_tokens=500,
             tools=[{"type": "web_search_20250305", "name": "web_search"}],
-            messages=[{"role": "user", "content":
-                f"Answer in 1-3 sentences, be direct and concise. Question: {question}"}]
+            messages=[{"role": "user", "content": f"""You are Onyx, an AI investment assistant.
+
+Based on this user's current dashboard state, suggest 4 specific, actionable next steps to help them trade smarter.
+
+User context: {json.dumps(context)}
+
+Return ONLY a JSON array of 4 suggestions:
+[
+  {{"title": "Short action title", "description": "One sentence explaining why", "action": {{"type": "scan", "ticker": "AAPL"}} or null}},
+  ...
+]
+
+Make suggestions specific to their actual watchlist/portfolio. Search for relevant market info if needed."""}]
         )
         text = "".join(b.text for b in resp.content if hasattr(b, "text") and b.text)
-        return {"answer": text.strip() or "No answer found."}
+        s, e = text.find("["), text.rfind("]") + 1
+        if s >= 0 and e > s:
+            return {"suggestions": json.loads(text[s:e])}
     except Exception as ex:
-        return {"answer": f"Error: {str(ex)}"}
+        pass
+    return {"suggestions": [
+        {"title": "Scan your watchlist", "description": "Get AI signals on all your tracked stocks.", "action": {"type": "scanAll"}},
+        {"title": "Research market trends", "description": "Ask Onyx about current macro conditions.", "action": {"type": "navigate", "page": "research"}},
+        {"title": "Review your portfolio", "description": "Check P&L and consider rebalancing.", "action": None},
+        {"title": "Add a new position", "description": "Diversify by adding a new ticker.", "action": None}
+    ]}
 
 # ── History ────────────────────────────────────────────────────
 @app.get("/predictions")
