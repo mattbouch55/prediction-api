@@ -1744,23 +1744,21 @@ async function runAnalysis(){
   try {
     var b = activeBet;
     var descText = document.getElementById('rwDesc') ? document.getElementById('rwDesc').value.trim() : (b.desc||'');
-    var res = await fetch(API+'/ask', {
+    var res = await fetch(API+'/analyse-market', {
       method:'POST', headers:{'Content-Type':'application/json'},
       body: JSON.stringify({
-        question: 'You are a prediction market analyst. Analyse this Kalshi market and give a trading recommendation.\n\nMarket: '+b.q+'\nCurrent odds: YES '+b.yes+'¢ ('+b.yes+'% implied), NO '+b.no+'¢ ('+b.no+'% implied)\nCloses: '+(b.close||'unknown')+'\nCategory: '+b.cat+(descText?'\nResolution criteria: '+descText:'')+'\n\nSearch the web for the most current information on this topic. Then return ONLY valid JSON:\n{"verdict":"YES|NO|SKIP","confidence":"High|Medium|Low","reasoning":"2-3 sentence explanation","signals":["signal 1","signal 2","signal 3"]}'
+        question: 'You are a prediction market analyst. Analyse this Kalshi market and give a YES, NO, or SKIP recommendation.\n\nMarket: '+b.q+'\nCurrent odds: YES '+b.yes+'¢ ('+b.yes+'% implied), NO '+b.no+'¢ ('+b.no+'% implied)\nCloses: '+(b.close||'unknown')+'\nCategory: '+b.cat+(descText?'\nResolution criteria: '+descText:'')+'\n\nSearch the web for the most current information on this topic. Return ONLY this JSON with no extra text:\n{"verdict":"YES","confidence":"High","reasoning":"your 2-3 sentence analysis here","signals":["key signal 1","key signal 2","key signal 3"]}'
       })
     });
-    var data = await res.json();
+    var result = await res.json();
     clearInterval(iv);
-    var text = data.answer || '';
-    var s=text.indexOf('{'),e=text.lastIndexOf('}')+1;
-    if(s>=0&&e>s){
-      var result = JSON.parse(text.substring(s,e));
+    if(result.error) throw new Error(result.error);
+    if(result.verdict){
       aiResults[b.id] = result;
       localStorage.setItem('onyx_mkt_ai', JSON.stringify(aiResults));
       document.getElementById('aiResultArea').innerHTML = renderAIResult(result);
     } else {
-      throw new Error('parse failed');
+      throw new Error('No verdict in response');
     }
   } catch(err) {
     clearInterval(iv);
