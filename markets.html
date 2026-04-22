@@ -1083,6 +1083,15 @@ async function runAnalysis(){
 
 function renderSidebarPanels(){
   try{
+    var spState=JSON.parse(localStorage.getItem('onyx_sp_state')||'{}');
+    ['spWatchlist','spResearch','spBets'].forEach(function(id){
+      var el=document.getElementById(id);
+      if(!el) return;
+      if(spState[id]===false) el.classList.remove('open');
+      else el.classList.add('open');
+    });
+  }catch(e){}
+  try{
     var wl=JSON.parse(localStorage.getItem('onyx_wl_v3')||'[]');
     var portfolio=[];
     try{portfolio=JSON.parse(localStorage.getItem('onyx_portfolio')||'[]');}catch(e){}
