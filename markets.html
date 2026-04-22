@@ -174,30 +174,30 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:'Inter'
 .empty-sub{font-size:11px;color:var(--grey);line-height:1.6}
 
     /* Inventory grid */
-    .inv-grid { display: flex; flex-direction: column; gap: 0; }
-    .inv-item { padding: 16px 16px; border-bottom: 1px solid var(--border); cursor: pointer; transition: all 0.12s; }
-    .inv-item:last-child { border-bottom: none; }
-    .inv-item:hover { background: var(--surface2); }
-    .inv-item.active { background: var(--blue-soft); }
-    .inv-top { display: flex; align-items: center; gap: 6px; margin-bottom: 9px; flex-wrap: wrap; }
-    .inv-side { font-size: 9px; font-weight: 800; padding: 2px 7px; border-radius: 3px; text-transform: uppercase; letter-spacing: 0.04em; flex-shrink: 0; }
+    .inv-grid { display: flex; flex-direction: column; gap: 10px; padding: 10px; }
+    .inv-item { background: var(--surface2); border: 1px solid var(--border); border-radius: 9px; padding: 14px 16px; cursor: pointer; transition: all 0.15s; box-shadow: 0 1px 3px rgba(0,0,0,0.04); }
+    .inv-item:hover { border-color: var(--blue); background: var(--surface); box-shadow: var(--shadow); }
+    .inv-item.active { border-color: var(--blue); background: var(--blue-soft); }
+    .inv-top { display: flex; align-items: center; gap: 6px; margin-bottom: 10px; flex-wrap: wrap; }
+    .inv-side { font-size: 10px; font-weight: 800; padding: 3px 9px; border-radius: 4px; text-transform: uppercase; letter-spacing: 0.05em; flex-shrink: 0; }
     .inv-side.yes { background: var(--green); color: #fff; }
     .inv-side.no { background: var(--red); color: #fff; }
-    .inv-status { font-size: 9px; font-weight: 600; padding: 1px 6px; border-radius: 3px; flex-shrink: 0; margin-left: auto; }
+    .inv-status { font-size: 10px; font-weight: 600; padding: 3px 8px; border-radius: 4px; flex-shrink: 0; }
     .inv-status.open { background: var(--blue-soft); color: var(--blue); }
     .inv-status.won { background: var(--green-dim); color: var(--green); }
     .inv-status.lost { background: var(--red-dim); color: var(--red); }
-    .inv-del { background: none; border: none; color: var(--grey); cursor: pointer; font-size: 14px; padding: 0 2px; flex-shrink: 0; }
+    .inv-del { background: none; border: none; color: var(--grey); cursor: pointer; font-size: 16px; padding: 0 3px; flex-shrink: 0; margin-left: auto; line-height: 1; }
     .inv-del:hover { color: var(--red); }
-    .inv-q { font-size: 13px; font-weight: 500; color: var(--text); line-height: 1.5; margin-bottom: 10px; }
-    .inv-meta { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin-top: 2px; }
+    .inv-q { font-size: 13px; font-weight: 600; color: var(--text); line-height: 1.5; margin-bottom: 12px; }
+    .inv-meta { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; }
+    .inv-meta-item { background: var(--surface); border: 1px solid var(--border); border-radius: 6px; padding: 6px 10px; }
+    .inv-meta-label { font-size: 9px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.07em; color: var(--grey); margin-bottom: 2px; }
+    .inv-meta-val { font-size: 13px; font-weight: 700; font-family: 'JetBrains Mono', monospace; color: var(--text); }
+    .inv-meta-val.green { color: var(--green); }
+    .inv-meta-val.red { color: var(--red); }
     .inv-price { font-size: 11px; font-family: 'JetBrains Mono', monospace; color: var(--grey2); }
-    .inv-pnl { font-size: 12px; font-weight: 700; font-family: 'JetBrains Mono', monospace; margin-left: auto; }
     .inv-actions { display: flex; gap: 4px; margin-top: 6px; }
     .inv-btn { font-size: 9px; font-weight: 600; padding: 2px 8px; border-radius: 3px; border: 1px solid var(--border); background: var(--surface2); color: var(--grey2); cursor: pointer; transition: all 0.12s; }
-    .inv-btn.won-btn:hover { background: var(--green-dim); border-color: rgba(22,163,74,0.3); color: var(--green); }
-    .inv-btn.lost-btn:hover { background: var(--red-dim); border-color: rgba(220,38,38,0.3); color: var(--red); }
-    .inv-btn.open-btn:hover { background: var(--blue-soft); border-color: rgba(21,101,255,0.3); color: var(--blue); }
     /* Summary strip */
     .pnl-strip { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 6px; padding: 10px 12px; }
     .pnl-box { background: var(--surface2); border-radius: 6px; padding: 7px 8px; text-align: center; }
