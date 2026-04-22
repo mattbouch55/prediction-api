@@ -301,7 +301,7 @@ def get_predictions(limit: int = 10):
 
 @app.get("/kalshi-market")
 async def get_kalshi_market(url: str = "", ticker: str = ""):
-    """Fetch live Kalshi market data via AI web search (Kalshi API blocks server IPs)."""
+    """Fetch live Kalshi market data via AI web search."""
     # Extract ticker from URL
     if url and not ticker:
         parts = url.rstrip("/").split("/")
@@ -310,44 +310,40 @@ async def get_kalshi_market(url: str = "", ticker: str = ""):
     if not ticker and not url:
         return {"error": "No URL provided"}
 
-    market_ref = url or ticker
     client = anthropic.Anthropic(api_key=ANTHROPIC_KEY)
 
-    prompt = f"""Search the web for this Kalshi prediction market and extract its current data:
-
-URL: {market_ref}
-
-Find the current YES price (in cents, 1-99), NO price, market question/title, close date, and volume.
-Return ONLY valid JSON with no extra text:
-{{
-  "title": "Full market question",
-  "yes": 62,
-  "no": 38,
-  "close": "Jun 18, 2025",
-  "volume": "$1.2M",
-  "category": "finance|politics|crypto|macro|tech|sports",
-  "ticker": "{ticker}"
-}}"""
+    prompt = (
+        f"Search the web for this Kalshi prediction market: {url or ticker}\n\n"
+        "Find and return the current YES price in cents (1-99), NO price, the full market question, "
+        "close/expiry date, and trading volume. "
+        "Return ONLY a valid JSON object, no markdown, no explanation:\n"
+        '{"title": "...", "yes": 62, "no": 38, "close": "Jun 18 2025", "volume": "$1.2M", "category": "finance"}'
+    )
 
     try:
         resp = client.messages.create(
             model="claude-sonnet-4-5",
-            max_tokens=400,
-            tools=[{{"type": "web_search_20250305", "name": "web_search"}}],
-            messages=[{{"role": "user", "content": prompt}}]
+            max_tokens=500,
+            tools=[{"type": "web_search_20250305", "name": "web_search"}],
+            messages=[{"role": "user", "content": prompt}]
         )
         text = "".join(b.text for b in resp.content if hasattr(b, "text") and b.text)
-        s, e = text.find("{{"), text.rfind("}}") + 1
+        # Find JSON in response
+        s = text.find("{")
+        e = text.rfind("}") + 1
         if s >= 0 and e > s:
             result = json.loads(text[s:e])
             result["url"] = url or f"https://kalshi.com/markets/{ticker}"
-            # Ensure yes+no = 100
+            result["ticker"] = ticker
             if result.get("yes") and not result.get("no"):
                 result["no"] = 100 - int(result["yes"])
+            if result.get("no") and not result.get("yes"):
+                result["yes"] = 100 - int(result["no"])
             return result
-        return {{"error": "Could not parse market data. Check the URL and try again."}}
+        # If no JSON found, return what we got for debugging
+        return {"error": f"AI could not parse market. Raw: {text[:200]}"}
     except Exception as ex:
-        return {{"error": str(ex)}}
+        return {"error": str(ex)}
 
 @app.get("/health")
 def health():
