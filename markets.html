@@ -407,20 +407,22 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:'Inter'
         <div style="display:flex;align-items:center;gap:6px;margin-left:auto">
           <span class="cs" id="betCount">0 markets</span>
           <button onclick="openKalshiPortfolio()" id="portfolioBtn"
-            style="background:var(--text);color:#fff;border:none;font-family:'Inter',sans-serif;font-size:10px;font-weight:600;padding:3px 9px;border-radius:4px;cursor:pointer;white-space:nowrap;transition:opacity 0.12s"
-            onmouseover="this.style.opacity=0.8" onmouseout="this.style.opacity=1"
+            style="background:var(--blue-soft);color:var(--blue);border:1px solid rgba(21,101,255,0.3);font-family:'Inter',sans-serif;font-size:10px;font-weight:600;padding:2px 9px;border-radius:4px;cursor:pointer;white-space:nowrap;transition:all 0.12s"
+            onmouseover="this.style.background='var(--blue)';this.style.color='#fff'" onmouseout="this.style.background='var(--blue-soft)';this.style.color='var(--blue)'"
             title="Open your Kalshi portfolio">Kalshi Portfolio ↗</button>
         </div>
       </div>
 
       <!-- Portfolio URL popup -->
-      <div id="portfolioPopup" style="display:none;position:absolute;top:44px;right:0;z-index:100;background:var(--surface);border:1px solid var(--border);border-radius:8px;box-shadow:var(--shadow);padding:12px 14px;width:260px">
-        <div style="font-size:11px;font-weight:600;color:var(--text);margin-bottom:8px">Set Kalshi Portfolio URL</div>
-        <input id="portfolioUrlInput" type="url" placeholder="https://kalshi.com/profile/..." style="width:100%;background:var(--bg);border:1px solid var(--border2);border-radius:5px;font-family:'Inter',sans-serif;font-size:11px;padding:5px 9px;outline:none;color:var(--text);margin-bottom:8px"/>
+      <div id="portfolioPopup" style="display:none;position:absolute;top:42px;right:0;z-index:100;background:var(--surface);border:1px solid var(--border);border-radius:8px;box-shadow:var(--shadow);padding:14px 16px;width:280px">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
+          <span style="font-size:11px;font-weight:600;color:var(--text)">Kalshi Portfolio URL</span>
+          <button onclick="closePortfolioPopup()" style="background:none;border:none;color:var(--grey);cursor:pointer;font-size:16px;line-height:1;padding:0">×</button>
+        </div>
+        <input id="portfolioUrlInput" type="url" placeholder="https://kalshi.com/profile/..." style="width:100%;background:var(--bg);border:1px solid var(--border2);border-radius:5px;font-family:'Inter',sans-serif;font-size:11px;padding:6px 10px;outline:none;color:var(--text);margin-bottom:10px;transition:border-color 0.15s"/>
         <div style="display:flex;gap:6px">
-          <button onclick="savePortfolioUrl()" style="flex:1;background:var(--text);color:#fff;border:none;font-family:'Inter',sans-serif;font-size:11px;font-weight:600;padding:5px;border-radius:5px;cursor:pointer">Save</button>
-          <button onclick="clearPortfolioUrl()" style="background:none;border:1px solid var(--border);color:var(--grey2);font-family:'Inter',sans-serif;font-size:11px;padding:5px 10px;border-radius:5px;cursor:pointer">Clear</button>
-          <button onclick="closePortfolioPopup()" style="background:none;border:none;color:var(--grey);cursor:pointer;font-size:16px;padding:0 4px">×</button>
+          <button onclick="savePortfolioUrl()" style="flex:1;background:var(--blue);color:#fff;border:none;font-family:'Inter',sans-serif;font-size:11px;font-weight:600;padding:6px;border-radius:5px;cursor:pointer">Save & Open</button>
+          <button onclick="clearPortfolioUrl()" style="background:none;border:1px solid var(--border);color:var(--grey2);font-family:'Inter',sans-serif;font-size:11px;padding:6px 10px;border-radius:5px;cursor:pointer">Clear</button>
         </div>
       </div>
 
@@ -1437,20 +1439,22 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:'Inter'
         <div style="display:flex;align-items:center;gap:6px;margin-left:auto">
           <span class="cs" id="betCount">0 markets</span>
           <button onclick="openKalshiPortfolio()" id="portfolioBtn"
-            style="background:var(--text);color:#fff;border:none;font-family:'Inter',sans-serif;font-size:10px;font-weight:600;padding:3px 9px;border-radius:4px;cursor:pointer;white-space:nowrap;transition:opacity 0.12s"
-            onmouseover="this.style.opacity=0.8" onmouseout="this.style.opacity=1"
+            style="background:var(--blue-soft);color:var(--blue);border:1px solid rgba(21,101,255,0.3);font-family:'Inter',sans-serif;font-size:10px;font-weight:600;padding:2px 9px;border-radius:4px;cursor:pointer;white-space:nowrap;transition:all 0.12s"
+            onmouseover="this.style.background='var(--blue)';this.style.color='#fff'" onmouseout="this.style.background='var(--blue-soft)';this.style.color='var(--blue)'"
             title="Open your Kalshi portfolio">Kalshi Portfolio ↗</button>
         </div>
       </div>
 
       <!-- Portfolio URL popup -->
-      <div id="portfolioPopup" style="display:none;position:absolute;top:44px;right:0;z-index:100;background:var(--surface);border:1px solid var(--border);border-radius:8px;box-shadow:var(--shadow);padding:12px 14px;width:260px">
-        <div style="font-size:11px;font-weight:600;color:var(--text);margin-bottom:8px">Set Kalshi Portfolio URL</div>
-        <input id="portfolioUrlInput" type="url" placeholder="https://kalshi.com/profile/..." style="width:100%;background:var(--bg);border:1px solid var(--border2);border-radius:5px;font-family:'Inter',sans-serif;font-size:11px;padding:5px 9px;outline:none;color:var(--text);margin-bottom:8px"/>
+      <div id="portfolioPopup" style="display:none;position:absolute;top:42px;right:0;z-index:100;background:var(--surface);border:1px solid var(--border);border-radius:8px;box-shadow:var(--shadow);padding:14px 16px;width:280px">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
+          <span style="font-size:11px;font-weight:600;color:var(--text)">Kalshi Portfolio URL</span>
+          <button onclick="closePortfolioPopup()" style="background:none;border:none;color:var(--grey);cursor:pointer;font-size:16px;line-height:1;padding:0">×</button>
+        </div>
+        <input id="portfolioUrlInput" type="url" placeholder="https://kalshi.com/profile/..." style="width:100%;background:var(--bg);border:1px solid var(--border2);border-radius:5px;font-family:'Inter',sans-serif;font-size:11px;padding:6px 10px;outline:none;color:var(--text);margin-bottom:10px;transition:border-color 0.15s"/>
         <div style="display:flex;gap:6px">
-          <button onclick="savePortfolioUrl()" style="flex:1;background:var(--text);color:#fff;border:none;font-family:'Inter',sans-serif;font-size:11px;font-weight:600;padding:5px;border-radius:5px;cursor:pointer">Save</button>
-          <button onclick="clearPortfolioUrl()" style="background:none;border:1px solid var(--border);color:var(--grey2);font-family:'Inter',sans-serif;font-size:11px;padding:5px 10px;border-radius:5px;cursor:pointer">Clear</button>
-          <button onclick="closePortfolioPopup()" style="background:none;border:none;color:var(--grey);cursor:pointer;font-size:16px;padding:0 4px">×</button>
+          <button onclick="savePortfolioUrl()" style="flex:1;background:var(--blue);color:#fff;border:none;font-family:'Inter',sans-serif;font-size:11px;font-weight:600;padding:6px;border-radius:5px;cursor:pointer">Save & Open</button>
+          <button onclick="clearPortfolioUrl()" style="background:none;border:1px solid var(--border);color:var(--grey2);font-family:'Inter',sans-serif;font-size:11px;padding:6px 10px;border-radius:5px;cursor:pointer">Clear</button>
         </div>
       </div>
 
