@@ -24,11 +24,11 @@
 
     /* ── SIDEBAR ── */
     .sidebar { width: var(--sidebar-w); background: var(--surface); border-right: 1px solid var(--border); display: flex; flex-direction: column; flex-shrink: 0; }
-    .sidebar-logo { padding: 20px 16px 16px; border-bottom: 1px solid var(--border); }
+    .sidebar-logo { height: 107px; padding: 0 20px; border-bottom: 1px solid var(--border); display: flex; align-items: center; }
     .logo-row { display: flex; align-items: center; gap: 9px; }
     .logo-icon { width: 28px; height: 28px; background: var(--blue); border-radius: 6px; display: flex; align-items: center; justify-content: center; font-size: 13px; font-weight: 700; color: white; font-family: 'JetBrains Mono', monospace; }
     .logo-name { font-size: 16px; font-weight: 700; color: var(--text); }
-    .logo-sub { font-size: 11px; color: var(--grey); letter-spacing: 0.06em; text-transform: uppercase; margin-top: 2px; }
+    .logo-sub { font-size: 11px; color: var(--grey); letter-spacing: 0.07em; text-transform: uppercase; margin-top: 3px; }
     .sidebar-nav { padding: 12px 10px; flex: 1; }
     .nav-section { font-size: 10px; font-weight: 600; letter-spacing: 0.1em; text-transform: uppercase; color: var(--grey); padding: 10px 8px 5px; }
     .nav-item { display: flex; align-items: center; gap: 10px; padding: 9px 12px; border-radius: 7px; color: var(--grey2); text-decoration: none; font-size: 13px; font-weight: 500; transition: all 0.12s; margin-bottom: 2px; }
@@ -43,10 +43,10 @@
     .dot.closed { background: var(--red); }
 
     /* ── TWO COLUMN LAYOUT ── */
-    .research { flex: 1; display: grid; grid-template-columns: 1fr 1fr; height: 100vh; overflow: hidden; padding-top: 70px; }
+    .research { flex: 1; display: grid; grid-template-columns: 1fr 1fr; height: 100vh; overflow: hidden; padding-top: 107px; }
 
     /* ── LEFT: AI ENGINE ── */
-    .ai-col { display: flex; flex-direction: column; height: calc(100vh - 70px); border-right: 1px solid var(--border); background: var(--bg); }
+    .ai-col { display: flex; flex-direction: column; height: calc(100vh - 107px); border-right: 1px solid var(--border); background: var(--bg); }
 
     /* Session bar */
     .session-bar { display: flex; align-items: center; gap: 8px; padding: 7px 16px; background: var(--surface); border-bottom: 1px solid var(--border); flex-shrink: 0; }
@@ -132,7 +132,7 @@
     .empty-sub { font-size: 12px; color: var(--grey); line-height: 1.7; }
 
     /* ── RIGHT: SOURCES + NOTES ── */
-    .right-col { display: flex; flex-direction: column; height: calc(100vh - 70px); }
+    .right-col { display: flex; flex-direction: column; height: calc(100vh - 107px); }
 
     /* Sources panel */
     .sources-panel { display: flex; flex-direction: column; flex: 0 0 38%; border-bottom: 1px solid var(--border); overflow: hidden; background: var(--surface); }
