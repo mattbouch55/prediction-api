@@ -65,7 +65,7 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:'Inter'
 .dot.open{background:var(--green)}.dot.closed{background:var(--red)}
 
 /* MAIN */
-.main{flex:1;padding:24px;padding-top:131px;display:flex;gap:16px;overflow:hidden;height:100vh}
+.main{flex:1;padding:24px;padding-top:131px;display:flex;gap:16px;overflow:hidden;height:100vh;position:relative}
 
 /* THREE COLUMNS */
 .col-import{width:220px;flex-shrink:0;display:flex;flex-direction:column;gap:12px;overflow-y:auto}
@@ -203,6 +203,20 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:'Inter'
     .pnl-box { background: var(--surface2); border-radius: 6px; padding: 7px 8px; text-align: center; }
     .pnl-val { font-size: 15px; font-weight: 800; font-family: 'JetBrains Mono', monospace; }
     .pnl-lbl { font-size: 9px; color: var(--grey); text-transform: uppercase; letter-spacing: 0.05em; margin-top: 1px; }
+
+    /* Collapsible import panel */
+    .col-import { transition: width 0.25s ease, opacity 0.2s ease, padding 0.25s ease; }
+    .col-import.collapsed { width: 0 !important; opacity: 0; overflow: hidden; padding: 0; gap: 0; }
+    .panel-toggle {
+      position: absolute; left: 0; top: 50%; transform: translateY(-50%);
+      width: 18px; height: 48px; background: var(--surface); border: 1px solid var(--border);
+      border-left: none; border-radius: 0 6px 6px 0; cursor: pointer; display: flex;
+      align-items: center; justify-content: center; font-size: 10px; color: var(--grey2);
+      box-shadow: 2px 0 6px rgba(0,0,0,0.06); transition: all 0.15s; z-index: 10;
+      user-select: none;
+    }
+    .panel-toggle:hover { background: var(--blue-soft); color: var(--blue); border-color: rgba(21,101,255,0.3); }
+    .main-markets { position: relative; }
 </style>
 </head>
 <body>
@@ -261,8 +275,11 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:'Inter'
 <!-- MAIN -->
 <div class="main">
 
+  <!-- Toggle button -->
+  <button class="panel-toggle" id="importToggle" onclick="toggleImportPanel()" title="Toggle import panel">◀</button>
+
   <!-- COL 1: IMPORT -->
-  <div class="col-import" style="display:flex;flex-direction:column">
+  <div class="col-import" id="importPanel" style="display:flex;flex-direction:column">
 
     <!-- Import form -->
     <div class="card" style="flex:1;display:flex;flex-direction:column">
@@ -889,6 +906,25 @@ function renderSidebarPanels(){
   }catch(e){}
 }
 setInterval(renderSidebarPanels,30000);
+
+// ── IMPORT PANEL TOGGLE ───────────────────────────────────────
+function toggleImportPanel(){
+  var panel  = document.getElementById('importPanel');
+  var btn    = document.getElementById('importToggle');
+  var isOpen = !panel.classList.contains('collapsed');
+  if(isOpen){
+    panel.classList.add('collapsed');
+    btn.textContent = '▶';
+    btn.title = 'Open import panel';
+    btn.style.left = '0px';
+  } else {
+    panel.classList.remove('collapsed');
+    btn.textContent = '◀';
+    btn.title = 'Close import panel';
+    btn.style.left = '0px';
+  }
+}
+
 </script>
 </body>
 </html>'<div style="display:flex;gap:8px;margin-top:10px;align-items:center">'+
@@ -971,7 +1007,7 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:'Inter'
 .dot.open{background:var(--green)}.dot.closed{background:var(--red)}
 
 /* MAIN */
-.main{flex:1;padding:24px;padding-top:131px;display:flex;gap:16px;overflow:hidden;height:100vh}
+.main{flex:1;padding:24px;padding-top:131px;display:flex;gap:16px;overflow:hidden;height:100vh;position:relative}
 
 /* THREE COLUMNS */
 .col-import{width:220px;flex-shrink:0;display:flex;flex-direction:column;gap:12px;overflow-y:auto}
@@ -1167,8 +1203,11 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:'Inter'
 <!-- MAIN -->
 <div class="main">
 
+  <!-- Toggle button -->
+  <button class="panel-toggle" id="importToggle" onclick="toggleImportPanel()" title="Toggle import panel">◀</button>
+
   <!-- COL 1: IMPORT -->
-  <div class="col-import" style="display:flex;flex-direction:column">
+  <div class="col-import" id="importPanel" style="display:flex;flex-direction:column">
 
     <!-- Import form -->
     <div class="card" style="flex:1;display:flex;flex-direction:column">
