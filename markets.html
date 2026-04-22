@@ -285,7 +285,7 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:'Inter'
     <div class="card" style="flex:1;display:flex;flex-direction:column">
       <div class="ch">
         <span class="ct">Import from Kalshi</span>
-        <a href="https://kalshi.com" target="_blank" style="font-size:10px;color:var(--blue);font-weight:600;text-decoration:none">Open Kalshi ↗</a>
+        <a href="https://kalshi.com" target="_blank" style="font-size:10px;color:var(--blue);font-weight:600;text-decoration:none;background:var(--blue-soft);border:1px solid rgba(21,101,255,0.2);padding:2px 8px;border-radius:4px;white-space:nowrap">Kalshi ↗</a>
       </div>
       <div class="import-form" style="flex:1;gap:10px">
 
@@ -624,7 +624,7 @@ function renderResearchWorkspace(){
     hdrRight.innerHTML =
       '<span style="font-size:10px;font-weight:700;text-transform:uppercase;padding:2px 8px;border-radius:3px;background:var(--surface2);color:var(--grey2);border:1px solid var(--border);letter-spacing:0.05em">'+b.cat+'</span>' +
       (b.close?'<span style="font-size:10px;color:var(--grey);font-family:JetBrains Mono,monospace">Closes '+b.close+'</span>':'') +
-      (b.url?'<a href="'+b.url+'" target="_blank" style="font-size:10px;color:var(--blue);font-weight:600;text-decoration:none;border:1px solid rgba(21,101,255,0.3);padding:2px 9px;border-radius:4px;background:var(--blue-soft);white-space:nowrap">Kalshi ↗</a>':'');
+      (b.url?'<a href="'+b.url+'" target="_blank" style="font-size:10px;color:var(--blue);font-weight:600;text-decoration:none;border:1px solid rgba(21,101,255,0.3);padding:2px 9px;border-radius:4px;background:var(--blue-soft);white-space:nowrap" title="Open this market on Kalshi">Bet on Kalshi ↗</a>':'');
   }
   var saved = aiResults[b.id];
   var notes = betNotes[b.id] || '';
@@ -1213,7 +1213,7 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:'Inter'
     <div class="card" style="flex:1;display:flex;flex-direction:column">
       <div class="ch">
         <span class="ct">Import from Kalshi</span>
-        <a href="https://kalshi.com" target="_blank" style="font-size:10px;color:var(--blue);font-weight:600;text-decoration:none">Open Kalshi ↗</a>
+        <a href="https://kalshi.com" target="_blank" style="font-size:10px;color:var(--blue);font-weight:600;text-decoration:none;background:var(--blue-soft);border:1px solid rgba(21,101,255,0.2);padding:2px 8px;border-radius:4px;white-space:nowrap">Kalshi ↗</a>
       </div>
       <div class="import-form" style="flex:1;gap:10px">
 
@@ -1552,7 +1552,7 @@ function renderResearchWorkspace(){
     hdrRight.innerHTML =
       '<span style="font-size:10px;font-weight:700;text-transform:uppercase;padding:2px 8px;border-radius:3px;background:var(--surface2);color:var(--grey2);border:1px solid var(--border);letter-spacing:0.05em">'+b.cat+'</span>' +
       (b.close?'<span style="font-size:10px;color:var(--grey);font-family:JetBrains Mono,monospace">Closes '+b.close+'</span>':'') +
-      (b.url?'<a href="'+b.url+'" target="_blank" style="font-size:10px;color:var(--blue);font-weight:600;text-decoration:none;border:1px solid rgba(21,101,255,0.3);padding:2px 9px;border-radius:4px;background:var(--blue-soft);white-space:nowrap">Kalshi ↗</a>':'');
+      (b.url?'<a href="'+b.url+'" target="_blank" style="font-size:10px;color:var(--blue);font-weight:600;text-decoration:none;border:1px solid rgba(21,101,255,0.3);padding:2px 9px;border-radius:4px;background:var(--blue-soft);white-space:nowrap" title="Open this market on Kalshi">Bet on Kalshi ↗</a>':'');
   }
   var saved = aiResults[b.id];
   var notes = betNotes[b.id] || '';
