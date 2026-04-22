@@ -774,6 +774,8 @@ function updateStatus(id, status){
 }
 
 function renderPositions(){
+  try {
+
   var list = document.getElementById('posList');
   document.getElementById('posCount').textContent = positions.length + ' tracked';
   if(!positions.length){
@@ -805,6 +807,8 @@ function renderPositions(){
       '</div>' +
     '</div>';
   }).join('');
+
+  } catch(e) {}
 }
 
 function renderPnl(){ /* removed - Kalshi tracks P&L */ }
