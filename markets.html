@@ -616,28 +616,24 @@ function renderResearchWorkspace(){
   document.getElementById('researchBody').innerHTML =
     '<div class="bet-detail-header">' +
       '<div class="bet-detail-q">'+b.q+'</div>' +
-      '<div class="bet-meta">' +
-        '<div class="odds-strip">' +
-          '<span class="yes-pill">YES '+b.yes+'¢</span>' +
-          '<span class="no-pill">NO '+b.no+'¢</span>' +
-        '</div>' +
-      '</div>' +
-      '<div class="prob-bar"><div class="prob-fill" id="rwProbFill" style="width:'+b.yes+'%"></div></div>' +
-      '<div class="prob-label"><span>YES '+b.yes+'%</span><span>NO '+b.no+'%</span></div>' +
-      '<div style="display:flex;gap:8px;margin-top:10px;align-items:center">' +
-        '<span style="font-size:10px;font-weight:600;color:var(--grey);text-transform:uppercase;letter-spacing:0.06em">Update Prices:</span>' +
+      '<div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">' +
         '<div style="display:flex;align-items:center;gap:4px">' +
-          '<span style="font-size:10px;color:var(--green);font-weight:700">YES</span>' +
-          '<input type="number" id="rwYes" min="1" max="99" value="'+b.yes+'" style="width:56px;background:var(--bg);border:1px solid rgba(22,163,74,0.4);border-radius:5px;font-family:JetBrains Mono,monospace;font-size:12px;font-weight:700;color:var(--green);padding:4px 7px;outline:none;text-align:center"/>' +
-          '<span style="font-size:11px;color:var(--grey)">¢</span>' +
+          '<span class="yes-pill" style="min-width:52px;text-align:center" id="rwYesPill">YES '+b.yes+'¢</span>' +
+          '<div style="display:flex;flex-direction:column;gap:1px">' +
+            '<button onclick="adjustPrice(1,0)" style="background:none;border:none;cursor:pointer;color:var(--green);font-size:10px;line-height:1;padding:1px 3px" title="YES +1">▲</button>' +
+            '<button onclick="adjustPrice(-1,0)" style="background:none;border:none;cursor:pointer;color:var(--grey);font-size:10px;line-height:1;padding:1px 3px" title="YES -1">▼</button>' +
+          '</div>' +
         '</div>' +
         '<div style="display:flex;align-items:center;gap:4px">' +
-          '<span style="font-size:10px;color:var(--red);font-weight:700">NO</span>' +
-          '<input type="number" id="rwNo" min="1" max="99" value="'+b.no+'" style="width:56px;background:var(--bg);border:1px solid rgba(220,38,38,0.4);border-radius:5px;font-family:JetBrains Mono,monospace;font-size:12px;font-weight:700;color:var(--red);padding:4px 7px;outline:none;text-align:center"/>' +
-          '<span style="font-size:11px;color:var(--grey)">¢</span>' +
+          '<span class="no-pill" style="min-width:52px;text-align:center" id="rwNoPill">NO '+b.no+'¢</span>' +
+          '<div style="display:flex;flex-direction:column;gap:1px">' +
+            '<button onclick="adjustPrice(0,1)" style="background:none;border:none;cursor:pointer;color:var(--red);font-size:10px;line-height:1;padding:1px 3px" title="NO +1">▲</button>' +
+            '<button onclick="adjustPrice(0,-1)" style="background:none;border:none;cursor:pointer;color:var(--grey);font-size:10px;line-height:1;padding:1px 3px" title="NO -1">▼</button>' +
+          '</div>' +
         '</div>' +
-        '<button onclick="savePrices()" style="background:var(--blue);color:#fff;border:none;font-family:Inter,sans-serif;font-size:10px;font-weight:600;padding:4px 10px;border-radius:4px;cursor:pointer">Save</button>' +
       '</div>' +
+      '<div class="prob-bar" style="margin-top:8px"><div class="prob-fill" id="rwProbFill" style="width:'+b.yes+'%"></div></div>' +
+      '<div class="prob-label"><span id="rwYesLbl">YES '+b.yes+'%</span><span id="rwNoLbl">NO '+b.no+'%</span></div>' +
     '</div>' +
     '<div class="ai-section">' +
       '<div style="display:flex;align-items:center;gap:8px">' +
@@ -769,6 +765,22 @@ function updateBetPrices(id, yes, no){
   renderBetList();
 }
 
+function adjustPrice(yDelta, nDelta){
+  if(!activeBet) return;
+  var y=activeBet.yes, n=activeBet.no;
+  if(yDelta!==0){ y=Math.min(99,Math.max(1,y+yDelta)); n=100-y; }
+  else{ n=Math.min(99,Math.max(1,n+nDelta)); y=100-n; }
+  activeBet.yes=y; activeBet.no=n;
+  var yp=document.getElementById('rwYesPill'); if(yp) yp.textContent='YES '+y+'¢';
+  var np=document.getElementById('rwNoPill'); if(np) np.textContent='NO '+n+'¢';
+  var fill=document.getElementById('rwProbFill'); if(fill) fill.style.width=y+'%';
+  var yl=document.getElementById('rwYesLbl'); if(yl) yl.textContent='YES '+y+'%';
+  var nl=document.getElementById('rwNoLbl'); if(nl) nl.textContent='NO '+n+'%';
+  var idx=bets.findIndex(function(b){return b.id===activeBet.id;}); if(idx>=0) bets[idx]=activeBet;
+  localStorage.setItem('onyx_mkt_bets',JSON.stringify(bets));
+  renderBetList();
+}
+
 function rwSelectSide(side){
   var y=document.getElementById('rwSideYes'), n=document.getElementById('rwSideNo');
   if(!y||!n) return;
@@ -810,19 +822,7 @@ function rwUnmarkPlaced(){
   renderResearchWorkspace();
 }
 
-function savePrices(){
-  if(!activeBet) return;
-  var yEl=document.getElementById('rwYes'), nEl=document.getElementById('rwNo');
-  var y=yEl?parseInt(yEl.value):0, n=nEl?parseInt(nEl.value):0;
-  if(y>=1&&y<=99){ activeBet.yes=y; activeBet.no=100-y; if(nEl) nEl.value=100-y; }
-  else if(n>=1&&n<=99){ activeBet.no=n; activeBet.yes=100-n; if(yEl) yEl.value=100-n; }
-  var fill=document.getElementById('rwProbFill'); if(fill) fill.style.width=activeBet.yes+'%';
-  var idx=bets.findIndex(function(b){return b.id===activeBet.id;}); if(idx>=0) bets[idx]=activeBet;
-  localStorage.setItem('onyx_mkt_bets',JSON.stringify(bets));
-  renderBetList();
-  var btn=document.querySelector('[onclick="savePrices()"]');
-  if(btn){btn.textContent='Saved ✓';btn.style.background='var(--green)';setTimeout(function(){btn.textContent='Save';btn.style.background='';},1200);}
-}
+
 
 function markPlaced(id){
   var b = bets.find(function(b){return b.id===id;});
@@ -1737,6 +1737,22 @@ function updateBetPrices(id, yes, no){
   // Update prob bar
   var fill=document.getElementById('rwProbFill'); if(fill) fill.style.width=b.yes+'%';
   localStorage.setItem('onyx_mkt_bets', JSON.stringify(bets));
+  renderBetList();
+}
+
+function adjustPrice(yDelta, nDelta){
+  if(!activeBet) return;
+  var y=activeBet.yes, n=activeBet.no;
+  if(yDelta!==0){ y=Math.min(99,Math.max(1,y+yDelta)); n=100-y; }
+  else{ n=Math.min(99,Math.max(1,n+nDelta)); y=100-n; }
+  activeBet.yes=y; activeBet.no=n;
+  var yp=document.getElementById('rwYesPill'); if(yp) yp.textContent='YES '+y+'¢';
+  var np=document.getElementById('rwNoPill'); if(np) np.textContent='NO '+n+'¢';
+  var fill=document.getElementById('rwProbFill'); if(fill) fill.style.width=y+'%';
+  var yl=document.getElementById('rwYesLbl'); if(yl) yl.textContent='YES '+y+'%';
+  var nl=document.getElementById('rwNoLbl'); if(nl) nl.textContent='NO '+n+'%';
+  var idx=bets.findIndex(function(b){return b.id===activeBet.id;}); if(idx>=0) bets[idx]=activeBet;
+  localStorage.setItem('onyx_mkt_bets',JSON.stringify(bets));
   renderBetList();
 }
 
