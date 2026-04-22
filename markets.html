@@ -192,7 +192,7 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:'Inter'
     .inv-meta { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 3px; }
     .inv-meta-item { background: var(--surface); border: 1px solid var(--border); border-radius: 4px; padding: 3px 6px; }
     .inv-meta-label { font-size: 8px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.04em; color: var(--grey); margin-bottom: 1px; }
-    .inv-meta-val { font-size: 10px; font-weight: 700; font-family: 'JetBrains Mono', monospace; color: var(--text); }
+    .inv-meta-val { font-size: 10px; font-weight: 700; font-family: 'JetBrains Mono', monospace; color: var(--text); white-space: nowrap; overflow: hidden; }
     .inv-meta-val.green { color: var(--green); font-size: 10px; }
     .inv-meta-val.red { color: var(--red); }
     .inv-price { font-size: 11px; font-family: 'JetBrains Mono', monospace; color: var(--grey2); }
@@ -580,7 +580,7 @@ function renderBetList(){
       '<div class="inv-q">'+b.q+'</div>'+
       '<div class="inv-meta" style="grid-template-columns:1fr 1fr 1fr;gap:4px">'+
         '<div class="inv-meta-item">'+
-          '<div class="inv-meta-val"><span style="color:var(--blue)">'+b.yes+'¢</span> <span style="color:var(--grey)">/</span> <span style="color:var(--yellow)">'+b.no+'¢</span></div>'+
+          '<div style="font-size:10px;font-weight:700;font-family:JetBrains Mono,monospace;white-space:nowrap"><span style="color:var(--blue)">'+b.yes+'</span><span style="color:var(--grey);font-weight:400">/</span><span style="color:var(--yellow)">'+b.no+'</span></div>'+
         '</div>'+
         '<div class="inv-meta-item" style="border:'+(placed?'1px solid rgba(22,163,74,0.25)':'1px solid var(--border)')+';background:'+(placed?'var(--surface2)':'var(--surface)')+'">'+
           
@@ -1133,7 +1133,7 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:'Inter'
     .inv-meta { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 3px; }
     .inv-meta-item { background: var(--surface); border: 1px solid var(--border); border-radius: 4px; padding: 3px 6px; }
     .inv-meta-label { font-size: 8px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.04em; color: var(--grey); margin-bottom: 1px; }
-    .inv-meta-val { font-size: 10px; font-weight: 700; font-family: 'JetBrains Mono', monospace; color: var(--text); }
+    .inv-meta-val { font-size: 10px; font-weight: 700; font-family: 'JetBrains Mono', monospace; color: var(--text); white-space: nowrap; overflow: hidden; }
     .inv-meta-val.green { color: var(--green); font-size: 10px; }
     .inv-meta-val.red { color: var(--red); }
     .inv-price { font-size: 11px; font-family: 'JetBrains Mono', monospace; color: var(--grey2); }
@@ -1507,7 +1507,7 @@ function renderBetList(){
       '<div class="inv-q">'+b.q+'</div>'+
       '<div class="inv-meta" style="grid-template-columns:1fr 1fr 1fr;gap:4px">'+
         '<div class="inv-meta-item">'+
-          '<div class="inv-meta-val"><span style="color:var(--blue)">'+b.yes+'¢</span> <span style="color:var(--grey)">/</span> <span style="color:var(--yellow)">'+b.no+'¢</span></div>'+
+          '<div style="font-size:10px;font-weight:700;font-family:JetBrains Mono,monospace;white-space:nowrap"><span style="color:var(--blue)">'+b.yes+'</span><span style="color:var(--grey);font-weight:400">/</span><span style="color:var(--yellow)">'+b.no+'</span></div>'+
         '</div>'+
         '<div class="inv-meta-item" style="border:'+(placed?'1px solid rgba(22,163,74,0.25)':'1px solid var(--border)')+';background:'+(placed?'var(--surface2)':'var(--surface)')+'">'+
           
