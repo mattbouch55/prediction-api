@@ -395,7 +395,12 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:'Inter'
       <!-- Header with P&L strip -->
       <div class="ch">
         <span class="ct">Bet Inventory</span>
-        <span class="cs" id="betCount">0 markets</span>
+        <div style="display:flex;align-items:center;gap:6px;margin-left:auto">
+          <span class="cs" id="betCount">0 markets</span>
+          <div id="portfolioLinkWrap" style="display:flex;align-items:center;gap:4px">
+            <!-- Populated by JS -->
+          </div>
+        </div>
       </div>
 
 
@@ -927,6 +932,48 @@ function toggleImportPanel(){
   }
 }
 
+
+// ── KALSHI PORTFOLIO LINK ─────────────────────────────────────
+function renderPortfolioLink() {
+  var wrap = document.getElementById('portfolioLinkWrap');
+  if (!wrap) return;
+  var saved = localStorage.getItem('onyx_kalshi_portfolio_url') || '';
+  if (saved) {
+    wrap.innerHTML =
+      '<a href="' + saved + '" target="_blank" style="font-size:10px;font-weight:600;color:var(--text);text-decoration:none;background:var(--surface2);border:1px solid var(--border);padding:2px 8px;border-radius:4px;white-space:nowrap">My Portfolio ↗</a>' +
+      '<button onclick="editPortfolioLink()" style="background:none;border:none;color:var(--grey);cursor:pointer;font-size:11px;padding:1px 4px;line-height:1" title="Change URL">✎</button>';
+  } else {
+    wrap.innerHTML =
+      '<button onclick="editPortfolioLink()" style="background:var(--surface2);border:1px solid var(--border);color:var(--grey2);font-family:Inter,sans-serif;font-size:10px;font-weight:500;padding:2px 8px;border-radius:4px;cursor:pointer;white-space:nowrap">+ Portfolio Link</button>';
+  }
+}
+
+function editPortfolioLink() {
+  var wrap = document.getElementById('portfolioLinkWrap');
+  if (!wrap) return;
+  var current = localStorage.getItem('onyx_kalshi_portfolio_url') || '';
+  wrap.innerHTML =
+    '<input id="portfolioUrlInput" type="url" value="' + current + '" placeholder="Paste Kalshi portfolio URL..." style="width:180px;background:var(--bg);border:1px solid var(--blue);border-radius:4px;font-family:Inter,sans-serif;font-size:10px;padding:2px 7px;outline:none;color:var(--text)"/>' +
+    '<button onclick="savePortfolioLink()" style="background:var(--text);color:#fff;border:none;font-family:Inter,sans-serif;font-size:10px;font-weight:600;padding:2px 8px;border-radius:4px;cursor:pointer">Save</button>' +
+    '<button onclick="clearPortfolioLink()" style="background:none;border:none;color:var(--grey);cursor:pointer;font-size:11px;padding:1px 4px" title="Remove">×</button>';
+  setTimeout(function(){ var el=document.getElementById('portfolioUrlInput'); if(el){el.focus();el.select();} }, 50);
+}
+
+function savePortfolioLink() {
+  var el = document.getElementById('portfolioUrlInput');
+  var val = el ? el.value.trim() : '';
+  if (val) localStorage.setItem('onyx_kalshi_portfolio_url', val);
+  renderPortfolioLink();
+}
+
+function clearPortfolioLink() {
+  localStorage.removeItem('onyx_kalshi_portfolio_url');
+  renderPortfolioLink();
+}
+
+// Init on load
+renderPortfolioLink();
+
 </script>
 </body>
 </html>'<div style="display:flex;gap:8px;margin-top:10px;align-items:center">'+
@@ -1325,7 +1372,12 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:'Inter'
       <!-- Header with P&L strip -->
       <div class="ch">
         <span class="ct">Bet Inventory</span>
-        <span class="cs" id="betCount">0 markets</span>
+        <div style="display:flex;align-items:center;gap:6px;margin-left:auto">
+          <span class="cs" id="betCount">0 markets</span>
+          <div id="portfolioLinkWrap" style="display:flex;align-items:center;gap:4px">
+            <!-- Populated by JS -->
+          </div>
+        </div>
       </div>
 
 
