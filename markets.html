@@ -207,6 +207,10 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:'Inter'
     /* Collapsible import panel */
     .col-import { transition: width 0.25s ease, opacity 0.2s ease, padding 0.25s ease; }
     .col-import.collapsed { width: 0 !important; opacity: 0; overflow: hidden; padding: 0; gap: 0; }
+    .col-tracker { transition: width 0.25s ease, opacity 0.2s ease, padding 0.25s ease; }
+    .col-tracker.collapsed { width: 0 !important; opacity: 0; overflow: hidden; padding: 0; gap: 0; }
+    .panel-toggle-right { position: absolute; right: 0; top: 50%; transform: translateY(-50%); width: 18px; height: 48px; background: var(--surface); border: 1px solid var(--border); border-right: none; border-radius: 6px 0 0 6px; cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 10px; color: var(--grey2); box-shadow: -2px 0 6px rgba(0,0,0,0.06); transition: all 0.15s; z-index: 10; user-select: none; }
+    .panel-toggle-right:hover { background: var(--blue-soft); color: var(--blue); border-color: rgba(21,101,255,0.3); }
     .panel-toggle {
       position: absolute; left: 0; top: 50%; transform: translateY(-50%);
       width: 18px; height: 48px; background: var(--surface); border: 1px solid var(--border);
@@ -395,7 +399,8 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:'Inter'
   </div>
 
   <!-- COL 3: BET INVENTORY -->
-  <div class="col-tracker">
+  <button class="panel-toggle-right" id="trackerToggle" onclick="toggleTrackerPanel()" title="Toggle inventory panel">▶</button>
+  <div class="col-tracker" id="trackerPanel">
     <div class="card" style="flex:1;display:flex;flex-direction:column;min-height:0;overflow:hidden">
 
       <!-- Header with P&L strip -->
@@ -936,6 +941,21 @@ function renderSidebarPanels(){
 setInterval(renderSidebarPanels,30000);
 
 // ── IMPORT PANEL TOGGLE ───────────────────────────────────────
+function toggleTrackerPanel(){
+  var panel  = document.getElementById('trackerPanel');
+  var btn    = document.getElementById('trackerToggle');
+  var isOpen = !panel.classList.contains('collapsed');
+  if(isOpen){
+    panel.classList.add('collapsed');
+    btn.textContent = '◀';
+    btn.title = 'Open inventory panel';
+  } else {
+    panel.classList.remove('collapsed');
+    btn.textContent = '▶';
+    btn.title = 'Close inventory panel';
+  }
+}
+
 function toggleImportPanel(){
   var panel  = document.getElementById('importPanel');
   var btn    = document.getElementById('importToggle');
@@ -1393,7 +1413,8 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:'Inter'
   </div>
 
   <!-- COL 3: BET INVENTORY -->
-  <div class="col-tracker">
+  <button class="panel-toggle-right" id="trackerToggle" onclick="toggleTrackerPanel()" title="Toggle inventory panel">▶</button>
+  <div class="col-tracker" id="trackerPanel">
     <div class="card" style="flex:1;display:flex;flex-direction:column;min-height:0;overflow:hidden">
 
       <!-- Header with P&L strip -->
