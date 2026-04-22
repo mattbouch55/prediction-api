@@ -1,375 +1,2045 @@
-import os
-import json
-import time
-import asyncio
-import requests
-import anthropic
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<title>Onyx AI - Markets</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#f7f7f6;--surface:#fff;--surface2:#f3f3f2;
+  --border:#e5e4e2;--border2:#d1d0cd;
+  --blue:#1565ff;--blue-soft:#eff3ff;--blue-glow:rgba(21,101,255,0.08);
+  --text:#111827;--text2:#4b5563;--grey:#9ca3af;--grey2:#6b7280;
+  --green:#16a34a;--green-dim:rgba(22,163,74,0.08);
+  --red:#dc2626;--red-dim:rgba(220,38,38,0.08);
+  --yellow:#d97706;--yellow-dim:rgba(217,119,6,0.08);
+  --shadow:0 2px 8px rgba(0,0,0,0.08),0 1px 3px rgba(0,0,0,0.05);
+  --sidebar-w:300px;
+}
+html,body{height:100%;background:var(--bg);color:var(--text);font-family:'Inter',sans-serif;font-size:13px;overflow:hidden}
+*::-webkit-scrollbar{width:4px;height:4px}
+*::-webkit-scrollbar-track{background:transparent}
+*::-webkit-scrollbar-thumb{background:var(--border2);border-radius:2px}
+*::-webkit-scrollbar-thumb:hover{background:var(--grey)}
+*{scrollbar-width:thin;scrollbar-color:var(--border2) transparent}
+.layout{display:flex;height:100vh}
 
-from fastapi import FastAPI
-from fastapi.responses import HTMLResponse
-from fastapi.middleware.cors import CORSMiddleware
+/* SIDEBAR */
+.sidebar{width:var(--sidebar-w);background:var(--surface);border-right:1px solid var(--border);display:flex;flex-direction:column;flex-shrink:0;height:100vh}
+.sidebar-logo{height:107px;display:flex;align-items:center;padding:0 20px;border-bottom:1px solid var(--border);flex-shrink:0}
+.logo-row{display:flex;align-items:center;gap:9px}
+.logo-icon{width:28px;height:28px;background:var(--blue);border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;color:#fff;font-family:'JetBrains Mono',monospace;flex-shrink:0}
+.logo-name{font-size:16px;font-weight:700;color:var(--text)}
+.logo-sub{font-size:11px;color:var(--grey);letter-spacing:0.06em;text-transform:uppercase;margin-top:2px}
+.sidebar-nav{padding:12px 10px;flex-shrink:0}
+.nav-sec{font-size:10px;font-weight:600;letter-spacing:0.1em;text-transform:uppercase;color:var(--grey);padding:10px 10px 5px}
+.nav-item{display:flex;align-items:center;gap:10px;padding:9px 12px;border-radius:7px;color:var(--grey2);text-decoration:none;font-size:13px;font-weight:500;transition:all 0.12s;margin-bottom:2px}
+.nav-item:hover{background:var(--surface2);color:var(--text)}
+.nav-item.active{background:var(--blue-soft);color:var(--blue)}
+.sidebar-panels{padding:10px;display:flex;flex-direction:column;gap:8px;overflow-y:auto;flex:1;min-height:0}
+.sp-card{background:var(--surface2);border:1px solid var(--border);border-radius:8px;overflow:hidden}
+.sp-header{display:flex;align-items:center;justify-content:space-between;padding:8px 10px;cursor:pointer;user-select:none}
+.sp-header:hover{background:var(--border)}
+.sp-title{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:0.08em;color:var(--text2)}
+.sp-count{font-size:9px;color:var(--grey);font-family:'JetBrains Mono',monospace}
+.sp-arrow{font-size:9px;color:var(--grey);transition:transform 0.2s}
+.sp-card.open .sp-arrow{transform:rotate(90deg)}
+.sp-body{display:none;border-top:1px solid var(--border)}
+.sp-card.open .sp-body{display:block}
+.sp-row{display:flex;align-items:center;gap:6px;padding:6px 10px;border-bottom:1px solid var(--border);cursor:pointer}
+.sp-row:last-child{border-bottom:none}
+.sp-row:hover{background:var(--surface)}
+.sp-ticker{font-family:'JetBrains Mono',monospace;font-size:11px;font-weight:600;color:var(--text);min-width:38px}
+.sp-log-row{padding:6px 10px;border-bottom:1px solid var(--border);cursor:pointer}
+.sp-log-row:last-child{border-bottom:none}
+.sp-log-row:hover{background:var(--surface)}
+.sp-log-name{font-size:11px;font-weight:500;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.sp-log-date{font-size:9px;color:var(--grey);font-family:'JetBrains Mono',monospace}
+.sp-empty{padding:10px;font-size:11px;color:var(--grey);font-style:italic;text-align:center}
+.sidebar-footer{padding:14px 20px;border-top:1px solid var(--border);flex-shrink:0}
+.mkt-pill{display:flex;align-items:center;gap:7px;font-size:11px;color:var(--text2)}
+.dot{width:6px;height:6px;border-radius:50%}
+.dot.open{background:var(--green)}.dot.closed{background:var(--red)}
 
-from models import PredictionRequest, InvestmentRequest
-from agent import PredictionAgent, InvestmentAgent
-from database import Database
-from ai_bar import inject as inject_ai_bar
+/* MAIN */
+.main{flex:1;padding:24px;padding-top:131px;display:flex;gap:16px;overflow:hidden;height:100vh;position:relative}
 
-# ── App ────────────────────────────────────────────────────────
-app = FastAPI(title="Onyx AI")
-app.add_middleware(CORSMiddleware, allow_origins=["*"], allow_methods=["*"], allow_headers=["*"])
+/* THREE COLUMNS */
+.col-import{width:220px;flex-shrink:0;display:flex;flex-direction:column;gap:12px;overflow-y:auto}
+.col-research{flex:1;min-width:0;display:flex;flex-direction:column;gap:12px;overflow-y:auto}
+.col-tracker{width:220px;flex-shrink:0;display:flex;flex-direction:column;gap:12px;overflow-y:auto;position:relative}
 
-db = Database()
-db.initialize()
-predict_agent = PredictionAgent()
-invest_agent  = InvestmentAgent()
+/* CARDS */
+.card{background:var(--surface);border:1px solid var(--border);border-radius:10px;overflow:hidden;box-shadow:var(--shadow)}
+.ch{padding:8px 14px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;flex-shrink:0}
+.ct{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:0.08em;color:var(--text)}
+.cs{font-size:10px;color:var(--grey)}
 
-ANTHROPIC_KEY = os.environ.get("ANTHROPIC_API_KEY", "")
-FINNHUB_KEY   = os.environ.get("FINNHUB_API_KEY", "")
-HEADERS       = {"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36"}
+/* IMPORT FORM */
+.import-form{padding:10px 12px;display:flex;flex-direction:column;gap:7px}
+.field-label{font-size:9px;font-weight:600;color:var(--grey);text-transform:uppercase;letter-spacing:0.06em;margin-bottom:2px}
+.field-input{width:100%;background:var(--bg);border:1px solid var(--border2);border-radius:6px;color:var(--text);font-family:'Inter',sans-serif;font-size:11px;padding:5px 8px;outline:none;transition:border-color 0.15s}
+.field-input:focus{border-color:var(--blue);box-shadow:0 0 0 2px var(--blue-glow)}
+.field-input::placeholder{color:var(--grey)}
+.field-row{display:flex;gap:6px}
+.price-input{width:80px;flex-shrink:0;background:var(--bg);border:1px solid var(--border2);border-radius:6px;color:var(--text);font-family:'JetBrains Mono',monospace;font-size:12px;font-weight:600;padding:6px 9px;outline:none;transition:border-color 0.15s;text-align:center}
+.price-input:focus{border-color:var(--blue)}
+.import-btn{width:100%;background:var(--text);color:#fff;border:none;font-family:'Inter',sans-serif;font-size:11px;font-weight:600;padding:7px;border-radius:6px;cursor:pointer;transition:opacity 0.12s}
+.import-btn:hover{opacity:0.8}
+.kalshi-hint{display:none}
 
-# ── Pages ──────────────────────────────────────────────────────
-@app.get("/", response_class=HTMLResponse)
-def dashboard():
-    return inject_ai_bar(open("index.html").read())
+/* IMPORTED BETS LIST */
+.bet-list{display:flex;flex-direction:column;gap:0}
+.bet-row{display:flex;align-items:center;gap:8px;padding:8px 12px;border-bottom:1px solid var(--border);cursor:pointer;transition:background 0.1s}
+.bet-row:last-child{border-bottom:none}
+.bet-row:hover{background:var(--surface2)}
+.bet-row.active{background:var(--blue-soft)}
+.bet-q{font-size:11px;font-weight:500;color:var(--text);flex:1;line-height:1.4;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.bet-yes{font-size:10px;font-weight:700;color:var(--green);background:var(--green-dim);padding:1px 5px;border-radius:3px;flex-shrink:0}
+.bet-no{font-size:10px;font-weight:700;color:var(--red);background:var(--red-dim);padding:1px 5px;border-radius:3px;flex-shrink:0}
+.bet-del{background:none;border:none;color:var(--grey);cursor:pointer;font-size:14px;padding:0 2px;flex-shrink:0}
+.bet-del:hover{color:var(--red)}
 
-@app.get("/search", response_class=HTMLResponse)
-def research():
-    return inject_ai_bar(open("search.html").read())
+/* RESEARCH WORKSPACE */
+.research-empty{padding:40px 20px;text-align:center}
+.bet-detail-header{padding:12px 14px;border-bottom:1px solid var(--border)}
+.bet-detail-q{font-size:14px;font-weight:600;color:var(--text);line-height:1.4;margin-bottom:8px}
+.bet-meta{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.odds-strip{display:flex;gap:6px;align-items:center}
+.yes-pill{font-size:11px;font-weight:700;padding:3px 10px;border-radius:4px;background:var(--blue-soft);color:var(--blue)}
+.no-pill{font-size:11px;font-weight:700;padding:3px 10px;border-radius:4px;background:var(--yellow-dim);color:var(--yellow)}
+.close-badge{font-size:10px;color:var(--grey);font-family:'JetBrains Mono',monospace}
+.cat-badge{font-size:9px;font-weight:700;text-transform:uppercase;padding:2px 6px;border-radius:3px;background:var(--surface2);color:var(--grey2);border:1px solid var(--border)}
+.prob-bar{height:5px;background:var(--yellow);border-radius:3px;overflow:hidden;margin:10px 0 4px}
+.prob-fill{height:5px;background:var(--blue);border-radius:3px;transition:width 0.5s}
+.prob-label{font-size:10px;color:var(--grey);display:flex;justify-content:space-between}
 
-@app.get("/markets", response_class=HTMLResponse)
-def markets():
-    return inject_ai_bar(open("markets.html").read())
+/* AI ANALYSIS */
+.ai-section{padding:10px 14px;display:flex;flex-direction:column;gap:8px}
+.ai-btn{background:var(--text);color:var(--surface);border:none;font-family:'Inter',sans-serif;font-size:11px;font-weight:600;padding:7px 14px;border-radius:6px;cursor:pointer;transition:opacity 0.12s;display:flex;align-items:center;gap:6px;flex-shrink:0}
+.ai-btn:hover{opacity:0.8}
+.ai-btn:disabled{opacity:0.4;cursor:not-allowed}
+.ai-result{background:var(--surface2);border:1px solid var(--border);border-radius:7px;padding:10px 12px}
+.ai-verdict{display:flex;align-items:center;gap:8px;margin-bottom:8px}
+.verdict-badge{font-size:12px;font-weight:800;padding:4px 12px;border-radius:5px;text-transform:uppercase;letter-spacing:0.05em}
+.verdict-badge.yes{background:var(--green);color:#fff}
+.verdict-badge.no{background:var(--red);color:#fff}
+.verdict-badge.skip{background:var(--surface2);color:var(--grey2);border:1px solid var(--border)}
+.verdict-conf{font-size:10px;color:var(--grey)}
+.ai-reasoning{font-size:12px;color:var(--text2);line-height:1.65;margin-bottom:8px}
+.ai-signals{display:flex;flex-direction:column;gap:4px}
+.ai-signal{font-size:11px;color:var(--text2);display:flex;gap:6px;line-height:1.4}
+.ai-signal-dot{width:5px;height:5px;border-radius:50%;background:var(--blue);flex-shrink:0;margin-top:4px}
 
-# ── Prices ─────────────────────────────────────────────────────
-@app.get("/prices")
-def get_prices(tickers: str):
-    ticker_list = [t.strip().upper() for t in tickers.split(",") if t.strip()]
-    result = {}
-    for ticker in ticker_list:
-        price, prev = None, None
+/* NOTES */
+.notes-area{width:100%;background:var(--bg);border:1px solid var(--border2);border-radius:6px;color:var(--text);font-family:'Inter',sans-serif;font-size:12px;padding:8px 10px;resize:none;outline:none;line-height:1.6;min-height:100px;transition:border-color 0.15s}
+.notes-area:focus{border-color:var(--blue)}
 
-        # Finnhub (primary)
-        if FINNHUB_KEY:
-            try:
-                r = requests.get(
-                    f"https://finnhub.io/api/v1/quote?symbol={ticker}&token={FINNHUB_KEY}",
-                    timeout=5, headers=HEADERS
-                )
-                if r.status_code == 200:
-                    d = r.json()
-                    c, pc = d.get("c", 0), d.get("pc", 0)
-                    best = c if (c and float(c) > 0) else pc
-                    if best and float(best) > 0:
-                        price = round(float(best), 2)
-                        prev  = round(float(pc), 2) if pc else price
-            except Exception:
-                pass
+/* KALSHI LINK */
+.kalshi-btn{display:flex;align-items:center;justify-content:center;gap:8px;width:100%;background:var(--text);color:#fff;text-decoration:none;font-family:'Inter',sans-serif;font-size:12px;font-weight:700;padding:9px;border-radius:7px;transition:opacity 0.12s;border:none;cursor:pointer}
+.kalshi-btn:hover{opacity:0.85}
 
-        # Yahoo Finance v8 (fallback)
-        if not price:
-            try:
-                r = requests.get(
-                    f"https://query1.finance.yahoo.com/v8/finance/chart/{ticker}?interval=1m&range=1d",
-                    timeout=5, headers=HEADERS
-                )
-                if r.status_code == 200:
-                    res = r.json().get("chart", {}).get("result", [])
-                    if res:
-                        meta = res[0].get("meta", {})
-                        p  = meta.get("regularMarketPrice") or meta.get("previousClose")
-                        pc = meta.get("previousClose") or p
-                        if p and float(p) > 0:
-                            price = round(float(p), 2)
-                            prev  = round(float(pc), 2) if pc else price
-            except Exception:
-                pass
+/* POSITIONS TRACKER */
+.pos-card{padding:9px 12px;border-bottom:1px solid var(--border);display:flex;flex-direction:column;gap:4px}
+.pos-card:last-child{border-bottom:none}
+.pos-top{display:flex;align-items:center;gap:6px}
+.pos-side{font-size:9px;font-weight:700;padding:1px 6px;border-radius:3px;text-transform:uppercase;flex-shrink:0}
+.pos-side.yes{background:var(--blue-soft);color:var(--blue)}
+.pos-side.no{background:var(--yellow-dim);color:var(--yellow)}
+.pos-q{font-size:11px;font-weight:500;color:var(--text);flex:1;line-height:1.3;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.pos-del{background:none;border:none;color:var(--grey);cursor:pointer;font-size:13px;padding:0;flex-shrink:0}
+.pos-del:hover{color:var(--red)}
+.pos-meta{display:flex;gap:10px;font-size:10px;color:var(--grey2);font-family:'JetBrains Mono',monospace}
+.pos-pnl{font-weight:700}
+.pos-status{font-size:9px;font-weight:600;padding:1px 6px;border-radius:3px;flex-shrink:0}
+.pos-status.open{background:var(--blue-soft);color:var(--blue)}
+.pos-status.won{background:var(--blue-soft);color:var(--blue)}
+.pos-status.lost{background:var(--yellow-dim);color:var(--yellow)}
 
-        if price:
-            chg = round(((price - prev) / prev) * 100, 2) if prev and prev > 0 else 0
-            result[ticker] = {"price": price, "prev_close": prev, "change_pct": chg}
-        else:
-            result[ticker] = {"price": None, "change_pct": None, "error": "No data"}
+/* STATUS */
+.status-bar{display:none;align-items:center;gap:6px;padding:6px 12px;background:var(--blue-soft);border-bottom:1px solid rgba(21,101,255,0.15);font-size:10px;color:var(--blue);font-family:'JetBrains Mono',monospace}
+.status-bar.active{display:flex}
+.spin{width:10px;height:10px;border:1.5px solid rgba(21,101,255,0.2);border-top-color:var(--blue);border-radius:50%;animation:spin 0.7s linear infinite;flex-shrink:0}
+@keyframes spin{to{transform:rotate(360deg)}}
 
-    return result
+/* MISC */
+.section-btn{background:none;border:1px solid var(--border2);color:var(--text2);font-family:'Inter',sans-serif;font-size:10px;font-weight:500;padding:3px 9px;border-radius:4px;cursor:pointer;transition:all 0.12s}
+.section-btn:hover{border-color:var(--blue);color:var(--blue)}
+.empty-state{padding:30px 16px;text-align:center;color:var(--grey)}
+.empty-icon{font-size:28px;margin-bottom:10px;opacity:0.2}
+.empty-text{font-size:13px;font-weight:500;color:var(--text2);margin-bottom:4px}
+.empty-sub{font-size:11px;color:var(--grey);line-height:1.6}
 
-# ── Chart ──────────────────────────────────────────────────────
-@app.get("/chart")
-def get_chart(ticker: str, from_ts: int = None, to_ts: int = None, resolution: str = "5"):
-    now = int(time.time())
-    try:
-        r = requests.get(
-            f"https://finnhub.io/api/v1/stock/candle"
-            f"?symbol={ticker}&resolution={resolution}"
-            f"&from={from_ts or now-86400}&to={to_ts or now}&token={FINNHUB_KEY}",
-            timeout=8
-        )
-        d = r.json()
-        if d.get("s") == "ok":
-            return {"ticker": ticker, "prices": [{"t": t, "p": c} for t, c in zip(d["t"], d["c"])]}
-    except Exception:
-        pass
-    return {"ticker": ticker, "prices": []}
+    /* Inventory grid */
+    .inv-grid { display: flex; flex-direction: column; gap: 10px; padding: 12px; }
+    .inv-item { background: var(--surface2); border: 1px solid var(--border); border-radius: 9px; padding: 14px 16px; cursor: pointer; transition: all 0.15s; box-shadow: 0 1px 3px rgba(0,0,0,0.04); }
+    .inv-item:hover { border-color: var(--blue); background: var(--surface); box-shadow: var(--shadow); }
+    .inv-item.active { border-color: var(--blue); background: var(--blue-soft); }
+    .inv-top { display: flex; align-items: center; gap: 6px; margin-bottom: 10px; flex-wrap: wrap; }
+    .inv-side { font-size: 10px; font-weight: 800; padding: 3px 9px; border-radius: 4px; text-transform: uppercase; letter-spacing: 0.05em; flex-shrink: 0; }
+    .inv-side.yes { background: var(--green); color: #fff; }
+    .inv-side.no { background: var(--red); color: #fff; }
+    .inv-status { font-size: 10px; font-weight: 600; padding: 3px 8px; border-radius: 4px; flex-shrink: 0; }
+    .inv-status.open { background: var(--blue-soft); color: var(--blue); }
+    .inv-status.won { background: var(--green-dim); color: var(--green); }
+    .inv-status.lost { background: var(--red-dim); color: var(--red); }
+    .inv-del { background: none; border: none; color: var(--grey); cursor: pointer; font-size: 16px; padding: 0 3px; flex-shrink: 0; margin-left: auto; line-height: 1; }
+    .inv-del:hover { color: var(--red); }
+    .inv-q { font-size: 11px; font-weight: 600; color: var(--text); line-height: 1.35; margin-bottom: 5px; }
+    .inv-meta { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 3px; }
+    .inv-meta-item { background: var(--surface); border: 1px solid var(--border); border-radius: 4px; padding: 3px 6px; }
+    .inv-meta-label { font-size: 8px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.04em; color: var(--grey); margin-bottom: 1px; }
+    .inv-meta-val { font-size: 10px; font-weight: 700; font-family: 'JetBrains Mono', monospace; color: var(--text); white-space: nowrap; overflow: hidden; }
+    .inv-meta-val.green { color: var(--green); font-size: 10px; }
+    .inv-meta-val.red { color: var(--red); }
+    .inv-price { font-size: 11px; font-family: 'JetBrains Mono', monospace; color: var(--grey2); }
+    .inv-actions { display: flex; gap: 4px; margin-top: 6px; }
+    .inv-btn { font-size: 9px; font-weight: 600; padding: 2px 8px; border-radius: 3px; border: 1px solid var(--border); background: var(--surface2); color: var(--grey2); cursor: pointer; transition: all 0.12s; }
+    /* Summary strip */
+    .pnl-strip { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 6px; padding: 10px 12px; }
+    .pnl-box { background: var(--surface2); border-radius: 6px; padding: 7px 8px; text-align: center; }
+    .pnl-val { font-size: 15px; font-weight: 800; font-family: 'JetBrains Mono', monospace; }
+    .pnl-lbl { font-size: 9px; color: var(--grey); text-transform: uppercase; letter-spacing: 0.05em; margin-top: 1px; }
 
-# ── AI: Predict ────────────────────────────────────────────────
-@app.post("/predict")
-async def predict(request: PredictionRequest):
-    result = await predict_agent.run(
-        topic=request.topic,
-        domain=request.domain,
-        time_horizon=request.time_horizon,
-        custom_source=getattr(request, "custom_source", None)
-    )
-    try:
-        db.save_prediction(result)
-    except Exception:
-        pass
-    return result
-
-# ── AI: Invest ─────────────────────────────────────────────────
-@app.post("/invest")
-async def invest(request: InvestmentRequest):
-    return await invest_agent.run(
-        ticker=request.ticker,
-        asset_type=request.asset_type,
-        custom_source=getattr(request, "custom_source", None)
-    )
-
-# ── AI: Stock Effect ───────────────────────────────────────────
-@app.post("/stock-effect")
-async def stock_effect(request: dict):
-    prediction = (request.get("prediction") or "").strip()
-    ticker     = (request.get("ticker") or "").upper().strip()
-    confidence = request.get("confidence") or ""
-    topic      = request.get("topic") or prediction
-
-    if not prediction or not ticker:
-        return {"error": "prediction and ticker required"}
-
-    client = anthropic.Anthropic(api_key=ANTHROPIC_KEY)
-    prompt = f"""You are a senior equity analyst.
-
-TOPIC: {topic}
-PREDICTION: {prediction}
-CONFIDENCE: {confidence}
-
-Analyse how this prediction affects {ticker}. Search the web for current data.
-
-Return ONLY valid JSON:
-{{
-  "ticker": "{ticker}",
-  "company_name": "Full name",
-  "impact": "High|Medium|Low|Minimal",
-  "direction": "Bullish|Bearish|Neutral|Mixed",
-  "impact_score": 0,
-  "summary": "2-3 sentence explanation",
-  "bull_scenario": "If prediction correct",
-  "bull_price_direction": "Increase|Decrease",
-  "bull_price_magnitude": "+5-10%",
-  "bear_scenario": "If prediction wrong",
-  "bear_price_direction": "Increase|Decrease",
-  "bear_price_magnitude": "-3-7%",
-  "key_factors": ["factor1","factor2","factor3"],
-  "time_horizon": "2-4 weeks",
-  "confidence": "High|Medium|Low"
-}}"""
-
-    defaults = {
-        "ticker": ticker, "company_name": ticker, "impact": "Medium",
-        "direction": "Neutral", "impact_score": 0,
-        "summary": "Analysis unavailable.", "bull_scenario": "N/A",
-        "bull_price_direction": "Increase", "bull_price_magnitude": "Unknown",
-        "bear_scenario": "N/A", "bear_price_direction": "Decrease",
-        "bear_price_magnitude": "Unknown", "key_factors": [],
-        "time_horizon": "Unknown", "confidence": "Low"
+    /* Collapsible import panel */
+    .col-import { transition: width 0.25s ease, opacity 0.2s ease, padding 0.25s ease; }
+    .col-import.collapsed { width: 0 !important; opacity: 0; overflow: hidden; padding: 0; gap: 0; }
+    .col-tracker { transition: width 0.25s ease, opacity 0.2s ease, padding 0.25s ease; }
+    .col-tracker.collapsed { width: 0 !important; opacity: 0; overflow: hidden; padding: 0; gap: 0; }
+    .panel-toggle-right { position: absolute; right: 0; top: 50%; transform: translateY(-50%); width: 18px; height: 48px; background: var(--surface); border: 1px solid var(--border); border-right: none; border-radius: 6px 0 0 6px; cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 10px; color: var(--grey2); box-shadow: -2px 0 6px rgba(0,0,0,0.06); transition: all 0.15s; z-index: 10; user-select: none; }
+    .panel-toggle-right:hover { background: var(--blue-soft); color: var(--blue); border-color: rgba(21,101,255,0.3); }
+    .panel-toggle {
+      position: absolute; left: 0; top: 50%; transform: translateY(-50%);
+      width: 18px; height: 48px; background: var(--surface); border: 1px solid var(--border);
+      border-left: none; border-radius: 0 6px 6px 0; cursor: pointer; display: flex;
+      align-items: center; justify-content: center; font-size: 10px; color: var(--grey2);
+      box-shadow: 2px 0 6px rgba(0,0,0,0.06); transition: all 0.15s; z-index: 10;
+      user-select: none;
     }
+    .panel-toggle:hover { background: var(--blue-soft); color: var(--blue); border-color: rgba(21,101,255,0.3); }
+    .main-markets { position: relative; }
+</style>
+</head>
+<body>
+<div class="layout">
 
-    try:
-        resp = client.messages.create(
-            model="claude-sonnet-4-5", max_tokens=800,
-            tools=[{"type": "web_search_20250305", "name": "web_search"}],
-            messages=[{"role": "user", "content": prompt}]
-        )
-        text = "".join(b.text for b in resp.content if hasattr(b, "text") and b.text)
-        s, e = text.find("{"), text.rfind("}") + 1
-        if s >= 0 and e > s:
-            result = json.loads(text[s:e])
-            for k, v in defaults.items():
-                if result.get(k) is None:
-                    result[k] = v
-            return result
-    except Exception as ex:
-        return {"error": str(ex)}
+<!-- SIDEBAR -->
+<aside class="sidebar">
+  <div class="sidebar-logo">
+    <div class="logo-row">
+      <div class="logo-icon">O</div>
+      <div>
+        <div class="logo-name">Onyx AI</div>
+        <div class="logo-sub">Intelligence</div>
+      </div>
+    </div>
+  </div>
+  <nav class="sidebar-nav">
+    <div class="nav-sec">Main</div>
+    <a class="nav-item" href="/">
+      <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor"><path d="M2 2h5v5H2V2zm0 7h5v5H2V9zm7-7h5v5H9V2zm0 7h5v5H9V9z"/></svg>
+      Dashboard
+    </a>
+    <a class="nav-item" href="/search">
+      <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor"><path d="M11.742 10.344a6.5 6.5 0 1 0-1.397 1.398h-.001l3.85 3.85a1 1 0 0 0 1.415-1.414l-3.85-3.85zm-5.242 1.656a5.5 5.5 0 1 1 0-11 5.5 5.5 0 0 1 0 11z"/></svg>
+      Research
+    </a>
+    <a class="nav-item active" href="/markets">
+      <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor"><path d="M0 11l3-5 4 3 3-7 3 4 3-2v7H0z"/></svg>
+      Markets
+    </a>
+  </nav>
+  <div style="padding:10px 10px 4px;flex-shrink:0">
+    <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:0.1em;color:var(--grey);padding:6px 2px 4px">Portfolio</div>
+  </div>
+  <div class="sidebar-panels" id="sidebarPanels">
+    <div class="sp-card open" id="spWatchlist">
+      <div class="sp-header" onclick="toggleSP('spWatchlist')">
+        <span class="sp-title">Watchlist</span>
+        <div style="display:flex;align-items:center;gap:6px"><span class="sp-count" id="spWlCount">0 stocks</span><span class="sp-arrow">▶</span></div>
+      </div>
+      <div class="sp-body" id="spWlBody"><div class="sp-empty">No stocks added yet</div></div>
+    </div>
+    <div class="sp-card open" id="spResearch">
+      <div class="sp-header" onclick="toggleSP('spResearch')">
+        <span class="sp-title">Research Log</span>
+        <div style="display:flex;align-items:center;gap:6px"><span class="sp-count" id="spRsCount">0 sessions</span><span class="sp-arrow">▶</span></div>
+      </div>
+      <div class="sp-body" id="spRsBody"><div class="sp-empty">No research sessions yet</div></div>
+    </div>
+  </div>
+  <div class="sidebar-footer">
+    <div class="mkt-pill"><div class="dot" id="mktDot"></div><span id="mktTxt">Checking...</span></div>
+  </div>
+</aside>
 
-    return {"error": "Could not parse response"}
+<!-- MAIN -->
+<div class="main">
 
-# ── AI: Ask ────────────────────────────────────────────────────
-@app.post("/ask")
-async def ask(request: dict):
-    question = (request.get("question") or "").strip()
-    context  = request.get("context") or {}
-    if not question:
-        return {"answer": "Please ask a question.", "action": None}
+  <!-- Toggle button -->
+  <button class="panel-toggle" id="importToggle" onclick="toggleImportPanel()" title="Toggle import panel">◀</button>
 
-    client = anthropic.Anthropic(api_key=ANTHROPIC_KEY)
+  <!-- COL 1: IMPORT -->
+  <div class="col-import" id="importPanel" style="display:flex;flex-direction:column">
 
-    system = """You are Onyx, an AI agent embedded in a stock investment dashboard.
-You can answer questions AND control the dashboard by returning actions.
+    <!-- Import form -->
+    <div class="card" style="flex:1;display:flex;flex-direction:column">
+      <div class="ch">
+        <span class="ct">Import from Kalshi</span>
+        <a href="https://kalshi.com" target="_blank" style="font-size:10px;color:var(--blue);font-weight:600;text-decoration:none;background:var(--blue-soft);border:1px solid rgba(21,101,255,0.2);padding:2px 8px;border-radius:4px;white-space:nowrap">Kalshi ↗</a>
+      </div>
+      <div class="import-form" style="flex:1;gap:10px;display:flex;flex-direction:column">
 
-If the user wants to:
-- Add a stock to watchlist: action={"type":"addTicker","ticker":"TSLA"}
-- Buy a stock: action={"type":"buy","ticker":"TSLA","shares":5}
-- Sell a stock: action={"type":"sell","ticker":"TSLA","shares":5}
-- Scan/analyse a stock: action={"type":"scan","ticker":"TSLA"}
-- Go to research page: action={"type":"navigate","page":"research"}
-- Go to dashboard: action={"type":"navigate","page":"dashboard"}
-- Search a topic: action={"type":"research","topic":"Federal Reserve rates"}
-- No action needed: action=null
+        <!-- Kalshi URL -->
+        <div>
+          <div style="margin-bottom:4px">
+            <div class="field-label">Kalshi Market URL</div>
+          </div>
+          <textarea class="field-input" id="importUrl" rows="1" placeholder="https://kalshi.com/markets/..." oninput="onUrlInput(this.value)" style="resize:none;line-height:1.6;min-height:32px"></textarea>
+          <div id="urlStatus" style="font-size:10px;color:var(--grey);margin-top:4px;line-height:1.4;display:none"></div>
+        </div>
 
-Always respond with JSON:
-{"answer": "your 1-3 sentence response", "action": null or action object}
+        <!-- Market Question -->
+        <div>
+          <div class="field-label">Market Question</div>
+          <textarea class="field-input" id="importQ" rows="2" placeholder="Copy the market question from Kalshi..." style="resize:none;line-height:1.5"></textarea>
+        </div>
 
-Be conversational and helpful. If buying/selling, confirm what you did."""
+        <!-- Bet Description -->
+        <div>
+          <div class="field-label">Bet Description</div>
+          <textarea class="field-input" id="importDesc" rows="5" placeholder="Paste the resolution criteria or bet description from Kalshi..." style="resize:none;line-height:1.5;font-size:10px;flex:1;min-height:100px"></textarea>
+        </div>
 
-    try:
-        resp = client.messages.create(
-            model="claude-sonnet-4-5", max_tokens=400,
-            tools=[{"type": "web_search_20250305", "name": "web_search"}],
-            system=system,
-            messages=[{"role": "user", "content":
-                f"User context: {json.dumps(context)}\n\nQuestion/Command: {question}"}]
-        )
-        text = "".join(b.text for b in resp.content if hasattr(b, "text") and b.text)
-        # Try to parse JSON response
-        s, e = text.find("{"), text.rfind("}") + 1
-        if s >= 0 and e > s:
-            try:
-                parsed = json.loads(text[s:e])
-                return {
-                    "answer": parsed.get("answer", text.strip()),
-                    "action": parsed.get("action", None)
-                }
-            except Exception:
-                pass
-        return {"answer": text.strip() or "No answer found.", "action": None}
-    except Exception as ex:
-        return {"answer": f"Error: {str(ex)}", "action": None}
+        <!-- YES / NO prices -->
+        <div style="display:flex;gap:6px">
+          <div style="flex:1">
+            <div class="field-label">YES Price (¢)</div>
+            <input class="price-input" id="importYes" type="number" min="1" max="99" placeholder="e.g. 62" style="width:100%" oninput="syncNo(this.value)"/>
+          </div>
+          <div style="flex:1">
+            <div class="field-label">NO Price (¢)</div>
+            <input class="price-input" id="importNo" type="number" min="1" max="99" placeholder="e.g. 38" style="width:100%" oninput="syncYes(this.value)"/>
+          </div>
+        </div>
 
-@app.post("/suggest")
-async def suggest(request: dict):
-    """Generate smart next-step suggestions based on user context."""
-    context = request.get("context") or {}
-    client = anthropic.Anthropic(api_key=ANTHROPIC_KEY)
-    try:
-        resp = client.messages.create(
-            model="claude-sonnet-4-5", max_tokens=500,
-            tools=[{"type": "web_search_20250305", "name": "web_search"}],
-            messages=[{"role": "user", "content": f"""You are Onyx, an AI investment assistant.
+        <!-- Prob bar preview -->
+        <div id="probPreview" style="display:none">
+          <div style="height:4px;background:var(--yellow);border-radius:3px;overflow:hidden">
+            <div id="probFill" style="height:4px;background:var(--blue);border-radius:3px;width:50%"></div>
+          </div>
+          <div style="display:flex;justify-content:space-between;font-size:9px;color:var(--grey);margin-top:2px">
+            <span id="probYesLbl">YES 50%</span><span id="probNoLbl">NO 50%</span>
+          </div>
+        </div>
 
-Based on this user's current dashboard state, suggest 4 specific, actionable next steps to help them trade smarter.
+        <!-- Close date + Category -->
+        <div style="display:flex;gap:6px">
+          <div style="flex:1">
+            <div class="field-label">Close Date</div>
+            <input class="field-input" id="importClose" type="text" placeholder="e.g. Mar 17, 2026"/>
+          </div>
+          <div style="flex:1">
+            <div class="field-label">Category</div>
+            <select class="field-input" id="importCat" style="padding:6px 8px;font-size:11px">
+              <option value="finance">Finance</option>
+              <option value="politics">Politics</option>
+              <option value="crypto">Crypto</option>
+              <option value="macro">Macro</option>
+              <option value="tech">Tech</option>
+              <option value="sports">Sports</option>
+            </select>
+          </div>
+        </div>
 
-User context: {json.dumps(context)}
+        <!-- Optional: Mark as placed immediately -->
+        <div style="background:var(--surface2);border:1px solid var(--border);border-radius:7px;padding:8px 10px">
+          <div class="field-label" style="color:var(--grey2);margin-bottom:6px">Already placed? (optional)</div>
+          <div style="display:flex;gap:5px;margin-bottom:5px">
+            <button type="button" id="importSideYes" onclick="selectImportSide('YES')" style="flex:1;padding:5px;border-radius:5px;border:1px solid rgba(21,101,255,0.3);background:var(--surface);color:var(--grey2);font-family:Inter,sans-serif;font-size:11px;font-weight:700;cursor:pointer;transition:all 0.12s">YES</button>
+            <button type="button" id="importSideNo" onclick="selectImportSide('NO')" style="flex:1;padding:5px;border-radius:5px;border:1px solid rgba(217,119,6,0.3);background:var(--surface);color:var(--grey2);font-family:Inter,sans-serif;font-size:11px;font-weight:700;cursor:pointer;transition:all 0.12s">NO</button>
+          </div>
+          <input class="price-input" id="importAmount" type="number" min="1" placeholder="$ amount bet" style="width:100%;font-size:11px;padding:5px 8px"/>
+          <input type="hidden" id="importSide" value=""/>
+        </div>
 
-Return ONLY a JSON array of 4 suggestions:
-[
-  {{"title": "Short action title", "description": "One sentence explaining why", "action": {{"type": "scan", "ticker": "AAPL"}} or null}},
-  ...
-]
+        <!-- Import -->
+        <button class="import-btn" style="margin-top:4px" onclick="importBet()">+ Add to Research Inventory</button>
 
-Make suggestions specific to their actual watchlist/portfolio. Search for relevant market info if needed."""}]
-        )
-        text = "".join(b.text for b in resp.content if hasattr(b, "text") and b.text)
-        s, e = text.find("["), text.rfind("]") + 1
-        if s >= 0 and e > s:
-            return {"suggestions": json.loads(text[s:e])}
-    except Exception as ex:
-        pass
-    return {"suggestions": [
-        {"title": "Scan your watchlist", "description": "Get AI signals on all your tracked stocks.", "action": {"type": "scanAll"}},
-        {"title": "Research market trends", "description": "Ask Onyx about current macro conditions.", "action": {"type": "navigate", "page": "research"}},
-        {"title": "Review your portfolio", "description": "Check P&L and consider rebalancing.", "action": None},
-        {"title": "Add a new position", "description": "Diversify by adding a new ticker.", "action": None}
-    ]}
+      </div>
 
-# ── History ────────────────────────────────────────────────────
-@app.get("/predictions")
-def get_predictions(limit: int = 10):
-    try:
-        return db.get_predictions(limit=limit)
-    except Exception:
-        return []
-
-
-@app.get("/kalshi-market")
-async def get_kalshi_market(url: str = "", ticker: str = ""):
-    """Fetch live Kalshi market data via AI web search."""
-    # Extract ticker from URL
-    if url and not ticker:
-        parts = url.rstrip("/").split("/")
-        ticker = parts[-1]
-
-    if not ticker and not url:
-        return {"error": "No URL provided"}
-
-    client = anthropic.Anthropic(api_key=ANTHROPIC_KEY)
-
-    prompt = (
-        f"Search the web for this Kalshi prediction market: {url or ticker}\n\n"
-        "Find and return the current YES price in cents (1-99), NO price, the full market question, "
-        "close/expiry date, and trading volume. "
-        "Return ONLY a valid JSON object, no markdown, no explanation:\n"
-        '{"title": "...", "yes": 62, "no": 38, "close": "Jun 18 2025", "volume": "$1.2M", "category": "finance"}'
-    )
-
-    try:
-        resp = client.messages.create(
-            model="claude-sonnet-4-5",
-            max_tokens=500,
-            tools=[{"type": "web_search_20250305", "name": "web_search"}],
-            messages=[{"role": "user", "content": prompt}]
-        )
-        text = "".join(b.text for b in resp.content if hasattr(b, "text") and b.text)
-        # Find JSON in response
-        s = text.find("{")
-        e = text.rfind("}") + 1
-        if s >= 0 and e > s:
-            result = json.loads(text[s:e])
-            result["url"] = url or f"https://kalshi.com/markets/{ticker}"
-            result["ticker"] = ticker
-            if result.get("yes") and not result.get("no"):
-                result["no"] = 100 - int(result["yes"])
-            if result.get("no") and not result.get("yes"):
-                result["yes"] = 100 - int(result["no"])
-            return result
-        # If no JSON found, return what we got for debugging
-        return {"error": f"AI could not parse market. Raw: {text[:200]}"}
-    except Exception as ex:
-        return {"error": str(ex)}
+    </div>
 
 
-@app.post("/analyse-market")
-async def analyse_market(request: dict):
-    question = (request.get("question") or "").strip()
-    if not question:
-        return {"error": "No question provided"}
 
-    client = anthropic.Anthropic(api_key=ANTHROPIC_KEY)
-    try:
-        resp = client.messages.create(
-            model="claude-sonnet-4-5", max_tokens=600,
-            tools=[{"type": "web_search_20250305", "name": "web_search"}],
-            messages=[{"role": "user", "content": question}]
-        )
-        text = "".join(b.text for b in resp.content if hasattr(b, "text") and b.text)
-        s, e = text.find("{"), text.rfind("}") + 1
-        if s >= 0 and e > s:
-            try:
-                return json.loads(text[s:e])
-            except Exception:
-                pass
-        return {"error": "Could not parse response", "raw": text[:300]}
-    except Exception as ex:
-        return {"error": str(ex)}
+  </div>
 
-@app.get("/health")
-def health():
-    return {"status": "ok"}
+  <!-- COL 2: RESEARCH WORKSPACE -->
+  <div class="col-research">
+    <div class="card" id="researchCard" style="flex:1;display:flex;flex-direction:column;min-height:0">
+      <div class="ch">
+        <span class="ct">Research Workspace</span>
+        <div id="researchHdrRight" style="display:flex;align-items:center;gap:8px;margin-left:auto">
+          <span class="cs" id="researchSub">Select a market to research</span>
+        </div>
+      </div>
+      <div id="researchBody" style="flex:1;overflow-y:auto">
+        <div class="research-empty">
+          <div class="empty-icon" style="font-size:36px;margin-bottom:14px;opacity:0.12">🔭</div>
+          <div class="empty-text">No market selected</div>
+          <div class="empty-sub">Import a Kalshi market and select it to start your AI-powered research session.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- COL 3: BET INVENTORY -->
+  <button class="panel-toggle-right" id="trackerToggle" onclick="toggleTrackerPanel()" title="Toggle inventory panel">▶</button>
+  <div class="col-tracker" id="trackerPanel">
+    <div class="card" style="flex:1;display:flex;flex-direction:column;min-height:0;overflow:hidden">
+
+      <!-- Header with P&L strip -->
+      <div class="ch" style="flex-direction:column;align-items:stretch;gap:6px;padding:10px 14px">
+        <div style="display:flex;align-items:center;justify-content:space-between">
+          <span class="ct">Bet Inventory</span>
+          <span class="cs" id="betCount">0 markets</span>
+        </div>
+        <button onclick="openKalshiPortfolio()" id="portfolioBtn"
+          style="width:100%;background:var(--blue-soft);color:var(--blue);border:1px solid rgba(21,101,255,0.3);font-family:'Inter',sans-serif;font-size:11px;font-weight:600;padding:5px;border-radius:5px;cursor:pointer;transition:all 0.12s;text-align:center"
+          onmouseover="this.style.background='var(--blue)';this.style.color='#fff'" onmouseout="this.style.background='var(--blue-soft)';this.style.color='var(--blue)'"
+          title="Open your Kalshi portfolio">Kalshi Portfolio ↗</button>
+      </div>
+
+      <!-- Portfolio URL popup -->
+      <div id="portfolioPopup" style="display:none;position:absolute;top:42px;right:0;z-index:100;background:var(--surface);border:1px solid var(--border);border-radius:8px;box-shadow:var(--shadow);padding:14px 16px;width:280px">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
+          <span style="font-size:11px;font-weight:600;color:var(--text)">Kalshi Portfolio URL</span>
+          <button onclick="closePortfolioPopup()" style="background:none;border:none;color:var(--grey);cursor:pointer;font-size:16px;line-height:1;padding:0">×</button>
+        </div>
+        <input id="portfolioUrlInput" type="url" placeholder="https://kalshi.com/profile/..." style="width:100%;background:var(--bg);border:1px solid var(--border2);border-radius:5px;font-family:'Inter',sans-serif;font-size:11px;padding:6px 10px;outline:none;color:var(--text);margin-bottom:10px;transition:border-color 0.15s"/>
+        <div style="display:flex;gap:6px">
+          <button onclick="savePortfolioUrl()" style="flex:1;background:var(--blue);color:#fff;border:none;font-family:'Inter',sans-serif;font-size:11px;font-weight:600;padding:6px;border-radius:5px;cursor:pointer">Save & Open</button>
+          <button onclick="clearPortfolioUrl()" style="background:none;border:1px solid var(--border);color:var(--grey2);font-family:'Inter',sans-serif;font-size:11px;padding:6px 10px;border-radius:5px;cursor:pointer">Clear</button>
+        </div>
+      </div>
+
+
+
+      <!-- Inventory list -->
+      <div style="flex:1;overflow-y:auto;border-top:1px solid var(--border)">
+        <div class="inv-grid" id="betList">
+          <div class="sp-empty" style="padding:24px">No bets tracked yet.<br>Place a bet on Kalshi then log it below.</div>
+        </div>
+      </div>
+
+
+
+    </div>
+  </div>
+
+</div><!-- /main -->
+</div><!-- /layout -->
+
+<script>
+const API = 'https://prediction-api-production-ad66.up.railway.app';
+
+// ── STATE ─────────────────────────────────────────────────────
+let bets      = JSON.parse(localStorage.getItem('onyx_mkt_bets') || '[]');
+let positions = JSON.parse(localStorage.getItem('onyx_mkt_pos')  || '[]');
+let activeBet = null;
+let aiResults = JSON.parse(localStorage.getItem('onyx_mkt_ai')   || '{}');
+let betNotes  = JSON.parse(localStorage.getItem('onyx_mkt_notes')|| '{}');
+
+// ── INIT ─────────────────────────────────────────────────────
+(function(){
+  var now=new Date(),h=now.getUTCHours(),d=now.getUTCDay();
+  var open=d>0&&d<6&&h>=13&&h<21;
+  document.getElementById('mktDot').className='dot '+(open?'open':'closed');
+  document.getElementById('mktTxt').textContent=open?'Market Open':'Market Closed';
+})();
+
+renderBetList();
+renderPositions();
+renderPnl();
+renderSidebarPanels();
+
+// ── IMPORT ────────────────────────────────────────────────────
+document.addEventListener('keydown',function(e){
+
+  if(e.key==='Enter' && document.getElementById('importQ')===document.activeElement) importBet();
+});
+
+function selectImportSide(side) {
+  document.getElementById('importSide').value = side;
+  var yBtn = document.getElementById('importSideYes');
+  var nBtn = document.getElementById('importSideNo');
+  if(side === 'YES') {
+    yBtn.style.background = 'var(--blue)'; yBtn.style.color = '#fff'; yBtn.style.borderColor = 'var(--blue)';
+    nBtn.style.background = 'var(--surface)'; nBtn.style.color = 'var(--grey2)'; nBtn.style.borderColor = 'rgba(220,38,38,0.3)';
+  } else {
+    nBtn.style.background = 'var(--yellow)'; nBtn.style.color = '#fff'; nBtn.style.borderColor = 'var(--yellow)';
+    yBtn.style.background = 'var(--surface)'; yBtn.style.color = 'var(--grey2)'; yBtn.style.borderColor = 'rgba(22,163,74,0.3)';
+  }
+}
+
+function onUrlInput(url) {
+  if(!url) return;
+  var status = document.getElementById('urlStatus');
+  // Extract ticker and auto-detect close date from URL slug
+  var parts = url.replace(/\/$/, '').split('/');
+  var ticker = parts[parts.length - 1];
+  // Try to extract date from ticker e.g. kxhormuznorm-26mar17 -> Mar 17, 2026
+  var dateMatch = ticker.match(/(\d{2})(jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec)(\d{2})$/i);
+  if(dateMatch) {
+    var months = {jan:'Jan',feb:'Feb',mar:'Mar',apr:'Apr',may:'May',jun:'Jun',jul:'Jul',aug:'Aug',sep:'Sep',oct:'Oct',nov:'Nov',dec:'Dec'};
+    var mon = months[dateMatch[2].toLowerCase()];
+    var day = parseInt(dateMatch[3]);
+    var year = 2000 + parseInt(dateMatch[1]);
+    document.getElementById('importClose').value = mon + ' ' + day + ', ' + year;
+  }
+  // Auto-detect category from URL
+  var slug = url.toLowerCase();
+  var cats = {politics:['election','president','congress','senate','trump','biden','democrat','republican'],
+               crypto:['bitcoin','btc','eth','ethereum','crypto','solana'],
+               finance:['stock','s&p','sp500','fed','rate','nasdaq','dow'],
+               macro:['gdp','inflation','cpi','unemployment','recession'],
+               tech:['ai','apple','google','meta','microsoft','nvidia','openai'],
+               sports:['nba','nfl','mlb','nhl','world cup','super bowl']};
+  for(var cat in cats) {
+    if(cats[cat].some(function(k){return slug.includes(k);})) {
+      document.getElementById('importCat').value = cat; break;
+    }
+  }
+  status.textContent = '✓ URL saved · Ticker: ' + ticker.toUpperCase() + ' · Fill in the question and prices from Kalshi.';
+  status.style.color = 'var(--green)';
+}
+
+function syncNo(yes) {
+  var y = parseInt(yes);
+  if(y >= 1 && y <= 99) {
+    document.getElementById('importNo').value = 100 - y;
+    updateProbBar(y, 100-y);
+  }
+}
+
+function syncYes(no) {
+  var n = parseInt(no);
+  if(n >= 1 && n <= 99) {
+    document.getElementById('importYes').value = 100 - n;
+    updateProbBar(100-n, n);
+  }
+}
+
+function updateProbBar(yes, no) {
+  document.getElementById('probPreview').style.display = 'block';
+  document.getElementById('probFill').style.width = yes + '%';
+  document.getElementById('probYesLbl').textContent = 'YES ' + yes + '%';
+  document.getElementById('probNoLbl').textContent = 'NO ' + no + '%';
+}
+
+function importBet(){
+  var q      = document.getElementById('importQ').value.trim();
+  var yes    = parseInt(document.getElementById('importYes').value);
+  var no     = parseInt(document.getElementById('importNo').value);
+  var close  = document.getElementById('importClose').value.trim();
+  var cat    = document.getElementById('importCat').value;
+  var url    = document.getElementById('importUrl').value.trim();
+  var side   = document.getElementById('importSide').value;
+  var desc   = document.getElementById('importDesc').value.trim();
+  var amount = parseFloat(document.getElementById('importAmount').value);
+  if(!q){ document.getElementById('importQ').focus(); return; }
+  if(!yes||!no){ alert('Please enter YES and NO prices'); return; }
+  var bet = {
+    id: Date.now().toString(), q, yes, no, close, cat, url, desc: desc||'', created: Date.now(),
+    placed: !!(side && amount),
+    placedSide: side || null,
+    placedAmount: (side && amount) ? amount.toFixed(2) : null
+  };
+  bets.unshift(bet);
+  localStorage.setItem('onyx_mkt_bets', JSON.stringify(bets));
+  ['importQ','importYes','importNo','importClose','importUrl','importAmount','importDesc'].forEach(function(id){
+    document.getElementById(id).value='';
+  });
+  document.getElementById('importSide').value = '';
+  var yBtn=document.getElementById('importSideYes'),nBtn=document.getElementById('importSideNo');
+  if(yBtn){yBtn.style.background='var(--surface)';yBtn.style.color='var(--grey2)';}
+  if(nBtn){nBtn.style.background='var(--surface)';nBtn.style.color='var(--grey2)';}
+  document.getElementById('probPreview').style.display = 'none';
+  document.getElementById('urlStatus').textContent = 'Paste a Kalshi market URL, then fill in the details below.';
+  document.getElementById('urlStatus').style.color = 'var(--grey)';
+  renderBetList();
+  selectBet(bet.id);
+}
+
+function deleteBet(id){
+  bets = bets.filter(function(b){return b.id!==id;});
+  localStorage.setItem('onyx_mkt_bets', JSON.stringify(bets));
+  if(activeBet && activeBet.id===id){ activeBet=null; renderResearchEmpty(); }
+  renderBetList();
+}
+
+// ── BET LIST ─────────────────────────────────────────────────
+function renderBetList(){
+  var list = document.getElementById('betList');
+  document.getElementById('betCount').textContent = bets.length + ' market'+(bets.length!==1?'s':'');
+  if(!bets.length){
+    list.innerHTML = '<div class="empty-state"><div class="empty-icon">📋</div><div class="empty-text">No markets yet</div><div class="empty-sub">Import a Kalshi market above to start researching</div></div>';
+    return;
+  }
+  list.innerHTML = bets.map(function(b){
+    var isActive = activeBet && activeBet.id===b.id;
+    var ai = aiResults[b.id];
+    var verdict = ai ? ai.verdict : null;
+    var vColor = verdict==='YES'?'var(--green)':verdict==='NO'?'var(--red)':'var(--grey)';
+    var placed = b.placed;
+    var daysLeft = '';
+    if(b.close){
+      var d = Math.ceil((new Date(b.close) - Date.now()) / 86400000);
+      daysLeft = d > 0 ? d+'d left' : 'closed';
+    }
+    var html = '<div class="inv-item'+(isActive?' active':'')+'" onclick="selectBet(\''+b.id+'\')">'+
+      '<div class="inv-top">'+
+        '<span class="inv-status open" style="background:var(--surface2);color:var(--grey2);border:1px solid var(--border)">'+b.cat+'</span>'+
+        (verdict?'<span class="inv-status" style="background:'+(verdict==='YES'?'var(--green-dim)':verdict==='NO'?'var(--red-dim)':'var(--surface2)')+';color:'+vColor+'">AI: '+verdict+'</span>':'')+
+        '<button class="inv-del" onclick="event.stopPropagation();deleteBet(\''+b.id+'\')">×</button>'+
+      '</div>'+
+      '<div class="inv-q">'+b.q+'</div>'+
+      '<div class="inv-meta" style="grid-template-columns:1fr 1fr 1fr;gap:4px">'+
+        '<div class="inv-meta-item">'+
+          '<div style="font-size:10px;font-weight:700;font-family:JetBrains Mono,monospace;white-space:nowrap"><span style="color:var(--blue)">'+b.yes+'</span><span style="color:var(--grey);font-weight:400">/</span><span style="color:var(--yellow)">'+b.no+'</span></div>'+
+        '<div style="height:3px;border-radius:2px;overflow:hidden;margin-top:3px;background:var(--yellow)">'+
+          '<div style="height:3px;width:'+b.yes+'%;background:var(--blue);border-radius:2px"></div>'+
+        '</div>'+
+        '</div>'+
+        '<div class="inv-meta-item" style="border:'+(placed?'1px solid rgba(22,163,74,0.25)':'1px solid var(--border)')+';background:'+(placed?'var(--surface2)':'var(--surface)')+'">'+
+          
+          '<div style="font-size:13px;font-weight:700;font-family:Inter,sans-serif;color:'+(placed?'var(--green)':'var(--grey2)')+'">'+(placed?'<span style="color:'+(b.placedSide==='YES'?'var(--blue)':'var(--yellow)')+'">'+b.placedSide+'</span><span style="color:var(--green)"> $'+b.placedAmount+'</span>':'Not Owned')+'</div>'+
+        '</div>'+
+        '<div class="inv-meta-item">'+
+          '<div class="inv-meta-label">Closes</div>'+
+          '<div style="font-size:12px;font-weight:600;font-family:Inter,sans-serif;color:var(--text2)">'+(b.close||'—')+'</div>'+
+        '</div>'+
+      '</div>'+
+
+        '</div>'+
+      '</div>';
+
+    html += '</div>';
+    return html;
+  }).join('');
+}
+
+// ── SELECT BET → RESEARCH ────────────────────────────────────
+function selectBet(id){
+  activeBet = bets.find(function(b){return b.id===id;});
+  if(!activeBet) return;
+  renderBetList();
+  renderResearchWorkspace();
+}
+
+function renderResearchEmpty(){
+  document.getElementById('researchSub').textContent = 'Select a market to research';
+  var hdr=document.getElementById('researchHdrRight'); if(hdr) hdr.innerHTML='<span class="cs" id="researchSub">Select a market to research</span>';
+  document.getElementById('researchBody').innerHTML =
+    '<div class="research-empty"><div class="empty-icon" style="font-size:36px;margin-bottom:14px;opacity:0.12">🔭</div><div class="empty-text">No market selected</div><div class="empty-sub">Import a Kalshi market and select it to start your AI-powered research session.</div></div>';
+}
+
+function renderResearchWorkspace(){
+  var b = activeBet;
+  // Build rich inline header
+  var hdrRight = document.getElementById('researchHdrRight');
+  if(hdrRight){
+    hdrRight.innerHTML =
+      '<span style="font-size:10px;font-weight:700;text-transform:uppercase;padding:2px 8px;border-radius:3px;background:var(--surface2);color:var(--grey2);border:1px solid var(--border);letter-spacing:0.05em">'+b.cat+'</span>' +
+      (b.close?'<span style="font-size:10px;color:var(--grey);font-family:JetBrains Mono,monospace">Closes '+b.close+'</span>':'') +
+      (b.url?'<a href="'+b.url+'" target="_blank" style="font-size:10px;color:var(--blue);font-weight:600;text-decoration:none;border:1px solid rgba(21,101,255,0.3);padding:2px 9px;border-radius:4px;background:var(--blue-soft);white-space:nowrap" title="Open this market on Kalshi">Bet on Kalshi ↗</a>':'');
+  }
+  var saved = aiResults[b.id];
+  var notes = betNotes[b.id] || '';
+
+  document.getElementById('researchBody').innerHTML =
+
+    // Tiny bet status strip at top
+    '<div style="display:flex;align-items:center;gap:6px;padding:5px 12px;border-bottom:1px solid var(--border);background:var(--surface2);flex-shrink:0">' +
+      '<span style="font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:0.07em;color:var(--grey);white-space:nowrap">Bet Status</span>' +
+      (!b.placed ?
+        '<div style="display:flex;align-items:center;gap:4px;flex:1">' +
+          '<button id="rwSideYes" onclick="rwSelectSide(\'YES\')" style="padding:2px 9px;border-radius:4px;border:1px solid rgba(21,101,255,0.3);background:var(--surface);color:var(--grey2);font-family:Inter,sans-serif;font-size:10px;font-weight:700;cursor:pointer;transition:all 0.12s">YES</button>' +
+          '<button id="rwSideNo" onclick="rwSelectSide(\'NO\')" style="padding:2px 9px;border-radius:4px;border:1px solid rgba(217,119,6,0.3);background:var(--surface);color:var(--grey2);font-family:Inter,sans-serif;font-size:10px;font-weight:700;cursor:pointer;transition:all 0.12s">NO</button>' +
+          '<input id="rwAmount" type="number" min="1" placeholder="$ amount" style="width:80px;background:var(--bg);border:1px solid var(--border2);border-radius:4px;font-family:Inter,sans-serif;font-size:10px;padding:2px 6px;outline:none;color:var(--text)"/>' +
+          '<button onclick="rwMarkPlaced()" style="background:var(--text);color:#fff;border:none;font-family:Inter,sans-serif;font-size:10px;font-weight:600;padding:2px 8px;border-radius:4px;cursor:pointer;white-space:nowrap">Save</button>' +
+        '</div>'
+      :
+        '<div style="display:flex;align-items:center;gap:8px;flex:1">' +
+          '<span style="font-size:11px;font-weight:600;color:var(--text2)">✓ Placed </span>' +
+          '<span style="font-size:11px;font-weight:700;color:'+(b.placedSide==='YES'?'var(--blue)':'var(--yellow)')+'">'+( b.placedSide||'')+'</span>' +
+          '<span style="font-size:11px;font-weight:700;color:var(--green)"> · $'+(b.placedAmount||'')+'</span>' +
+          '<button onclick="rwUnmarkPlaced()" style="background:none;border:1px solid var(--border);color:var(--grey2);cursor:pointer;font-size:9px;padding:2px 7px;border-radius:3px;font-family:Inter,sans-serif;margin-left:auto">Reset</button>' +
+        '</div>') +
+    '</div>' +
+
+    '<div class="bet-detail-header">' +
+      '<div class="bet-detail-q">'+b.q+'</div>' +
+
+      '<div style="display:flex;align-items:center">' +
+        '<div style="display:flex;align-items:center;gap:4px">' +
+          '<span class="yes-pill" style="min-width:52px;text-align:center" id="rwYesPill">YES '+b.yes+'¢</span>' +
+          '<div style="display:flex;flex-direction:column;gap:1px">' +
+            '<button onclick="adjustPrice(1,0)" style="background:none;border:none;cursor:pointer;color:var(--blue);font-size:10px;line-height:1;padding:1px 3px" title="YES +1">▲</button>' +
+            '<button onclick="adjustPrice(-1,0)" style="background:none;border:none;cursor:pointer;color:var(--grey);font-size:10px;line-height:1;padding:1px 3px" title="YES -1">▼</button>' +
+          '</div>' +
+        '</div>' +
+        '<div style="display:flex;align-items:center;gap:4px;margin-left:auto">' +
+          '<div style="display:flex;flex-direction:column;gap:1px">' +
+            '<button onclick="adjustPrice(0,1)" style="background:none;border:none;cursor:pointer;color:var(--yellow);font-size:10px;line-height:1;padding:1px 3px" title="NO +1">▲</button>' +
+            '<button onclick="adjustPrice(0,-1)" style="background:none;border:none;cursor:pointer;color:var(--grey);font-size:10px;line-height:1;padding:1px 3px" title="NO -1">▼</button>' +
+          '</div>' +
+          '<span class="no-pill" style="min-width:52px;text-align:center" id="rwNoPill">NO '+b.no+'¢</span>' +
+        '</div>' +
+      '</div>' +
+      '<div class="prob-bar" style="margin-top:8px"><div class="prob-fill" id="rwProbFill" style="width:'+b.yes+'%"></div></div>' +
+      '<div class="prob-label"><span id="rwYesLbl">YES '+b.yes+'%</span><span id="rwNoLbl">NO '+b.no+'%</span></div>' +
+      '<div style="margin-top:8px">' +
+        '<div style="font-size:9px;font-weight:600;text-transform:uppercase;letter-spacing:0.07em;color:var(--grey);margin-bottom:3px">Bet Description</div>' +
+        '<textarea id="rwDesc" style="width:100%;background:var(--surface2);border:1px solid var(--border);border-radius:5px;font-family:Inter,sans-serif;font-size:11px;color:var(--text2);padding:6px 9px;resize:none;outline:none;line-height:1.6;min-height:52px;" placeholder="Paste resolution criteria from Kalshi..." oninput="saveRwDesc()">'+(b.desc||'')+'</textarea>' +
+      '</div>' +
+    '</div>' +
+    '<div class="ai-section">' +
+      '<div style="display:flex;align-items:center;gap:8px">' +
+        '<button class="ai-btn" id="aiAnalyseBtn" onclick="runAnalysis()">✦ Analyse with Onyx</button>' +
+        '<div class="status-bar" id="aiStatus"><div class="spin"></div><span id="aiStatusText">Searching...</span></div>' +
+      '</div>' +
+      '<div id="aiResultArea">' +
+        (saved ? renderAIResult(saved) : '<div style="font-size:11px;color:var(--grey);font-style:italic">Click Analyse to get Onyx AI recommendation on this market.</div>') +
+      '</div>' +
+    '</div>' +
+    '<div style="border-top:1px solid var(--border);margin:0 14px"></div>' +
+    '<div style="padding:10px 14px;display:flex;flex-direction:column;gap:6px">' +
+      '<div style="display:flex;align-items:center;justify-content:space-between">' +
+        '<div style="font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:0.06em;color:var(--grey)">Research Notes</div>' +
+        '<button class="section-btn" onclick="saveNotes()">Save</button>' +
+      '</div>' +
+      '<textarea class="notes-area" id="betNotes" placeholder="Write your research notes, thesis, reasons to bet YES or NO...">'+notes+'</textarea>' +
+    '</div>' +
+    '';
+}
+
+
+function saveNotes(){
+  if(!activeBet) return;
+  var val = document.getElementById('betNotes').value;
+  betNotes[activeBet.id] = val;
+  localStorage.setItem('onyx_mkt_notes', JSON.stringify(betNotes));
+  var btn = document.querySelector('.section-btn');
+  if(btn){ btn.textContent='Saved ✓'; btn.style.color='var(--green)';
+    setTimeout(function(){ btn.textContent='Save'; btn.style.color=''; },1500); }
+}
+
+// ── POSITIONS ─────────────────────────────────────────────────
+function addPosition(){
+  var marketId = document.getElementById('posMarket').value;
+  var side     = document.getElementById('posSide').value;
+  var entry    = parseFloat(document.getElementById('posEntry').value);
+  var amount   = parseFloat(document.getElementById('posAmount').value);
+  if(!marketId||!entry||!amount){ alert('Fill in all position fields'); return; }
+  var bet = bets.find(function(b){return b.id===marketId;});
+  if(!bet) return;
+  positions.unshift({ id:Date.now().toString(), marketId, side, q:bet.q, yes:bet.yes, no:bet.no, entryPrice:entry, amount, status:'open', created:Date.now() });
+  localStorage.setItem('onyx_mkt_pos', JSON.stringify(positions));
+  ['posMarket','posEntry','posAmount'].forEach(function(id){ document.getElementById(id).value=''; });
+  renderPositions();
+  renderPnl();
+}
+
+function deletePosition(id){
+  positions = positions.filter(function(p){return p.id!==id;});
+  localStorage.setItem('onyx_mkt_pos', JSON.stringify(positions));
+  renderPositions(); renderPnl();
+}
+
+function updateStatus(id, status){
+  var p = positions.find(function(p){return p.id===id;});
+  if(p){ p.status=status; localStorage.setItem('onyx_mkt_pos', JSON.stringify(positions)); renderPositions(); renderPnl(); }
+}
+
+function renderPositions(){
+  var list = document.getElementById('posList');
+  document.getElementById('posCount').textContent = positions.length + ' tracked';
+  if(!positions.length){
+    list.innerHTML = '<div class="sp-empty">No positions yet. After placing a bet on Kalshi, track it here.</div>';
+    return;
+  }
+  list.innerHTML = positions.map(function(p){
+    var currentPrice = p.side==='YES' ? p.yes : p.no;
+    var pnl = ((currentPrice - p.entryPrice) / 100) * p.amount;
+    var pnlColor = pnl>=0?'var(--green)':'var(--red)';
+    var pnlStr = (pnl>=0?'+':'')+'$'+Math.abs(pnl).toFixed(2);
+    return '<div class="pos-card">' +
+      '<div class="pos-top">' +
+        '<span class="pos-side '+p.side.toLowerCase()+'">'+p.side+'</span>' +
+        '<div class="pos-q">'+p.q+'</div>' +
+        '<span class="pos-status '+p.status+'">'+p.status+'</span>' +
+        '<button class="pos-del" onclick="deletePosition(\''+p.id+'\')" title="Remove">×</button>' +
+      '</div>' +
+      '<div class="pos-meta">' +
+        '<span>Entry: '+p.entryPrice+'¢</span>' +
+        '<span>Stake: $'+p.amount+'</span>' +
+        '<span class="pos-pnl" style="color:'+pnlColor+'">'+pnlStr+'</span>' +
+      '</div>' +
+      '<div style="display:flex;gap:4px;margin-top:4px">' +
+        (p.status==='open'?
+          '<button class="section-btn" onclick="updateStatus(\''+p.id+'\',\'won\')" style="font-size:9px;color:var(--green)">✓ Won</button>' +
+          '<button class="section-btn" onclick="updateStatus(\''+p.id+'\',\'lost\')" style="font-size:9px;color:var(--red)">✗ Lost</button>'
+        :'') +
+      '</div>' +
+    '</div>';
+  }).join('');
+}
+
+function renderPnl(){ /* removed - Kalshi tracks P&L */ }
+
+// ── SIDEBAR ───────────────────────────────────────────────────
+function updateBetPrices(id, yes, no){
+  var b = bets.find(function(b){return b.id===id;});
+  if(!b) return;
+  if(yes !== null){
+    var y = parseInt(yes);
+    if(y>=1&&y<=99){ b.yes=y; b.no=100-y; var noEl=document.getElementById('rwNo'); if(noEl) noEl.value=100-y; }
+  }
+  if(no !== null){
+    var n = parseInt(no);
+    if(n>=1&&n<=99){ b.no=n; b.yes=100-n; var yEl=document.getElementById('rwYes'); if(yEl) yEl.value=100-n; }
+  }
+  // Update prob bar
+  var fill=document.getElementById('rwProbFill'); if(fill) fill.style.width=b.yes+'%';
+  localStorage.setItem('onyx_mkt_bets', JSON.stringify(bets));
+  renderBetList();
+}
+
+function saveRwDesc(){
+  if(!activeBet) return;
+  var el = document.getElementById('rwDesc');
+  if(!el) return;
+  activeBet.desc = el.value;
+  var idx = bets.findIndex(function(b){return b.id===activeBet.id;}); if(idx>=0) bets[idx]=activeBet;
+  localStorage.setItem('onyx_mkt_bets', JSON.stringify(bets));
+}
+
+function adjustPrice(yDelta, nDelta){
+  if(!activeBet) return;
+  var y=activeBet.yes, n=activeBet.no;
+  if(yDelta!==0){ y=Math.min(99,Math.max(1,y+yDelta)); n=100-y; }
+  else{ n=Math.min(99,Math.max(1,n+nDelta)); y=100-n; }
+  activeBet.yes=y; activeBet.no=n;
+  var yp=document.getElementById('rwYesPill'); if(yp) yp.textContent='YES '+y+'¢';
+  var np=document.getElementById('rwNoPill'); if(np) np.textContent='NO '+n+'¢';
+  var fill=document.getElementById('rwProbFill'); if(fill) fill.style.width=y+'%';
+  var yl=document.getElementById('rwYesLbl'); if(yl) yl.textContent='YES '+y+'%';
+  var nl=document.getElementById('rwNoLbl'); if(nl) nl.textContent='NO '+n+'%';
+  var idx=bets.findIndex(function(b){return b.id===activeBet.id;}); if(idx>=0) bets[idx]=activeBet;
+  localStorage.setItem('onyx_mkt_bets',JSON.stringify(bets));
+  renderBetList();
+}
+
+function rwSelectSide(side){
+  var y=document.getElementById('rwSideYes'), n=document.getElementById('rwSideNo');
+  if(!y||!n) return;
+  if(side==='YES'){
+    y.style.background='var(--blue)'; y.style.color='#fff'; y.style.borderColor='var(--blue)';
+    n.style.background='var(--surface)'; n.style.color='var(--grey2)'; n.style.borderColor='rgba(220,38,38,0.3)';
+  } else {
+    n.style.background='var(--yellow)'; n.style.color='#fff'; n.style.borderColor='var(--yellow)';
+    y.style.background='var(--surface)'; y.style.color='var(--grey2)'; y.style.borderColor='rgba(22,163,74,0.3)';
+  }
+  y.dataset.selected = side==='YES'?'1':'';
+  n.dataset.selected = side==='NO'?'1':'';
+}
+
+function rwMarkPlaced(){
+  if(!activeBet) return;
+  var yBtn=document.getElementById('rwSideYes');
+  var nBtn=document.getElementById('rwSideNo');
+  var amt=document.getElementById('rwAmount');
+  var side = (yBtn&&yBtn.dataset.selected==='1')?'YES':(nBtn&&nBtn.dataset.selected==='1')?'NO':'';
+  var amount = amt?parseFloat(amt.value):0;
+  if(!side){ alert('Select YES or NO first'); return; }
+  if(!amount||amount<=0){ if(amt) amt.focus(); return; }
+  activeBet.placed = true;
+  activeBet.placedSide = side;
+  activeBet.placedAmount = amount.toFixed(2);
+  var idx=bets.findIndex(function(b){return b.id===activeBet.id;}); if(idx>=0) bets[idx]=activeBet;
+  localStorage.setItem('onyx_mkt_bets', JSON.stringify(bets));
+  renderBetList();
+  renderResearchWorkspace();
+}
+
+function rwUnmarkPlaced(){
+  if(!activeBet) return;
+  activeBet.placed = false; activeBet.placedSide = null; activeBet.placedAmount = null;
+  var idx=bets.findIndex(function(b){return b.id===activeBet.id;}); if(idx>=0) bets[idx]=activeBet;
+  localStorage.setItem('onyx_mkt_bets', JSON.stringify(bets));
+  renderBetList();
+  renderResearchWorkspace();
+}
+
+
+
+function markPlaced(id){
+  var b = bets.find(function(b){return b.id===id;});
+  if(!b) return;
+  var side = document.getElementById('side-'+id);
+  var amt  = document.getElementById('amt-'+id);
+  if(!amt || !amt.value){ if(amt) amt.focus(); return; }
+  b.placed = true;
+  b.placedSide = side ? side.value : 'YES';
+  b.placedAmount = parseFloat(amt.value).toFixed(2);
+  localStorage.setItem('onyx_mkt_bets', JSON.stringify(bets));
+  renderBetList();
+  if(activeBet && activeBet.id===id) renderResearchWorkspace();
+}
+
+function unmarkPlaced(id){
+  var b = bets.find(function(b){return b.id===id;});
+  if(!b) return;
+  b.placed = false; b.placedSide = null; b.placedAmount = null;
+  localStorage.setItem('onyx_mkt_bets', JSON.stringify(bets));
+  renderBetList();
+}
+
+function selectBetFromInventory(marketId){
+  var bet = bets.find(function(b){return b.id===marketId;});
+  if(bet){ activeBet=bet; renderBetList(); renderResearchWorkspace(); }
+}
+
+function toggleSP(id){ var c=document.getElementById(id); if(c) c.classList.toggle('open'); }
+
+function renderSidebarPanels(){
+  try{
+    var wl=JSON.parse(localStorage.getItem('onyx_wl_v3')||'[]');
+    var port=JSON.parse(localStorage.getItem('onyx_portfolio')||'[]');
+    document.getElementById('spWlCount').textContent=wl.length+' stock'+(wl.length!==1?'s':'');
+    var wb=document.getElementById('spWlBody');
+    if(!wl.length){ wb.innerHTML='<div class="sp-empty">No stocks added yet</div>'; }
+    else {
+      wb.innerHTML=wl.slice(0,12).map(function(w){
+        var p=port.find(function(p){return p.ticker===w.ticker;});
+        var tv='';
+        if(p&&p.shares&&p.buyPrice){
+          var lp=p.points&&p.points.length?p.points[p.points.length-1].p:p.buyPrice;
+          var t=p.shares*lp,pnl=(lp-p.buyPrice)*p.shares;
+          tv='<span style="font-family:JetBrains Mono,monospace;font-size:10px;color:'+(pnl>=0?'var(--green)':'var(--red)')+';font-weight:600">$'+t.toFixed(2)+'</span>';
+        }
+        return '<div class="sp-row" onclick="window.location.href=\'/'+'\'"><span class="sp-ticker">'+w.ticker+'</span>'+(tv||'<span style="font-size:10px;color:var(--grey)">-</span>')+'</div>';
+      }).join('');
+    }
+  }catch(e){}
+  try{
+    var sessions=JSON.parse(localStorage.getItem('onyx_sessions')||'[]');
+    document.getElementById('spRsCount').textContent=sessions.length+' session'+(sessions.length!==1?'s':'');
+    var rb=document.getElementById('spRsBody');
+    if(!sessions.length){ rb.innerHTML='<div class="sp-empty">No research sessions yet</div>'; }
+    else {
+      rb.innerHTML=sessions.slice().reverse().slice(0,8).map(function(s){
+        var name=s.name||s.topic||'Untitled';
+        var date=new Date(s.created).toLocaleDateString('en-US',{month:'short',day:'numeric'});
+        return '<div class="sp-log-row" onclick="window.location.href=\'/search\'"><div class="sp-log-name">'+name.substring(0,28)+(name.length>28?'...':'')+'</div><div class="sp-log-date">'+date+'</div></div>';
+      }).join('');
+    }
+  }catch(e){}
+}
+setInterval(renderSidebarPanels,30000);
+
+// ── IMPORT PANEL TOGGLE ───────────────────────────────────────
+function toggleTrackerPanel(){
+  var panel  = document.getElementById('trackerPanel');
+  var btn    = document.getElementById('trackerToggle');
+  var isOpen = !panel.classList.contains('collapsed');
+  if(isOpen){
+    panel.classList.add('collapsed');
+    btn.textContent = '◀';
+    btn.title = 'Open inventory panel';
+  } else {
+    panel.classList.remove('collapsed');
+    btn.textContent = '▶';
+    btn.title = 'Close inventory panel';
+  }
+}
+
+function toggleImportPanel(){
+  var panel  = document.getElementById('importPanel');
+  var btn    = document.getElementById('importToggle');
+  var isOpen = !panel.classList.contains('collapsed');
+  if(isOpen){
+    panel.classList.add('collapsed');
+    btn.textContent = '▶';
+    btn.title = 'Open import panel';
+    btn.style.left = '0px';
+  } else {
+    panel.classList.remove('collapsed');
+    btn.textContent = '◀';
+    btn.title = 'Close import panel';
+    btn.style.left = '0px';
+  }
+}
+
+
+// ── KALSHI PORTFOLIO LINK ─────────────────────────────────────
+function openKalshiPortfolio() {
+  var saved = localStorage.getItem('onyx_kalshi_portfolio_url') || '';
+  if (saved) {
+    window.open(saved, '_blank');
+  } else {
+    // Show popup to enter URL
+    var popup = document.getElementById('portfolioPopup');
+    if (popup) {
+      popup.style.display = popup.style.display === 'none' ? 'block' : 'none';
+      var inp = document.getElementById('portfolioUrlInput');
+      if (inp) { inp.value = ''; inp.focus(); }
+    }
+  }
+}
+
+function savePortfolioUrl() {
+  var inp = document.getElementById('portfolioUrlInput');
+  var val = inp ? inp.value.trim() : '';
+  if (val) {
+    localStorage.setItem('onyx_kalshi_portfolio_url', val);
+    closePortfolioPopup();
+    window.open(val, '_blank');
+  } else {
+    if (inp) inp.focus();
+  }
+}
+
+function clearPortfolioUrl() {
+  localStorage.removeItem('onyx_kalshi_portfolio_url');
+  closePortfolioPopup();
+}
+
+function closePortfolioPopup() {
+  var popup = document.getElementById('portfolioPopup');
+  if (popup) popup.style.display = 'none';
+}
+
+// Close popup on outside click
+document.addEventListener('click', function(e) {
+  var popup = document.getElementById('portfolioPopup');
+  var btn = document.getElementById('portfolioBtn');
+  if (popup && btn && !popup.contains(e.target) && !btn.contains(e.target)) {
+    popup.style.display = 'none';
+  }
+});
+
+</script>
+</body>
+</html>'<div style="display:flex;gap:8px;margin-top:10px;align-items:center">'+
+        '<div style="font-size:10px;font-weight:600;color:var(--grey);text-transform:uppercase;letter-spacing:0.06em;white-space:nowrap">Update Prices:</div>'+
+        '<div style="display:flex;align-items:center;gap:4px">'+
+          '<span style="font-size:10px;color:var(--green);font-weight:700">YES</span>'+
+          '<input type="number" id="rwYes" min="1" max="99" value="'+b.yes+'" style="width:56px;background:var(--bg);border:1px solid rgba(22,163,74,0.4);border-radius:5px;font-family:JetBrains Mono,monospace;font-size:12px;font-weight:700;color:var(--green);padding:4px 7px;outline:none;text-align:center"/>'+
+          '<span style="font-size:11px;color:var(--grey)">¢</span>'+
+        '</div>'+
+        '<div style="display:flex;align-items:center;gap:4px">'+
+          '<span style="font-size:10px;color:var(--red);font-weight:700">NO</span>'+
+          '<input type="number" id="rwNo" min="1" max="99" value="'+b.no+'" style="width:56px;background:var(--bg);border:1px solid rgba(220,38,38,0.4);border-radius:5px;font-family:JetBrains Mono,monospace;font-size:12px;font-weight:700;color:var(--red);padding:4px 7px;outline:none;text-align:center"/>'+
+          '<span style="font-size:11px;color:var(--grey)">¢</span>'+
+        '</div>'+
+        '<button onclick="savePrices()" style="background:var(--blue);color:#fff;border:none;font-family:Inter,sans-serif;font-size:10px;font-weight:600;padding:4px 10px;border-radius:4px;cursor:pointer">Save</button>'+
+      '</div>'+
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<title>Onyx AI - Markets</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#f7f7f6;--surface:#fff;--surface2:#f3f3f2;
+  --border:#e5e4e2;--border2:#d1d0cd;
+  --blue:#1565ff;--blue-soft:#eff3ff;--blue-glow:rgba(21,101,255,0.08);
+  --text:#111827;--text2:#4b5563;--grey:#9ca3af;--grey2:#6b7280;
+  --green:#16a34a;--green-dim:rgba(22,163,74,0.08);
+  --red:#dc2626;--red-dim:rgba(220,38,38,0.08);
+  --yellow:#d97706;--yellow-dim:rgba(217,119,6,0.08);
+  --shadow:0 2px 8px rgba(0,0,0,0.08),0 1px 3px rgba(0,0,0,0.05);
+  --sidebar-w:300px;
+}
+html,body{height:100%;background:var(--bg);color:var(--text);font-family:'Inter',sans-serif;font-size:13px;overflow:hidden}
+*::-webkit-scrollbar{width:4px;height:4px}
+*::-webkit-scrollbar-track{background:transparent}
+*::-webkit-scrollbar-thumb{background:var(--border2);border-radius:2px}
+*::-webkit-scrollbar-thumb:hover{background:var(--grey)}
+*{scrollbar-width:thin;scrollbar-color:var(--border2) transparent}
+.layout{display:flex;height:100vh}
+
+/* SIDEBAR */
+.sidebar{width:var(--sidebar-w);background:var(--surface);border-right:1px solid var(--border);display:flex;flex-direction:column;flex-shrink:0;height:100vh}
+.sidebar-logo{height:107px;display:flex;align-items:center;padding:0 20px;border-bottom:1px solid var(--border);flex-shrink:0}
+.logo-row{display:flex;align-items:center;gap:9px}
+.logo-icon{width:28px;height:28px;background:var(--blue);border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;color:#fff;font-family:'JetBrains Mono',monospace;flex-shrink:0}
+.logo-name{font-size:16px;font-weight:700;color:var(--text)}
+.logo-sub{font-size:11px;color:var(--grey);letter-spacing:0.06em;text-transform:uppercase;margin-top:2px}
+.sidebar-nav{padding:12px 10px;flex-shrink:0}
+.nav-sec{font-size:10px;font-weight:600;letter-spacing:0.1em;text-transform:uppercase;color:var(--grey);padding:10px 10px 5px}
+.nav-item{display:flex;align-items:center;gap:10px;padding:9px 12px;border-radius:7px;color:var(--grey2);text-decoration:none;font-size:13px;font-weight:500;transition:all 0.12s;margin-bottom:2px}
+.nav-item:hover{background:var(--surface2);color:var(--text)}
+.nav-item.active{background:var(--blue-soft);color:var(--blue)}
+.sidebar-panels{padding:10px;display:flex;flex-direction:column;gap:8px;overflow-y:auto;flex:1;min-height:0}
+.sp-card{background:var(--surface2);border:1px solid var(--border);border-radius:8px;overflow:hidden}
+.sp-header{display:flex;align-items:center;justify-content:space-between;padding:8px 10px;cursor:pointer;user-select:none}
+.sp-header:hover{background:var(--border)}
+.sp-title{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:0.08em;color:var(--text2)}
+.sp-count{font-size:9px;color:var(--grey);font-family:'JetBrains Mono',monospace}
+.sp-arrow{font-size:9px;color:var(--grey);transition:transform 0.2s}
+.sp-card.open .sp-arrow{transform:rotate(90deg)}
+.sp-body{display:none;border-top:1px solid var(--border)}
+.sp-card.open .sp-body{display:block}
+.sp-row{display:flex;align-items:center;gap:6px;padding:6px 10px;border-bottom:1px solid var(--border);cursor:pointer}
+.sp-row:last-child{border-bottom:none}
+.sp-row:hover{background:var(--surface)}
+.sp-ticker{font-family:'JetBrains Mono',monospace;font-size:11px;font-weight:600;color:var(--text);min-width:38px}
+.sp-log-row{padding:6px 10px;border-bottom:1px solid var(--border);cursor:pointer}
+.sp-log-row:last-child{border-bottom:none}
+.sp-log-row:hover{background:var(--surface)}
+.sp-log-name{font-size:11px;font-weight:500;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.sp-log-date{font-size:9px;color:var(--grey);font-family:'JetBrains Mono',monospace}
+.sp-empty{padding:10px;font-size:11px;color:var(--grey);font-style:italic;text-align:center}
+.sidebar-footer{padding:14px 20px;border-top:1px solid var(--border);flex-shrink:0}
+.mkt-pill{display:flex;align-items:center;gap:7px;font-size:11px;color:var(--text2)}
+.dot{width:6px;height:6px;border-radius:50%}
+.dot.open{background:var(--green)}.dot.closed{background:var(--red)}
+
+/* MAIN */
+.main{flex:1;padding:24px;padding-top:131px;display:flex;gap:16px;overflow:hidden;height:100vh;position:relative}
+
+/* THREE COLUMNS */
+.col-import{width:220px;flex-shrink:0;display:flex;flex-direction:column;gap:12px;overflow-y:auto}
+.col-research{flex:1;min-width:0;display:flex;flex-direction:column;gap:12px;overflow-y:auto}
+.col-tracker{width:220px;flex-shrink:0;display:flex;flex-direction:column;gap:12px;overflow-y:auto;position:relative}
+
+/* CARDS */
+.card{background:var(--surface);border:1px solid var(--border);border-radius:10px;overflow:hidden;box-shadow:var(--shadow)}
+.ch{padding:8px 14px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;flex-shrink:0}
+.ct{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:0.08em;color:var(--text)}
+.cs{font-size:10px;color:var(--grey)}
+
+/* IMPORT FORM */
+.import-form{padding:10px 12px;display:flex;flex-direction:column;gap:7px}
+.field-label{font-size:9px;font-weight:600;color:var(--grey);text-transform:uppercase;letter-spacing:0.06em;margin-bottom:2px}
+.field-input{width:100%;background:var(--bg);border:1px solid var(--border2);border-radius:6px;color:var(--text);font-family:'Inter',sans-serif;font-size:11px;padding:5px 8px;outline:none;transition:border-color 0.15s}
+.field-input:focus{border-color:var(--blue);box-shadow:0 0 0 2px var(--blue-glow)}
+.field-input::placeholder{color:var(--grey)}
+.field-row{display:flex;gap:6px}
+.price-input{width:80px;flex-shrink:0;background:var(--bg);border:1px solid var(--border2);border-radius:6px;color:var(--text);font-family:'JetBrains Mono',monospace;font-size:12px;font-weight:600;padding:6px 9px;outline:none;transition:border-color 0.15s;text-align:center}
+.price-input:focus{border-color:var(--blue)}
+.import-btn{width:100%;background:var(--text);color:#fff;border:none;font-family:'Inter',sans-serif;font-size:11px;font-weight:600;padding:7px;border-radius:6px;cursor:pointer;transition:opacity 0.12s}
+.import-btn:hover{opacity:0.8}
+.kalshi-hint{display:none}
+
+/* IMPORTED BETS LIST */
+.bet-list{display:flex;flex-direction:column;gap:0}
+.bet-row{display:flex;align-items:center;gap:8px;padding:8px 12px;border-bottom:1px solid var(--border);cursor:pointer;transition:background 0.1s}
+.bet-row:last-child{border-bottom:none}
+.bet-row:hover{background:var(--surface2)}
+.bet-row.active{background:var(--blue-soft)}
+.bet-q{font-size:11px;font-weight:500;color:var(--text);flex:1;line-height:1.4;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.bet-yes{font-size:10px;font-weight:700;color:var(--green);background:var(--green-dim);padding:1px 5px;border-radius:3px;flex-shrink:0}
+.bet-no{font-size:10px;font-weight:700;color:var(--red);background:var(--red-dim);padding:1px 5px;border-radius:3px;flex-shrink:0}
+.bet-del{background:none;border:none;color:var(--grey);cursor:pointer;font-size:14px;padding:0 2px;flex-shrink:0}
+.bet-del:hover{color:var(--red)}
+
+/* RESEARCH WORKSPACE */
+.research-empty{padding:40px 20px;text-align:center}
+.bet-detail-header{padding:12px 14px;border-bottom:1px solid var(--border)}
+.bet-detail-q{font-size:14px;font-weight:600;color:var(--text);line-height:1.4;margin-bottom:8px}
+.bet-meta{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.odds-strip{display:flex;gap:6px;align-items:center}
+.yes-pill{font-size:11px;font-weight:700;padding:3px 10px;border-radius:4px;background:var(--blue-soft);color:var(--blue)}
+.no-pill{font-size:11px;font-weight:700;padding:3px 10px;border-radius:4px;background:var(--yellow-dim);color:var(--yellow)}
+.close-badge{font-size:10px;color:var(--grey);font-family:'JetBrains Mono',monospace}
+.cat-badge{font-size:9px;font-weight:700;text-transform:uppercase;padding:2px 6px;border-radius:3px;background:var(--surface2);color:var(--grey2);border:1px solid var(--border)}
+.prob-bar{height:5px;background:var(--yellow);border-radius:3px;overflow:hidden;margin:10px 0 4px}
+.prob-fill{height:5px;background:var(--blue);border-radius:3px;transition:width 0.5s}
+.prob-label{font-size:10px;color:var(--grey);display:flex;justify-content:space-between}
+
+/* AI ANALYSIS */
+.ai-section{padding:10px 14px;display:flex;flex-direction:column;gap:8px}
+.ai-btn{background:var(--text);color:var(--surface);border:none;font-family:'Inter',sans-serif;font-size:11px;font-weight:600;padding:7px 14px;border-radius:6px;cursor:pointer;transition:opacity 0.12s;display:flex;align-items:center;gap:6px;flex-shrink:0}
+.ai-btn:hover{opacity:0.8}
+.ai-btn:disabled{opacity:0.4;cursor:not-allowed}
+.ai-result{background:var(--surface2);border:1px solid var(--border);border-radius:7px;padding:10px 12px}
+.ai-verdict{display:flex;align-items:center;gap:8px;margin-bottom:8px}
+.verdict-badge{font-size:12px;font-weight:800;padding:4px 12px;border-radius:5px;text-transform:uppercase;letter-spacing:0.05em}
+.verdict-badge.yes{background:var(--green);color:#fff}
+.verdict-badge.no{background:var(--red);color:#fff}
+.verdict-badge.skip{background:var(--surface2);color:var(--grey2);border:1px solid var(--border)}
+.verdict-conf{font-size:10px;color:var(--grey)}
+.ai-reasoning{font-size:12px;color:var(--text2);line-height:1.65;margin-bottom:8px}
+.ai-signals{display:flex;flex-direction:column;gap:4px}
+.ai-signal{font-size:11px;color:var(--text2);display:flex;gap:6px;line-height:1.4}
+.ai-signal-dot{width:5px;height:5px;border-radius:50%;background:var(--blue);flex-shrink:0;margin-top:4px}
+
+/* NOTES */
+.notes-area{width:100%;background:var(--bg);border:1px solid var(--border2);border-radius:6px;color:var(--text);font-family:'Inter',sans-serif;font-size:12px;padding:8px 10px;resize:none;outline:none;line-height:1.6;min-height:100px;transition:border-color 0.15s}
+.notes-area:focus{border-color:var(--blue)}
+
+/* KALSHI LINK */
+.kalshi-btn{display:flex;align-items:center;justify-content:center;gap:8px;width:100%;background:var(--text);color:#fff;text-decoration:none;font-family:'Inter',sans-serif;font-size:12px;font-weight:700;padding:9px;border-radius:7px;transition:opacity 0.12s;border:none;cursor:pointer}
+.kalshi-btn:hover{opacity:0.85}
+
+/* POSITIONS TRACKER */
+.pos-card{padding:9px 12px;border-bottom:1px solid var(--border);display:flex;flex-direction:column;gap:4px}
+.pos-card:last-child{border-bottom:none}
+.pos-top{display:flex;align-items:center;gap:6px}
+.pos-side{font-size:9px;font-weight:700;padding:1px 6px;border-radius:3px;text-transform:uppercase;flex-shrink:0}
+.pos-side.yes{background:var(--blue-soft);color:var(--blue)}
+.pos-side.no{background:var(--yellow-dim);color:var(--yellow)}
+.pos-q{font-size:11px;font-weight:500;color:var(--text);flex:1;line-height:1.3;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.pos-del{background:none;border:none;color:var(--grey);cursor:pointer;font-size:13px;padding:0;flex-shrink:0}
+.pos-del:hover{color:var(--red)}
+.pos-meta{display:flex;gap:10px;font-size:10px;color:var(--grey2);font-family:'JetBrains Mono',monospace}
+.pos-pnl{font-weight:700}
+.pos-status{font-size:9px;font-weight:600;padding:1px 6px;border-radius:3px;flex-shrink:0}
+.pos-status.open{background:var(--blue-soft);color:var(--blue)}
+.pos-status.won{background:var(--blue-soft);color:var(--blue)}
+.pos-status.lost{background:var(--yellow-dim);color:var(--yellow)}
+
+/* STATUS */
+.status-bar{display:none;align-items:center;gap:6px;padding:6px 12px;background:var(--blue-soft);border-bottom:1px solid rgba(21,101,255,0.15);font-size:10px;color:var(--blue);font-family:'JetBrains Mono',monospace}
+.status-bar.active{display:flex}
+.spin{width:10px;height:10px;border:1.5px solid rgba(21,101,255,0.2);border-top-color:var(--blue);border-radius:50%;animation:spin 0.7s linear infinite;flex-shrink:0}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+/* MISC */
+.section-btn{background:none;border:1px solid var(--border2);color:var(--text2);font-family:'Inter',sans-serif;font-size:10px;font-weight:500;padding:3px 9px;border-radius:4px;cursor:pointer;transition:all 0.12s}
+.section-btn:hover{border-color:var(--blue);color:var(--blue)}
+.empty-state{padding:30px 16px;text-align:center;color:var(--grey)}
+.empty-icon{font-size:28px;margin-bottom:10px;opacity:0.2}
+.empty-text{font-size:13px;font-weight:500;color:var(--text2);margin-bottom:4px}
+.empty-sub{font-size:11px;color:var(--grey);line-height:1.6}
+
+    /* Inventory grid */
+    .inv-grid { display: flex; flex-direction: column; gap: 10px; padding: 12px; }
+    .inv-item { background: var(--surface2); border: 1px solid var(--border); border-radius: 9px; padding: 14px 16px; cursor: pointer; transition: all 0.15s; box-shadow: 0 1px 3px rgba(0,0,0,0.04); }
+    .inv-item:hover { border-color: var(--blue); background: var(--surface); box-shadow: var(--shadow); }
+    .inv-item.active { border-color: var(--blue); background: var(--blue-soft); }
+    .inv-top { display: flex; align-items: center; gap: 6px; margin-bottom: 10px; flex-wrap: wrap; }
+    .inv-side { font-size: 10px; font-weight: 800; padding: 3px 9px; border-radius: 4px; text-transform: uppercase; letter-spacing: 0.05em; flex-shrink: 0; }
+    .inv-side.yes { background: var(--green); color: #fff; }
+    .inv-side.no { background: var(--red); color: #fff; }
+    .inv-status { font-size: 10px; font-weight: 600; padding: 3px 8px; border-radius: 4px; flex-shrink: 0; }
+    .inv-status.open { background: var(--blue-soft); color: var(--blue); }
+    .inv-status.won { background: var(--green-dim); color: var(--green); }
+    .inv-status.lost { background: var(--red-dim); color: var(--red); }
+    .inv-del { background: none; border: none; color: var(--grey); cursor: pointer; font-size: 16px; padding: 0 3px; flex-shrink: 0; margin-left: auto; line-height: 1; }
+    .inv-del:hover { color: var(--red); }
+    .inv-q { font-size: 11px; font-weight: 600; color: var(--text); line-height: 1.35; margin-bottom: 5px; }
+    .inv-meta { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 3px; }
+    .inv-meta-item { background: var(--surface); border: 1px solid var(--border); border-radius: 4px; padding: 3px 6px; }
+    .inv-meta-label { font-size: 8px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.04em; color: var(--grey); margin-bottom: 1px; }
+    .inv-meta-val { font-size: 10px; font-weight: 700; font-family: 'JetBrains Mono', monospace; color: var(--text); white-space: nowrap; overflow: hidden; }
+    .inv-meta-val.green { color: var(--green); font-size: 10px; }
+    .inv-meta-val.red { color: var(--red); }
+    .inv-price { font-size: 11px; font-family: 'JetBrains Mono', monospace; color: var(--grey2); }
+    .inv-actions { display: flex; gap: 4px; margin-top: 6px; }
+    .inv-btn { font-size: 9px; font-weight: 600; padding: 2px 8px; border-radius: 3px; border: 1px solid var(--border); background: var(--surface2); color: var(--grey2); cursor: pointer; transition: all 0.12s; }
+    /* Summary strip */
+    .pnl-strip { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 6px; padding: 10px 12px; }
+    .pnl-box { background: var(--surface2); border-radius: 6px; padding: 7px 8px; text-align: center; }
+    .pnl-val { font-size: 15px; font-weight: 800; font-family: 'JetBrains Mono', monospace; }
+    .pnl-lbl { font-size: 9px; color: var(--grey); text-transform: uppercase; letter-spacing: 0.05em; margin-top: 1px; }
+</style>
+</head>
+<body>
+<div class="layout">
+
+<!-- SIDEBAR -->
+<aside class="sidebar">
+  <div class="sidebar-logo">
+    <div class="logo-row">
+      <div class="logo-icon">O</div>
+      <div>
+        <div class="logo-name">Onyx AI</div>
+        <div class="logo-sub">Intelligence</div>
+      </div>
+    </div>
+  </div>
+  <nav class="sidebar-nav">
+    <div class="nav-sec">Main</div>
+    <a class="nav-item" href="/">
+      <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor"><path d="M2 2h5v5H2V2zm0 7h5v5H2V9zm7-7h5v5H9V2zm0 7h5v5H9V9z"/></svg>
+      Dashboard
+    </a>
+    <a class="nav-item" href="/search">
+      <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor"><path d="M11.742 10.344a6.5 6.5 0 1 0-1.397 1.398h-.001l3.85 3.85a1 1 0 0 0 1.415-1.414l-3.85-3.85zm-5.242 1.656a5.5 5.5 0 1 1 0-11 5.5 5.5 0 0 1 0 11z"/></svg>
+      Research
+    </a>
+    <a class="nav-item active" href="/markets">
+      <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor"><path d="M0 11l3-5 4 3 3-7 3 4 3-2v7H0z"/></svg>
+      Markets
+    </a>
+  </nav>
+  <div style="padding:10px 10px 4px;flex-shrink:0">
+    <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:0.1em;color:var(--grey);padding:6px 2px 4px">Portfolio</div>
+  </div>
+  <div class="sidebar-panels" id="sidebarPanels">
+    <div class="sp-card open" id="spWatchlist">
+      <div class="sp-header" onclick="toggleSP('spWatchlist')">
+        <span class="sp-title">Watchlist</span>
+        <div style="display:flex;align-items:center;gap:6px"><span class="sp-count" id="spWlCount">0 stocks</span><span class="sp-arrow">▶</span></div>
+      </div>
+      <div class="sp-body" id="spWlBody"><div class="sp-empty">No stocks added yet</div></div>
+    </div>
+    <div class="sp-card open" id="spResearch">
+      <div class="sp-header" onclick="toggleSP('spResearch')">
+        <span class="sp-title">Research Log</span>
+        <div style="display:flex;align-items:center;gap:6px"><span class="sp-count" id="spRsCount">0 sessions</span><span class="sp-arrow">▶</span></div>
+      </div>
+      <div class="sp-body" id="spRsBody"><div class="sp-empty">No research sessions yet</div></div>
+    </div>
+  </div>
+  <div class="sidebar-footer">
+    <div class="mkt-pill"><div class="dot" id="mktDot"></div><span id="mktTxt">Checking...</span></div>
+  </div>
+</aside>
+
+<!-- MAIN -->
+<div class="main">
+
+  <!-- Toggle button -->
+  <button class="panel-toggle" id="importToggle" onclick="toggleImportPanel()" title="Toggle import panel">◀</button>
+
+  <!-- COL 1: IMPORT -->
+  <div class="col-import" id="importPanel" style="display:flex;flex-direction:column">
+
+    <!-- Import form -->
+    <div class="card" style="flex:1;display:flex;flex-direction:column">
+      <div class="ch">
+        <span class="ct">Import from Kalshi</span>
+        <a href="https://kalshi.com" target="_blank" style="font-size:10px;color:var(--blue);font-weight:600;text-decoration:none;background:var(--blue-soft);border:1px solid rgba(21,101,255,0.2);padding:2px 8px;border-radius:4px;white-space:nowrap">Kalshi ↗</a>
+      </div>
+      <div class="import-form" style="flex:1;gap:10px;display:flex;flex-direction:column">
+
+        <!-- Kalshi URL -->
+        <div>
+          <div style="margin-bottom:4px">
+            <div class="field-label">Kalshi Market URL</div>
+          </div>
+          <textarea class="field-input" id="importUrl" rows="1" placeholder="https://kalshi.com/markets/..." oninput="onUrlInput(this.value)" style="resize:none;line-height:1.6;min-height:32px"></textarea>
+          <div id="urlStatus" style="font-size:10px;color:var(--grey);margin-top:4px;line-height:1.4;display:none"></div>
+        </div>
+
+        <!-- Market Question -->
+        <div>
+          <div class="field-label">Market Question</div>
+          <textarea class="field-input" id="importQ" rows="2" placeholder="Copy the market question from Kalshi..." style="resize:none;line-height:1.5"></textarea>
+        </div>
+
+        <!-- Bet Description -->
+        <div>
+          <div class="field-label">Bet Description</div>
+          <textarea class="field-input" id="importDesc" rows="5" placeholder="Paste the resolution criteria or bet description from Kalshi..." style="resize:none;line-height:1.5;font-size:10px;flex:1;min-height:100px"></textarea>
+        </div>
+
+        <!-- YES / NO prices -->
+        <div style="display:flex;gap:6px">
+          <div style="flex:1">
+            <div class="field-label">YES Price (¢)</div>
+            <input class="price-input" id="importYes" type="number" min="1" max="99" placeholder="e.g. 62" style="width:100%" oninput="syncNo(this.value)"/>
+          </div>
+          <div style="flex:1">
+            <div class="field-label">NO Price (¢)</div>
+            <input class="price-input" id="importNo" type="number" min="1" max="99" placeholder="e.g. 38" style="width:100%" oninput="syncYes(this.value)"/>
+          </div>
+        </div>
+
+        <!-- Prob bar preview -->
+        <div id="probPreview" style="display:none">
+          <div style="height:4px;background:var(--yellow);border-radius:3px;overflow:hidden">
+            <div id="probFill" style="height:4px;background:var(--blue);border-radius:3px;width:50%"></div>
+          </div>
+          <div style="display:flex;justify-content:space-between;font-size:9px;color:var(--grey);margin-top:2px">
+            <span id="probYesLbl">YES 50%</span><span id="probNoLbl">NO 50%</span>
+          </div>
+        </div>
+
+        <!-- Close date + Category -->
+        <div style="display:flex;gap:6px">
+          <div style="flex:1">
+            <div class="field-label">Close Date</div>
+            <input class="field-input" id="importClose" type="text" placeholder="e.g. Mar 17, 2026"/>
+          </div>
+          <div style="flex:1">
+            <div class="field-label">Category</div>
+            <select class="field-input" id="importCat" style="padding:6px 8px;font-size:11px">
+              <option value="finance">Finance</option>
+              <option value="politics">Politics</option>
+              <option value="crypto">Crypto</option>
+              <option value="macro">Macro</option>
+              <option value="tech">Tech</option>
+              <option value="sports">Sports</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- Optional: Mark as placed immediately -->
+        <div style="background:var(--surface2);border:1px solid var(--border);border-radius:7px;padding:8px 10px">
+          <div class="field-label" style="color:var(--grey2);margin-bottom:6px">Already placed? (optional)</div>
+          <div style="display:flex;gap:5px;margin-bottom:5px">
+            <button type="button" id="importSideYes" onclick="selectImportSide('YES')" style="flex:1;padding:5px;border-radius:5px;border:1px solid rgba(21,101,255,0.3);background:var(--surface);color:var(--grey2);font-family:Inter,sans-serif;font-size:11px;font-weight:700;cursor:pointer;transition:all 0.12s">YES</button>
+            <button type="button" id="importSideNo" onclick="selectImportSide('NO')" style="flex:1;padding:5px;border-radius:5px;border:1px solid rgba(217,119,6,0.3);background:var(--surface);color:var(--grey2);font-family:Inter,sans-serif;font-size:11px;font-weight:700;cursor:pointer;transition:all 0.12s">NO</button>
+          </div>
+          <input class="price-input" id="importAmount" type="number" min="1" placeholder="$ amount bet" style="width:100%;font-size:11px;padding:5px 8px"/>
+          <input type="hidden" id="importSide" value=""/>
+        </div>
+
+        <!-- Import -->
+        <button class="import-btn" style="margin-top:4px" onclick="importBet()">+ Add to Research Inventory</button>
+
+      </div>
+
+    </div>
+
+
+
+  </div>
+
+  <!-- COL 2: RESEARCH WORKSPACE -->
+  <div class="col-research">
+    <div class="card" id="researchCard" style="flex:1;display:flex;flex-direction:column;min-height:0">
+      <div class="ch">
+        <span class="ct">Research Workspace</span>
+        <div id="researchHdrRight" style="display:flex;align-items:center;gap:8px;margin-left:auto">
+          <span class="cs" id="researchSub">Select a market to research</span>
+        </div>
+      </div>
+      <div id="researchBody" style="flex:1;overflow-y:auto">
+        <div class="research-empty">
+          <div class="empty-icon" style="font-size:36px;margin-bottom:14px;opacity:0.12">🔭</div>
+          <div class="empty-text">No market selected</div>
+          <div class="empty-sub">Import a Kalshi market and select it to start your AI-powered research session.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- COL 3: BET INVENTORY -->
+  <button class="panel-toggle-right" id="trackerToggle" onclick="toggleTrackerPanel()" title="Toggle inventory panel">▶</button>
+  <div class="col-tracker" id="trackerPanel">
+    <div class="card" style="flex:1;display:flex;flex-direction:column;min-height:0;overflow:hidden">
+
+      <!-- Header with P&L strip -->
+      <div class="ch" style="flex-direction:column;align-items:stretch;gap:6px;padding:10px 14px">
+        <div style="display:flex;align-items:center;justify-content:space-between">
+          <span class="ct">Bet Inventory</span>
+          <span class="cs" id="betCount">0 markets</span>
+        </div>
+        <button onclick="openKalshiPortfolio()" id="portfolioBtn"
+          style="width:100%;background:var(--blue-soft);color:var(--blue);border:1px solid rgba(21,101,255,0.3);font-family:'Inter',sans-serif;font-size:11px;font-weight:600;padding:5px;border-radius:5px;cursor:pointer;transition:all 0.12s;text-align:center"
+          onmouseover="this.style.background='var(--blue)';this.style.color='#fff'" onmouseout="this.style.background='var(--blue-soft)';this.style.color='var(--blue)'"
+          title="Open your Kalshi portfolio">Kalshi Portfolio ↗</button>
+      </div>
+
+      <!-- Portfolio URL popup -->
+      <div id="portfolioPopup" style="display:none;position:absolute;top:42px;right:0;z-index:100;background:var(--surface);border:1px solid var(--border);border-radius:8px;box-shadow:var(--shadow);padding:14px 16px;width:280px">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
+          <span style="font-size:11px;font-weight:600;color:var(--text)">Kalshi Portfolio URL</span>
+          <button onclick="closePortfolioPopup()" style="background:none;border:none;color:var(--grey);cursor:pointer;font-size:16px;line-height:1;padding:0">×</button>
+        </div>
+        <input id="portfolioUrlInput" type="url" placeholder="https://kalshi.com/profile/..." style="width:100%;background:var(--bg);border:1px solid var(--border2);border-radius:5px;font-family:'Inter',sans-serif;font-size:11px;padding:6px 10px;outline:none;color:var(--text);margin-bottom:10px;transition:border-color 0.15s"/>
+        <div style="display:flex;gap:6px">
+          <button onclick="savePortfolioUrl()" style="flex:1;background:var(--blue);color:#fff;border:none;font-family:'Inter',sans-serif;font-size:11px;font-weight:600;padding:6px;border-radius:5px;cursor:pointer">Save & Open</button>
+          <button onclick="clearPortfolioUrl()" style="background:none;border:1px solid var(--border);color:var(--grey2);font-family:'Inter',sans-serif;font-size:11px;padding:6px 10px;border-radius:5px;cursor:pointer">Clear</button>
+        </div>
+      </div>
+
+
+
+      <!-- Inventory list -->
+      <div style="flex:1;overflow-y:auto;border-top:1px solid var(--border)">
+        <div class="inv-grid" id="betList">
+          <div class="sp-empty" style="padding:24px">No bets tracked yet.<br>Place a bet on Kalshi then log it below.</div>
+        </div>
+      </div>
+
+
+
+    </div>
+  </div>
+
+</div><!-- /main -->
+</div><!-- /layout -->
+
+<script>
+const API = 'https://prediction-api-production-ad66.up.railway.app';
+
+// ── STATE ─────────────────────────────────────────────────────
+let bets      = JSON.parse(localStorage.getItem('onyx_mkt_bets') || '[]');
+let positions = JSON.parse(localStorage.getItem('onyx_mkt_pos')  || '[]');
+let activeBet = null;
+let aiResults = JSON.parse(localStorage.getItem('onyx_mkt_ai')   || '{}');
+let betNotes  = JSON.parse(localStorage.getItem('onyx_mkt_notes')|| '{}');
+
+// ── INIT ─────────────────────────────────────────────────────
+(function(){
+  var now=new Date(),h=now.getUTCHours(),d=now.getUTCDay();
+  var open=d>0&&d<6&&h>=13&&h<21;
+  document.getElementById('mktDot').className='dot '+(open?'open':'closed');
+  document.getElementById('mktTxt').textContent=open?'Market Open':'Market Closed';
+})();
+
+renderBetList();
+renderPositions();
+renderPnl();
+renderSidebarPanels();
+
+// ── IMPORT ────────────────────────────────────────────────────
+document.addEventListener('keydown',function(e){
+
+  if(e.key==='Enter' && document.getElementById('importQ')===document.activeElement) importBet();
+});
+
+function selectImportSide(side) {
+  document.getElementById('importSide').value = side;
+  var yBtn = document.getElementById('importSideYes');
+  var nBtn = document.getElementById('importSideNo');
+  if(side === 'YES') {
+    yBtn.style.background = 'var(--blue)'; yBtn.style.color = '#fff'; yBtn.style.borderColor = 'var(--blue)';
+    nBtn.style.background = 'var(--surface)'; nBtn.style.color = 'var(--grey2)'; nBtn.style.borderColor = 'rgba(220,38,38,0.3)';
+  } else {
+    nBtn.style.background = 'var(--yellow)'; nBtn.style.color = '#fff'; nBtn.style.borderColor = 'var(--yellow)';
+    yBtn.style.background = 'var(--surface)'; yBtn.style.color = 'var(--grey2)'; yBtn.style.borderColor = 'rgba(22,163,74,0.3)';
+  }
+}
+
+function onUrlInput(url) {
+  if(!url) return;
+  var status = document.getElementById('urlStatus');
+  // Extract ticker and auto-detect close date from URL slug
+  var parts = url.replace(/\/$/, '').split('/');
+  var ticker = parts[parts.length - 1];
+  // Try to extract date from ticker e.g. kxhormuznorm-26mar17 -> Mar 17, 2026
+  var dateMatch = ticker.match(/(\d{2})(jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec)(\d{2})$/i);
+  if(dateMatch) {
+    var months = {jan:'Jan',feb:'Feb',mar:'Mar',apr:'Apr',may:'May',jun:'Jun',jul:'Jul',aug:'Aug',sep:'Sep',oct:'Oct',nov:'Nov',dec:'Dec'};
+    var mon = months[dateMatch[2].toLowerCase()];
+    var day = parseInt(dateMatch[3]);
+    var year = 2000 + parseInt(dateMatch[1]);
+    document.getElementById('importClose').value = mon + ' ' + day + ', ' + year;
+  }
+  // Auto-detect category from URL
+  var slug = url.toLowerCase();
+  var cats = {politics:['election','president','congress','senate','trump','biden','democrat','republican'],
+               crypto:['bitcoin','btc','eth','ethereum','crypto','solana'],
+               finance:['stock','s&p','sp500','fed','rate','nasdaq','dow'],
+               macro:['gdp','inflation','cpi','unemployment','recession'],
+               tech:['ai','apple','google','meta','microsoft','nvidia','openai'],
+               sports:['nba','nfl','mlb','nhl','world cup','super bowl']};
+  for(var cat in cats) {
+    if(cats[cat].some(function(k){return slug.includes(k);})) {
+      document.getElementById('importCat').value = cat; break;
+    }
+  }
+  status.textContent = '✓ URL saved · Ticker: ' + ticker.toUpperCase() + ' · Fill in the question and prices from Kalshi.';
+  status.style.color = 'var(--green)';
+}
+
+function syncNo(yes) {
+  var y = parseInt(yes);
+  if(y >= 1 && y <= 99) {
+    document.getElementById('importNo').value = 100 - y;
+    updateProbBar(y, 100-y);
+  }
+}
+
+function syncYes(no) {
+  var n = parseInt(no);
+  if(n >= 1 && n <= 99) {
+    document.getElementById('importYes').value = 100 - n;
+    updateProbBar(100-n, n);
+  }
+}
+
+function updateProbBar(yes, no) {
+  document.getElementById('probPreview').style.display = 'block';
+  document.getElementById('probFill').style.width = yes + '%';
+  document.getElementById('probYesLbl').textContent = 'YES ' + yes + '%';
+  document.getElementById('probNoLbl').textContent = 'NO ' + no + '%';
+}
+
+function importBet(){
+  var q      = document.getElementById('importQ').value.trim();
+  var yes    = parseInt(document.getElementById('importYes').value);
+  var no     = parseInt(document.getElementById('importNo').value);
+  var close  = document.getElementById('importClose').value.trim();
+  var cat    = document.getElementById('importCat').value;
+  var url    = document.getElementById('importUrl').value.trim();
+  var side   = document.getElementById('importSide').value;
+  var desc   = document.getElementById('importDesc').value.trim();
+  var amount = parseFloat(document.getElementById('importAmount').value);
+  if(!q){ document.getElementById('importQ').focus(); return; }
+  if(!yes||!no){ alert('Please enter YES and NO prices'); return; }
+  var bet = {
+    id: Date.now().toString(), q, yes, no, close, cat, url, desc: desc||'', created: Date.now(),
+    placed: !!(side && amount),
+    placedSide: side || null,
+    placedAmount: (side && amount) ? amount.toFixed(2) : null
+  };
+  bets.unshift(bet);
+  localStorage.setItem('onyx_mkt_bets', JSON.stringify(bets));
+  ['importQ','importYes','importNo','importClose','importUrl','importAmount','importDesc'].forEach(function(id){
+    document.getElementById(id).value='';
+  });
+  document.getElementById('importSide').value = '';
+  var yBtn=document.getElementById('importSideYes'),nBtn=document.getElementById('importSideNo');
+  if(yBtn){yBtn.style.background='var(--surface)';yBtn.style.color='var(--grey2)';}
+  if(nBtn){nBtn.style.background='var(--surface)';nBtn.style.color='var(--grey2)';}
+  document.getElementById('probPreview').style.display = 'none';
+  document.getElementById('urlStatus').textContent = 'Paste a Kalshi market URL, then fill in the details below.';
+  document.getElementById('urlStatus').style.color = 'var(--grey)';
+  renderBetList();
+  selectBet(bet.id);
+}
+
+function deleteBet(id){
+  bets = bets.filter(function(b){return b.id!==id;});
+  localStorage.setItem('onyx_mkt_bets', JSON.stringify(bets));
+  if(activeBet && activeBet.id===id){ activeBet=null; renderResearchEmpty(); }
+  renderBetList();
+}
+
+// ── BET LIST ─────────────────────────────────────────────────
+function renderBetList(){
+  var list = document.getElementById('betList');
+  document.getElementById('betCount').textContent = bets.length + ' market'+(bets.length!==1?'s':'');
+  if(!bets.length){
+    list.innerHTML = '<div class="empty-state"><div class="empty-icon">📋</div><div class="empty-text">No markets yet</div><div class="empty-sub">Import a Kalshi market above to start researching</div></div>';
+    return;
+  }
+  list.innerHTML = bets.map(function(b){
+    var isActive = activeBet && activeBet.id===b.id;
+    var ai = aiResults[b.id];
+    var verdict = ai ? ai.verdict : null;
+    var vColor = verdict==='YES'?'var(--green)':verdict==='NO'?'var(--red)':'var(--grey)';
+    var placed = b.placed;
+    var daysLeft = '';
+    if(b.close){
+      var d = Math.ceil((new Date(b.close) - Date.now()) / 86400000);
+      daysLeft = d > 0 ? d+'d left' : 'closed';
+    }
+    var html = '<div class="inv-item'+(isActive?' active':'')+'" onclick="selectBet(\''+b.id+'\')">'+
+      '<div class="inv-top">'+
+        '<span class="inv-status open" style="background:var(--surface2);color:var(--grey2);border:1px solid var(--border)">'+b.cat+'</span>'+
+        (verdict?'<span class="inv-status" style="background:'+(verdict==='YES'?'var(--green-dim)':verdict==='NO'?'var(--red-dim)':'var(--surface2)')+';color:'+vColor+'">AI: '+verdict+'</span>':'')+
+        '<button class="inv-del" onclick="event.stopPropagation();deleteBet(\''+b.id+'\')">×</button>'+
+      '</div>'+
+      '<div class="inv-q">'+b.q+'</div>'+
+      '<div class="inv-meta" style="grid-template-columns:1fr 1fr 1fr;gap:4px">'+
+        '<div class="inv-meta-item">'+
+          '<div style="font-size:10px;font-weight:700;font-family:JetBrains Mono,monospace;white-space:nowrap"><span style="color:var(--blue)">'+b.yes+'</span><span style="color:var(--grey);font-weight:400">/</span><span style="color:var(--yellow)">'+b.no+'</span></div>'+
+        '<div style="height:3px;border-radius:2px;overflow:hidden;margin-top:3px;background:var(--yellow)">'+
+          '<div style="height:3px;width:'+b.yes+'%;background:var(--blue);border-radius:2px"></div>'+
+        '</div>'+
+        '</div>'+
+        '<div class="inv-meta-item" style="border:'+(placed?'1px solid rgba(22,163,74,0.25)':'1px solid var(--border)')+';background:'+(placed?'var(--surface2)':'var(--surface)')+'">'+
+          
+          '<div style="font-size:13px;font-weight:700;font-family:Inter,sans-serif;color:'+(placed?'var(--green)':'var(--grey2)')+'">'+(placed?'<span style="color:'+(b.placedSide==='YES'?'var(--blue)':'var(--yellow)')+'">'+b.placedSide+'</span><span style="color:var(--green)"> $'+b.placedAmount+'</span>':'Not Owned')+'</div>'+
+        '</div>'+
+        '<div class="inv-meta-item">'+
+          '<div class="inv-meta-label">Closes</div>'+
+          '<div style="font-size:12px;font-weight:600;font-family:Inter,sans-serif;color:var(--text2)">'+(b.close||'—')+'</div>'+
+        '</div>'+
+      '</div>'+
+
+        '</div>'+
+      '</div>';
+
+    html += '</div>';
+    return html;
+  }).join('');
+}
+
+// ── SELECT BET → RESEARCH ────────────────────────────────────
+function selectBet(id){
+  activeBet = bets.find(function(b){return b.id===id;});
+  if(!activeBet) return;
+  renderBetList();
+  renderResearchWorkspace();
+}
+
+function renderResearchEmpty(){
+  document.getElementById('researchSub').textContent = 'Select a market to research';
+  var hdr=document.getElementById('researchHdrRight'); if(hdr) hdr.innerHTML='<span class="cs" id="researchSub">Select a market to research</span>';
+  document.getElementById('researchBody').innerHTML =
+    '<div class="research-empty"><div class="empty-icon" style="font-size:36px;margin-bottom:14px;opacity:0.12">🔭</div><div class="empty-text">No market selected</div><div class="empty-sub">Import a Kalshi market and select it to start your AI-powered research session.</div></div>';
+}
+
+function renderResearchWorkspace(){
+  var b = activeBet;
+  // Build rich inline header
+  var hdrRight = document.getElementById('researchHdrRight');
+  if(hdrRight){
+    hdrRight.innerHTML =
+      '<span style="font-size:10px;font-weight:700;text-transform:uppercase;padding:2px 8px;border-radius:3px;background:var(--surface2);color:var(--grey2);border:1px solid var(--border);letter-spacing:0.05em">'+b.cat+'</span>' +
+      (b.close?'<span style="font-size:10px;color:var(--grey);font-family:JetBrains Mono,monospace">Closes '+b.close+'</span>':'') +
+      (b.url?'<a href="'+b.url+'" target="_blank" style="font-size:10px;color:var(--blue);font-weight:600;text-decoration:none;border:1px solid rgba(21,101,255,0.3);padding:2px 9px;border-radius:4px;background:var(--blue-soft);white-space:nowrap" title="Open this market on Kalshi">Bet on Kalshi ↗</a>':'');
+  }
+  var saved = aiResults[b.id];
+  var notes = betNotes[b.id] || '';
+
+  document.getElementById('researchBody').innerHTML =
+    // Market header
+    '<div class="bet-detail-header">' +
+      '<div class="bet-detail-q">'+b.q+'</div>' +
+
+      '<div class="bet-meta">' +
+        '<div class="odds-strip">' +
+          '<span class="yes-pill">YES '+b.yes+'¢</span>' +
+          '<span class="no-pill">NO '+b.no+'¢</span>' +
+        '</div>' +
+      '</div>' +
+      '<div class="prob-bar"><div class="prob-fill" id="rwProbFill" style="width:'+b.yes+'%"></div></div>' +
+      '<div class="prob-label"><span>YES '+b.yes+'%</span><span>NO '+b.no+'%</span></div>' +
+      '<div style="display:flex;gap:8px;margin-top:10px;align-items:center">' +
+        '<div style="font-size:10px;font-weight:600;color:var(--grey);text-transform:uppercase;letter-spacing:0.06em;white-space:nowrap">Update Prices:</div>' +
+        '<div style="display:flex;align-items:center;gap:4px">' +
+          '<span style="font-size:10px;color:var(--green);font-weight:700">YES</span>' +
+          '<input type="number" id="rwYes" min="1" max="99" value="'+b.yes+'" style="width:56px;background:var(--bg);border:1px solid rgba(22,163,74,0.4);border-radius:5px;font-family:JetBrains Mono,monospace;font-size:12px;font-weight:700;color:var(--green);padding:4px 7px;outline:none;text-align:center" oninput="updateBetPrices(''+b.id+'',this.value,null)"/>' +
+          '<span style="font-size:11px;color:var(--grey)">¢</span>' +
+        '</div>' +
+        '<div style="display:flex;align-items:center;gap:4px">' +
+          '<span style="font-size:10px;color:var(--red);font-weight:700">NO</span>' +
+          '<input type="number" id="rwNo" min="1" max="99" value="'+b.no+'" style="width:56px;background:var(--bg);border:1px solid rgba(220,38,38,0.4);border-radius:5px;font-family:JetBrains Mono,monospace;font-size:12px;font-weight:700;color:var(--red);padding:4px 7px;outline:none;text-align:center" oninput="updateBetPrices(''+b.id+'',null,this.value)"/>' +
+          '<span style="font-size:11px;color:var(--grey)">¢</span>' +
+        '</div>' +
+        '<span style="font-size:10px;color:var(--grey);margin-left:4px">Live from Kalshi</span>' +
+      '</div>' +
+    '</div>' +
+
+    // AI Analysis section
+    '<div class="ai-section">' +
+      '<div style="display:flex;align-items:center;gap:8px">' +
+        '<button class="ai-btn" id="aiAnalyseBtn" onclick="runAnalysis()">✦ Analyse with Onyx</button>' +
+        '<div class="status-bar" id="aiStatus"><div class="spin"></div><span id="aiStatusText">Searching...</span></div>' +
+      '</div>' +
+      '<div id="aiResultArea">' +
+        (saved ? renderAIResult(saved) : '<div style="font-size:11px;color:var(--grey);font-style:italic">Click Analyse to get Onyx AI\'s recommendation on this market.</div>') +
+      '</div>' +
+    '</div>' +
+
+    // Divider
+    '<div style="border-top:1px solid var(--border);margin:0 14px"></div>' +
+
+    // Notes section
+    '<div style="padding:10px 14px;display:flex;flex-direction:column;gap:6px">' +
+      '<div style="display:flex;align-items:center;justify-content:space-between">' +
+        '<div style="font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:0.06em;color:var(--grey)">Research Notes</div>' +
+        '<button class="section-btn" onclick="saveNotes()">Save</button>' +
+      '</div>' +
+      '<textarea class="notes-area" id="betNotes" placeholder="Write your research notes, thesis, reasons to bet YES or NO...">'+notes+'</textarea>' +
+    '</div>' +
+
+    // Kalshi link — single clean button at the bottom
+    '';
+}
+
+function renderAIResult(d){
+  var vClass = d.verdict==='YES'?'yes':d.verdict==='NO'?'no':'skip';
+  var signals = (d.signals||[]).map(function(s){
+    return '<div class="ai-signal"><div class="ai-signal-dot"></div><div>'+s+'</div></div>';
+  }).join('');
+  return '<div class="ai-result">' +
+    '<div class="ai-verdict">' +
+      '<span class="verdict-badge '+vClass+'">'+d.verdict+'</span>' +
+      '<span class="verdict-conf">'+d.confidence+' confidence · AI recommends <strong>'+d.verdict+'</strong></span>' +
+    '</div>' +
+    '<div class="ai-reasoning">'+d.reasoning+'</div>' +
+    (signals?'<div class="ai-signals">'+signals+'</div>':'') +
+  '</div>';
+}
+
+// ── AI ANALYSIS ───────────────────────────────────────────────
+async function runAnalysis(){
+  if(!activeBet) return;
+  var btn = document.getElementById('aiAnalyseBtn');
+  var status = document.getElementById('aiStatus');
+  var statusText = document.getElementById('aiStatusText');
+  btn.disabled = true;
+  status.classList.add('active');
+  var msgs = ['Searching for news...','Analysing probabilities...','Forming recommendation...'];
+  var mi=0;
+  var iv=setInterval(function(){ if(mi<msgs.length) statusText.textContent=msgs[mi++]; },4000);
+
+  try {
+    var b = activeBet;
+    var descText = document.getElementById('rwDesc') ? document.getElementById('rwDesc').value.trim() : (b.desc||'');
+    var res = await fetch(API+'/analyse-market', {
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({
+        question: 'You are a prediction market analyst. Analyse this Kalshi market and give a YES, NO, or SKIP recommendation.\n\nMarket: '+b.q+'\nCurrent odds: YES '+b.yes+'¢ ('+b.yes+'% implied), NO '+b.no+'¢ ('+b.no+'% implied)\nCloses: '+(b.close||'unknown')+'\nCategory: '+b.cat+(descText?'\nResolution criteria: '+descText:'')+'\n\nSearch the web for the most current information on this topic. Return ONLY this JSON with no extra text:\n{"verdict":"YES","confidence":"High","reasoning":"your 2-3 sentence analysis here","signals":["key signal 1","key signal 2","key signal 3"]}'
+      })
+    });
+    var result = await res.json();
+    clearInterval(iv);
+    if(result.error) throw new Error(result.error);
+    if(result.verdict){
+      aiResults[b.id] = result;
+      localStorage.setItem('onyx_mkt_ai', JSON.stringify(aiResults));
+      document.getElementById('aiResultArea').innerHTML = renderAIResult(result);
+    } else {
+      throw new Error('No verdict in response');
+    }
+  } catch(err) {
+    clearInterval(iv);
+    document.getElementById('aiResultArea').innerHTML =
+      '<div style="font-size:11px;color:var(--red);padding:8px">Could not load analysis. Try again.</div>';
+  } finally {
+    status.classList.remove('active');
+    btn.disabled = false;
+  }
+}
+
+// ── NOTES ─────────────────────────────────────────────────────
+function saveNotes(){
+  if(!activeBet) return;
+  var val = document.getElementById('betNotes').value;
+  betNotes[activeBet.id] = val;
+  localStorage.setItem('onyx_mkt_notes', JSON.stringify(betNotes));
+  var btn = document.querySelector('.section-btn');
+  if(btn){ btn.textContent='Saved ✓'; btn.style.color='var(--green)';
+    setTimeout(function(){ btn.textContent='Save'; btn.style.color=''; },1500); }
+}
+
+// ── POSITIONS ─────────────────────────────────────────────────
+function addPosition(){
+  var marketId = document.getElementById('posMarket').value;
+  var side     = document.getElementById('posSide').value;
+  var entry    = parseFloat(document.getElementById('posEntry').value);
+  var amount   = parseFloat(document.getElementById('posAmount').value);
+  if(!marketId||!entry||!amount){ alert('Fill in all position fields'); return; }
+  var bet = bets.find(function(b){return b.id===marketId;});
+  if(!bet) return;
+  positions.unshift({ id:Date.now().toString(), marketId, side, q:bet.q, yes:bet.yes, no:bet.no, entryPrice:entry, amount, status:'open', created:Date.now() });
+  localStorage.setItem('onyx_mkt_pos', JSON.stringify(positions));
+  ['posMarket','posEntry','posAmount'].forEach(function(id){ document.getElementById(id).value=''; });
+  renderPositions();
+  renderPnl();
+}
+
+function deletePosition(id){
+  positions = positions.filter(function(p){return p.id!==id;});
+  localStorage.setItem('onyx_mkt_pos', JSON.stringify(positions));
+  renderPositions(); renderPnl();
+}
+
+function updateStatus(id, status){
+  var p = positions.find(function(p){return p.id===id;});
+  if(p){ p.status=status; localStorage.setItem('onyx_mkt_pos', JSON.stringify(positions)); renderPositions(); renderPnl(); }
+}
+
+function renderPositions(){
+  var list = document.getElementById('posList');
+  document.getElementById('posCount').textContent = positions.length + ' tracked';
+  if(!positions.length){
+    list.innerHTML = '<div class="sp-empty">No positions yet. After placing a bet on Kalshi, track it here.</div>';
+    return;
+  }
+  list.innerHTML = positions.map(function(p){
+    var currentPrice = p.side==='YES' ? p.yes : p.no;
+    var pnl = ((currentPrice - p.entryPrice) / 100) * p.amount;
+    var pnlColor = pnl>=0?'var(--green)':'var(--red)';
+    var pnlStr = (pnl>=0?'+':'')+'$'+Math.abs(pnl).toFixed(2);
+    return '<div class="pos-card">' +
+      '<div class="pos-top">' +
+        '<span class="pos-side '+p.side.toLowerCase()+'">'+p.side+'</span>' +
+        '<div class="pos-q">'+p.q+'</div>' +
+        '<span class="pos-status '+p.status+'">'+p.status+'</span>' +
+        '<button class="pos-del" onclick="deletePosition(\''+p.id+'\')" title="Remove">×</button>' +
+      '</div>' +
+      '<div class="pos-meta">' +
+        '<span>Entry: '+p.entryPrice+'¢</span>' +
+        '<span>Stake: $'+p.amount+'</span>' +
+        '<span class="pos-pnl" style="color:'+pnlColor+'">'+pnlStr+'</span>' +
+      '</div>' +
+      '<div style="display:flex;gap:4px;margin-top:4px">' +
+        (p.status==='open'?
+          '<button class="section-btn" onclick="updateStatus(\''+p.id+'\',\'won\')" style="font-size:9px;color:var(--green)">✓ Won</button>' +
+          '<button class="section-btn" onclick="updateStatus(\''+p.id+'\',\'lost\')" style="font-size:9px;color:var(--red)">✗ Lost</button>'
+        :'') +
+      '</div>' +
+    '</div>';
+  }).join('');
+}
+
+function renderPnl(){ /* removed - Kalshi tracks P&L */ }
+
+// ── SIDEBAR ───────────────────────────────────────────────────
+function updateBetPrices(id, yes, no){
+  var b = bets.find(function(b){return b.id===id;});
+  if(!b) return;
+  if(yes !== null){
+    var y = parseInt(yes);
+    if(y>=1&&y<=99){ b.yes=y; b.no=100-y; var noEl=document.getElementById('rwNo'); if(noEl) noEl.value=100-y; }
+  }
+  if(no !== null){
+    var n = parseInt(no);
+    if(n>=1&&n<=99){ b.no=n; b.yes=100-n; var yEl=document.getElementById('rwYes'); if(yEl) yEl.value=100-n; }
+  }
+  // Update prob bar
+  var fill=document.getElementById('rwProbFill'); if(fill) fill.style.width=b.yes+'%';
+  localStorage.setItem('onyx_mkt_bets', JSON.stringify(bets));
+  renderBetList();
+}
+
+function saveRwDesc(){
+  if(!activeBet) return;
+  var el = document.getElementById('rwDesc');
+  if(!el) return;
+  activeBet.desc = el.value;
+  var idx = bets.findIndex(function(b){return b.id===activeBet.id;}); if(idx>=0) bets[idx]=activeBet;
+  localStorage.setItem('onyx_mkt_bets', JSON.stringify(bets));
+}
+
+function adjustPrice(yDelta, nDelta){
+  if(!activeBet) return;
+  var y=activeBet.yes, n=activeBet.no;
+  if(yDelta!==0){ y=Math.min(99,Math.max(1,y+yDelta)); n=100-y; }
+  else{ n=Math.min(99,Math.max(1,n+nDelta)); y=100-n; }
+  activeBet.yes=y; activeBet.no=n;
+  var yp=document.getElementById('rwYesPill'); if(yp) yp.textContent='YES '+y+'¢';
+  var np=document.getElementById('rwNoPill'); if(np) np.textContent='NO '+n+'¢';
+  var fill=document.getElementById('rwProbFill'); if(fill) fill.style.width=y+'%';
+  var yl=document.getElementById('rwYesLbl'); if(yl) yl.textContent='YES '+y+'%';
+  var nl=document.getElementById('rwNoLbl'); if(nl) nl.textContent='NO '+n+'%';
+  var idx=bets.findIndex(function(b){return b.id===activeBet.id;}); if(idx>=0) bets[idx]=activeBet;
+  localStorage.setItem('onyx_mkt_bets',JSON.stringify(bets));
+  renderBetList();
+}
+
+function rwSelectSide(side){
+  var y=document.getElementById('rwSideYes'), n=document.getElementById('rwSideNo');
+  if(!y||!n) return;
+  if(side==='YES'){
+    y.style.background='var(--blue)'; y.style.color='#fff'; y.style.borderColor='var(--blue)';
+    n.style.background='var(--surface)'; n.style.color='var(--grey2)'; n.style.borderColor='rgba(220,38,38,0.3)';
+  } else {
+    n.style.background='var(--yellow)'; n.style.color='#fff'; n.style.borderColor='var(--yellow)';
+    y.style.background='var(--surface)'; y.style.color='var(--grey2)'; y.style.borderColor='rgba(22,163,74,0.3)';
+  }
+  y.dataset.selected = side==='YES'?'1':'';
+  n.dataset.selected = side==='NO'?'1':'';
+}
+
+function rwMarkPlaced(){
+  if(!activeBet) return;
+  var yBtn=document.getElementById('rwSideYes');
+  var nBtn=document.getElementById('rwSideNo');
+  var amt=document.getElementById('rwAmount');
+  var side = (yBtn&&yBtn.dataset.selected==='1')?'YES':(nBtn&&nBtn.dataset.selected==='1')?'NO':'';
+  var amount = amt?parseFloat(amt.value):0;
+  if(!side){ alert('Select YES or NO first'); return; }
+  if(!amount||amount<=0){ if(amt) amt.focus(); return; }
+  activeBet.placed = true;
+  activeBet.placedSide = side;
+  activeBet.placedAmount = amount.toFixed(2);
+  var idx=bets.findIndex(function(b){return b.id===activeBet.id;}); if(idx>=0) bets[idx]=activeBet;
+  localStorage.setItem('onyx_mkt_bets', JSON.stringify(bets));
+  renderBetList();
+  renderResearchWorkspace();
+}
+
+function rwUnmarkPlaced(){
+  if(!activeBet) return;
+  activeBet.placed = false; activeBet.placedSide = null; activeBet.placedAmount = null;
+  var idx=bets.findIndex(function(b){return b.id===activeBet.id;}); if(idx>=0) bets[idx]=activeBet;
+  localStorage.setItem('onyx_mkt_bets', JSON.stringify(bets));
+  renderBetList();
+  renderResearchWorkspace();
+}
+
+function savePrices(){
+  if(!activeBet) return;
+  var yEl=document.getElementById('rwYes'), nEl=document.getElementById('rwNo');
+  var y=yEl?parseInt(yEl.value):0, n=nEl?parseInt(nEl.value):0;
+  if(y>=1&&y<=99){ activeBet.yes=y; activeBet.no=100-y; if(nEl) nEl.value=100-y; }
+  else if(n>=1&&n<=99){ activeBet.no=n; activeBet.yes=100-n; if(yEl) yEl.value=100-n; }
+  var fill=document.getElementById('rwProbFill'); if(fill) fill.style.width=activeBet.yes+'%';
+  var idx=bets.findIndex(function(b){return b.id===activeBet.id;}); if(idx>=0) bets[idx]=activeBet;
+  localStorage.setItem('onyx_mkt_bets',JSON.stringify(bets));
+  renderBetList();
+  var btn=document.querySelector('[onclick="savePrices()"]');
+  if(btn){btn.textContent='Saved ✓';btn.style.background='var(--green)';setTimeout(function(){btn.textContent='Save';btn.style.background='';},1200);}
+}
+
+function markPlaced(id){
+  var b = bets.find(function(b){return b.id===id;});
+  if(!b) return;
+  var side = document.getElementById('side-'+id);
+  var amt  = document.getElementById('amt-'+id);
+  if(!amt || !amt.value){ if(amt) amt.focus(); return; }
+  b.placed = true;
+  b.placedSide = side ? side.value : 'YES';
+  b.placedAmount = parseFloat(amt.value).toFixed(2);
+  localStorage.setItem('onyx_mkt_bets', JSON.stringify(bets));
+  renderBetList();
+  if(activeBet && activeBet.id===id) renderResearchWorkspace();
+}
+
+function unmarkPlaced(id){
+  var b = bets.find(function(b){return b.id===id;});
+  if(!b) return;
+  b.placed = false; b.placedSide = null; b.placedAmount = null;
+  localStorage.setItem('onyx_mkt_bets', JSON.stringify(bets));
+  renderBetList();
+}
+
+function selectBetFromInventory(marketId){
+  var bet = bets.find(function(b){return b.id===marketId;});
+  if(bet){ activeBet=bet; renderBetList(); renderResearchWorkspace(); }
+}
+
+function toggleSP(id){ var c=document.getElementById(id); if(c) c.classList.toggle('open'); }
+
+function renderSidebarPanels(){
+  try{
+    var wl=JSON.parse(localStorage.getItem('onyx_wl_v3')||'[]');
+    var port=JSON.parse(localStorage.getItem('onyx_portfolio')||'[]');
+    document.getElementById('spWlCount').textContent=wl.length+' stock'+(wl.length!==1?'s':'');
+    var wb=document.getElementById('spWlBody');
+    if(!wl.length){ wb.innerHTML='<div class="sp-empty">No stocks added yet</div>'; }
+    else {
+      wb.innerHTML=wl.slice(0,12).map(function(w){
+        var p=port.find(function(p){return p.ticker===w.ticker;});
+        var tv='';
+        if(p&&p.shares&&p.buyPrice){
+          var lp=p.points&&p.points.length?p.points[p.points.length-1].p:p.buyPrice;
+          var t=p.shares*lp,pnl=(lp-p.buyPrice)*p.shares;
+          tv='<span style="font-family:JetBrains Mono,monospace;font-size:10px;color:'+(pnl>=0?'var(--green)':'var(--red)')+';font-weight:600">$'+t.toFixed(2)+'</span>';
+        }
+        return '<div class="sp-row" onclick="window.location.href=\'/'+'\'"><span class="sp-ticker">'+w.ticker+'</span>'+(tv||'<span style="font-size:10px;color:var(--grey)">-</span>')+'</div>';
+      }).join('');
+    }
+  }catch(e){}
+  try{
+    var sessions=JSON.parse(localStorage.getItem('onyx_sessions')||'[]');
+    document.getElementById('spRsCount').textContent=sessions.length+' session'+(sessions.length!==1?'s':'');
+    var rb=document.getElementById('spRsBody');
+    if(!sessions.length){ rb.innerHTML='<div class="sp-empty">No research sessions yet</div>'; }
+    else {
+      rb.innerHTML=sessions.slice().reverse().slice(0,8).map(function(s){
+        var name=s.name||s.topic||'Untitled';
+        var date=new Date(s.created).toLocaleDateString('en-US',{month:'short',day:'numeric'});
+        return '<div class="sp-log-row" onclick="window.location.href=\'/search\'"><div class="sp-log-name">'+name.substring(0,28)+(name.length>28?'...':'')+'</div><div class="sp-log-date">'+date+'</div></div>';
+      }).join('');
+    }
+  }catch(e){}
+}
+setInterval(renderSidebarPanels,30000);
+</script>
+</body>
+</html>
