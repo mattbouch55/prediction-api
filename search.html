@@ -1497,7 +1497,7 @@ function renderSidebarPanels(){
         rb.innerHTML=sess.slice().reverse().slice(0,8).map(function(s){
           var name=s.name||s.topic||'Untitled';
           var date=new Date(s.created).toLocaleDateString('en-US',{month:'short',day:'numeric'});
-          return '<div class="sp-log-row" data-sid="'+s.id+'"><div class="sp-log-name">'+name.substring(0,28)+(name.length>28?'...':'')+'</div><div class="sp-log-date">'+date+'</div></div>';
+          return '<div class="sp-log-row" data-sid="'+s.id+'" style="display:flex;align-items:center;gap:4px"><div style="flex:1;min-width:0"><div class="sp-log-name">'+name.substring(0,28)+(name.length>28?'...':'')+'</div><div class="sp-log-date">'+date+'</div></div><span class="sp-del-session" data-sid="'+s.id+'" style="color:var(--grey);cursor:pointer;font-size:14px;padding:0 3px;opacity:0.4;flex-shrink:0" title="Delete">×</span></div>';
         }).join('');
         rb.querySelectorAll('.sp-log-row').forEach(function(row){
           row.addEventListener('click',function(e){
@@ -1537,6 +1537,13 @@ function spGoStock(ticker){
   else{sessionStorage.setItem('onyx_select_ticker',ticker);window.location.href='/';}
 }
 function spGoResearch(sid){if(window.location.pathname==='/search'){{if(typeof loadSession==='function')loadSession(sid);}}else{{window.location.href='/search';}}  }
+
+function deleteSession(sid){
+  var sess = JSON.parse(localStorage.getItem('onyx_sessions')||'[]');
+  sess = sess.filter(function(s){ return s.id !== sid; });
+  localStorage.setItem('onyx_sessions', JSON.stringify(sess));
+  try{renderSidebarPanels();}catch(e){}
+}
 function goToMarkets(){window.location.href='/markets';}
 try{renderSidebarPanels();}catch(e){}
 setTimeout(function(){try{renderSidebarPanels();}catch(e){}},300);
