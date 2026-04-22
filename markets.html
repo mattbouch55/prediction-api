@@ -87,8 +87,8 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:'Inter'
 .field-row{display:flex;gap:6px}
 .price-input{width:80px;flex-shrink:0;background:var(--bg);border:1px solid var(--border2);border-radius:6px;color:var(--text);font-family:'JetBrains Mono',monospace;font-size:12px;font-weight:600;padding:6px 9px;outline:none;transition:border-color 0.15s;text-align:center}
 .price-input:focus{border-color:var(--blue)}
-.import-btn{width:100%;background:var(--blue);color:#fff;border:none;font-family:'Inter',sans-serif;font-size:11px;font-weight:600;padding:7px;border-radius:6px;cursor:pointer;transition:background 0.12s}
-.import-btn:hover{background:#1a6fff}
+.import-btn{width:100%;background:var(--text);color:#fff;border:none;font-family:'Inter',sans-serif;font-size:11px;font-weight:600;padding:7px;border-radius:6px;cursor:pointer;transition:opacity 0.12s}
+.import-btn:hover{opacity:0.8}
 .kalshi-hint{font-size:10px;color:var(--grey);line-height:1.5;padding:8px 14px;border-top:1px solid var(--border);background:var(--surface2)}
 
 /* IMPORTED BETS LIST */
@@ -346,8 +346,8 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:'Inter'
         </div>
 
         <!-- Optional: Mark as placed immediately -->
-        <div style="background:var(--green-dim);border:1px solid rgba(22,163,74,0.2);border-radius:7px;padding:8px 10px">
-          <div class="field-label" style="color:var(--green);margin-bottom:6px">Already placed? (optional)</div>
+        <div style="background:var(--surface2);border:1px solid var(--border);border-radius:7px;padding:8px 10px">
+          <div class="field-label" style="color:var(--grey2);margin-bottom:6px">Already placed? (optional)</div>
           <div style="display:flex;gap:5px;margin-bottom:5px">
             <button type="button" id="importSideYes" onclick="selectImportSide('YES')" style="flex:1;padding:5px;border-radius:5px;border:1px solid rgba(21,101,255,0.3);background:var(--surface);color:var(--grey2);font-family:Inter,sans-serif;font-size:11px;font-weight:700;cursor:pointer;transition:all 0.12s">YES</button>
             <button type="button" id="importSideNo" onclick="selectImportSide('NO')" style="flex:1;padding:5px;border-radius:5px;border:1px solid rgba(217,119,6,0.3);background:var(--surface);color:var(--grey2);font-family:Inter,sans-serif;font-size:11px;font-weight:700;cursor:pointer;transition:all 0.12s">NO</button>
@@ -1028,8 +1028,8 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:'Inter'
 .field-row{display:flex;gap:6px}
 .price-input{width:80px;flex-shrink:0;background:var(--bg);border:1px solid var(--border2);border-radius:6px;color:var(--text);font-family:'JetBrains Mono',monospace;font-size:12px;font-weight:600;padding:6px 9px;outline:none;transition:border-color 0.15s;text-align:center}
 .price-input:focus{border-color:var(--blue)}
-.import-btn{width:100%;background:var(--blue);color:#fff;border:none;font-family:'Inter',sans-serif;font-size:11px;font-weight:600;padding:7px;border-radius:6px;cursor:pointer;transition:background 0.12s}
-.import-btn:hover{background:#1a6fff}
+.import-btn{width:100%;background:var(--text);color:#fff;border:none;font-family:'Inter',sans-serif;font-size:11px;font-weight:600;padding:7px;border-radius:6px;cursor:pointer;transition:opacity 0.12s}
+.import-btn:hover{opacity:0.8}
 .kalshi-hint{font-size:10px;color:var(--grey);line-height:1.5;padding:8px 14px;border-top:1px solid var(--border);background:var(--surface2)}
 
 /* IMPORTED BETS LIST */
@@ -1273,8 +1273,8 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:'Inter'
         </div>
 
         <!-- Optional: Mark as placed immediately -->
-        <div style="background:var(--green-dim);border:1px solid rgba(22,163,74,0.2);border-radius:7px;padding:8px 10px">
-          <div class="field-label" style="color:var(--green);margin-bottom:6px">Already placed? (optional)</div>
+        <div style="background:var(--surface2);border:1px solid var(--border);border-radius:7px;padding:8px 10px">
+          <div class="field-label" style="color:var(--grey2);margin-bottom:6px">Already placed? (optional)</div>
           <div style="display:flex;gap:5px;margin-bottom:5px">
             <button type="button" id="importSideYes" onclick="selectImportSide('YES')" style="flex:1;padding:5px;border-radius:5px;border:1px solid rgba(21,101,255,0.3);background:var(--surface);color:var(--grey2);font-family:Inter,sans-serif;font-size:11px;font-weight:700;cursor:pointer;transition:all 0.12s">YES</button>
             <button type="button" id="importSideNo" onclick="selectImportSide('NO')" style="flex:1;padding:5px;border-radius:5px;border:1px solid rgba(217,119,6,0.3);background:var(--surface);color:var(--grey2);font-family:Inter,sans-serif;font-size:11px;font-weight:700;cursor:pointer;transition:all 0.12s">NO</button>
