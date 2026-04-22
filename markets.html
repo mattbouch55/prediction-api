@@ -358,7 +358,9 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:'Inter'
     <div class="card" id="researchCard" style="flex:1;display:flex;flex-direction:column;min-height:0">
       <div class="ch">
         <span class="ct">Research Workspace</span>
-        <span class="cs" id="researchSub">Select a market to research</span>
+        <div id="researchHdrRight" style="display:flex;align-items:center;gap:8px;margin-left:auto">
+          <span class="cs" id="researchSub">Select a market to research</span>
+        </div>
       </div>
       <div id="researchBody" style="flex:1;overflow-y:auto">
         <div class="research-empty">
@@ -593,13 +595,21 @@ function selectBet(id){
 
 function renderResearchEmpty(){
   document.getElementById('researchSub').textContent = 'Select a market to research';
+  var hdr=document.getElementById('researchHdrRight'); if(hdr) hdr.innerHTML='<span class="cs" id="researchSub">Select a market to research</span>';
   document.getElementById('researchBody').innerHTML =
     '<div class="research-empty"><div class="empty-icon" style="font-size:36px;margin-bottom:14px;opacity:0.12">🔭</div><div class="empty-text">No market selected</div><div class="empty-sub">Import a Kalshi market and select it to start your AI-powered research session.</div></div>';
 }
 
 function renderResearchWorkspace(){
   var b = activeBet;
-  document.getElementById('researchSub').textContent = b.cat + ' · closes ' + (b.close||'—');
+  // Build rich inline header
+  var hdrRight = document.getElementById('researchHdrRight');
+  if(hdrRight){
+    hdrRight.innerHTML =
+      '<span style="font-size:10px;font-weight:700;text-transform:uppercase;padding:2px 8px;border-radius:3px;background:var(--surface2);color:var(--grey2);border:1px solid var(--border);letter-spacing:0.05em">'+b.cat+'</span>' +
+      (b.close?'<span style="font-size:10px;color:var(--grey);font-family:JetBrains Mono,monospace">Closes '+b.close+'</span>':'') +
+      (b.url?'<a href="'+b.url+'" target="_blank" style="font-size:10px;color:var(--blue);font-weight:600;text-decoration:none;border:1px solid rgba(21,101,255,0.3);padding:2px 9px;border-radius:4px;background:var(--blue-soft);white-space:nowrap">Kalshi ↗</a>':'');
+  }
   var saved = aiResults[b.id];
   var notes = betNotes[b.id] || '';
 
@@ -611,9 +621,6 @@ function renderResearchWorkspace(){
           '<span class="yes-pill">YES '+b.yes+'¢</span>' +
           '<span class="no-pill">NO '+b.no+'¢</span>' +
         '</div>' +
-        '<span class="cat-badge">'+b.cat+'</span>' +
-        (b.close?'<span class="close-badge">Closes '+b.close+'</span>':'') +
-        (b.url?'<a href="'+b.url+'" target="_blank" style="font-size:10px;color:var(--blue);font-weight:600;text-decoration:none;border:1px solid rgba(21,101,255,0.3);padding:1px 8px;border-radius:3px;background:var(--blue-soft)">Open on Kalshi ↗</a>':'') +
       '</div>' +
       '<div class="prob-bar"><div class="prob-fill" id="rwProbFill" style="width:'+b.yes+'%"></div></div>' +
       '<div class="prob-label"><span>YES '+b.yes+'%</span><span>NO '+b.no+'%</span></div>' +
@@ -1256,7 +1263,9 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:'Inter'
     <div class="card" id="researchCard" style="flex:1;display:flex;flex-direction:column;min-height:0">
       <div class="ch">
         <span class="ct">Research Workspace</span>
-        <span class="cs" id="researchSub">Select a market to research</span>
+        <div id="researchHdrRight" style="display:flex;align-items:center;gap:8px;margin-left:auto">
+          <span class="cs" id="researchSub">Select a market to research</span>
+        </div>
       </div>
       <div id="researchBody" style="flex:1;overflow-y:auto">
         <div class="research-empty">
@@ -1491,13 +1500,21 @@ function selectBet(id){
 
 function renderResearchEmpty(){
   document.getElementById('researchSub').textContent = 'Select a market to research';
+  var hdr=document.getElementById('researchHdrRight'); if(hdr) hdr.innerHTML='<span class="cs" id="researchSub">Select a market to research</span>';
   document.getElementById('researchBody').innerHTML =
     '<div class="research-empty"><div class="empty-icon" style="font-size:36px;margin-bottom:14px;opacity:0.12">🔭</div><div class="empty-text">No market selected</div><div class="empty-sub">Import a Kalshi market and select it to start your AI-powered research session.</div></div>';
 }
 
 function renderResearchWorkspace(){
   var b = activeBet;
-  document.getElementById('researchSub').textContent = b.cat + ' · closes ' + (b.close||'—');
+  // Build rich inline header
+  var hdrRight = document.getElementById('researchHdrRight');
+  if(hdrRight){
+    hdrRight.innerHTML =
+      '<span style="font-size:10px;font-weight:700;text-transform:uppercase;padding:2px 8px;border-radius:3px;background:var(--surface2);color:var(--grey2);border:1px solid var(--border);letter-spacing:0.05em">'+b.cat+'</span>' +
+      (b.close?'<span style="font-size:10px;color:var(--grey);font-family:JetBrains Mono,monospace">Closes '+b.close+'</span>':'') +
+      (b.url?'<a href="'+b.url+'" target="_blank" style="font-size:10px;color:var(--blue);font-weight:600;text-decoration:none;border:1px solid rgba(21,101,255,0.3);padding:2px 9px;border-radius:4px;background:var(--blue-soft);white-space:nowrap">Kalshi ↗</a>':'');
+  }
   var saved = aiResults[b.id];
   var notes = betNotes[b.id] || '';
 
@@ -1510,9 +1527,6 @@ function renderResearchWorkspace(){
           '<span class="yes-pill">YES '+b.yes+'¢</span>' +
           '<span class="no-pill">NO '+b.no+'¢</span>' +
         '</div>' +
-        '<span class="cat-badge">'+b.cat+'</span>' +
-        (b.close?'<span class="close-badge">Closes '+b.close+'</span>':'') +
-        (b.url?'<a href="'+b.url+'" target="_blank" style="font-size:10px;color:var(--blue);font-weight:600;text-decoration:none;border:1px solid rgba(21,101,255,0.3);padding:1px 8px;border-radius:3px;background:var(--blue-soft)">Open on Kalshi ↗</a>':'') +
       '</div>' +
       '<div class="prob-bar"><div class="prob-fill" id="rwProbFill" style="width:'+b.yes+'%"></div></div>' +
       '<div class="prob-label"><span>YES '+b.yes+'%</span><span>NO '+b.no+'%</span></div>' +
