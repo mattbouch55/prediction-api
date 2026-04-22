@@ -1145,7 +1145,83 @@ async function runAnalysis(){
 }
 
 
-function goToMarkets(){ window.location.href = '/markets'; }
+
+
+function renderSidebarPanels(){
+  try{
+    var wl=JSON.parse(localStorage.getItem('onyx_wl_v3')||'[]');
+    var portfolio=[];
+    try{portfolio=JSON.parse(localStorage.getItem('onyx_portfolio')||'[]');}catch(e){}
+    var wlC=document.getElementById('spWlCount');
+    if(wlC) wlC.textContent=wl.length+' stock'+(wl.length!==1?'s':'');
+    var wb=document.getElementById('spWlBody');
+    if(wb){
+      if(!wl.length){ wb.innerHTML='<div class="sp-empty">No stocks added yet</div>'; }
+      else {
+        wb.innerHTML=wl.slice(0,15).map(function(w){
+          var p=portfolio.find(function(x){return x.ticker===w.ticker;});
+          var val='<span class="sp-price">—</span>';
+          if(p&&p.shares&&p.buyPrice){
+            var lp=p.points&&p.points.length?p.points[p.points.length-1].p:p.buyPrice;
+            var pnl=(lp-p.buyPrice)*p.shares;
+            val='<span style="font-family:JetBrains Mono,monospace;font-size:11px;font-weight:600;color:'+(pnl>=0?'var(--green)':'var(--red)')+'">$'+(p.shares*lp).toFixed(2)+'</span>';
+          }
+          return '<div class="sp-stock-row" data-ticker="'+w.ticker+'"><span class="sp-ticker">'+w.ticker+'</span>'+val+'</div>';
+        }).join('');
+        wb.querySelectorAll('.sp-stock-row').forEach(function(row){
+          row.addEventListener('click',function(){spGoStock(row.dataset.ticker);});
+        });
+      }
+    }
+  }catch(e){}
+  try{
+    var sess=JSON.parse(localStorage.getItem('onyx_sessions')||'[]');
+    var rsC=document.getElementById('spRsCount');
+    if(rsC) rsC.textContent=sess.length+' session'+(sess.length!==1?'s':'');
+    var rb=document.getElementById('spRsBody');
+    if(rb){
+      if(!sess.length){ rb.innerHTML='<div class="sp-empty">No research sessions yet</div>'; }
+      else {
+        rb.innerHTML=sess.slice().reverse().slice(0,8).map(function(s){
+          var name=s.name||s.topic||'Untitled';
+          var date=new Date(s.created).toLocaleDateString('en-US',{month:'short',day:'numeric'});
+          return '<div class="sp-log-row" data-sid="'+s.id+'"><div class="sp-log-name">'+name.substring(0,28)+(name.length>28?'...':'')+'</div><div class="sp-log-date">'+date+'</div></div>';
+        }).join('');
+        rb.querySelectorAll('.sp-log-row').forEach(function(row){
+          row.addEventListener('click',function(){spGoResearch(row.dataset.sid);});
+        });
+      }
+    }
+  }catch(e){}
+  try{
+    var sb=JSON.parse(localStorage.getItem('onyx_mkt_bets')||'[]');
+    var btC=document.getElementById('spBtCount');
+    if(btC) btC.textContent=sb.length+' bet'+(sb.length!==1?'s':'');
+    var btB=document.getElementById('spBtBody');
+    if(btB){
+      if(!sb.length){ btB.innerHTML='<div class="sp-empty">No bets imported yet</div>'; }
+      else {
+        btB.innerHTML=sb.slice(0,8).map(function(b){
+          var q=b.q||'';
+          var short=q.length>30?q.substring(0,30)+'...':q;
+          var odds='<span style="color:var(--blue)">'+b.yes+'</span>/<span style="color:var(--yellow)">'+b.no+'</span>';
+          var side=b.placed?'<span style="color:'+(b.placedSide==='YES'?'var(--blue)':'var(--yellow)')+';font-weight:700"> '+b.placedSide+'</span>':'';
+          return '<div class="sp-log-row"><div class="sp-log-name">'+short+'</div><div class="sp-log-date">'+odds+side+'</div></div>';
+        }).join('');
+        btB.querySelectorAll('.sp-log-row').forEach(function(row){
+          row.addEventListener('click',function(){goToMarkets();});
+        });
+      }
+    }
+  }catch(e){}
+}
+function toggleSP(id){var c=document.getElementById(id);if(c)c.classList.toggle('open');}
+function spGoStock(t){if(window.location.pathname==='/'&&typeof selectStock==='function'){selectStock(t);}else{window.location.href='/';}}
+function spGoResearch(sid){if(window.location.pathname==='/search'&&typeof loadSession==='function'){loadSession(sid);}else{window.location.href='/search';}}
+function goToMarkets(){window.location.href='/markets';}
+try{renderSidebarPanels();}catch(e){}
+setTimeout(function(){try{renderSidebarPanels();}catch(e){}},300);
+setInterval(function(){try{renderSidebarPanels();}catch(e){}},30000);
 
 </script>
 </body>
