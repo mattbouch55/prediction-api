@@ -175,11 +175,11 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:'Inter'
 
     /* Inventory grid */
     .inv-grid { display: flex; flex-direction: column; gap: 0; }
-    .inv-item { padding: 13px 14px; border-bottom: 1px solid var(--border); cursor: pointer; transition: all 0.12s; }
+    .inv-item { padding: 16px 16px; border-bottom: 1px solid var(--border); cursor: pointer; transition: all 0.12s; }
     .inv-item:last-child { border-bottom: none; }
     .inv-item:hover { background: var(--surface2); }
     .inv-item.active { background: var(--blue-soft); }
-    .inv-top { display: flex; align-items: center; gap: 6px; margin-bottom: 7px; }
+    .inv-top { display: flex; align-items: center; gap: 6px; margin-bottom: 9px; flex-wrap: wrap; }
     .inv-side { font-size: 9px; font-weight: 800; padding: 2px 7px; border-radius: 3px; text-transform: uppercase; letter-spacing: 0.04em; flex-shrink: 0; }
     .inv-side.yes { background: var(--green); color: #fff; }
     .inv-side.no { background: var(--red); color: #fff; }
@@ -189,10 +189,10 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:'Inter'
     .inv-status.lost { background: var(--red-dim); color: var(--red); }
     .inv-del { background: none; border: none; color: var(--grey); cursor: pointer; font-size: 14px; padding: 0 2px; flex-shrink: 0; }
     .inv-del:hover { color: var(--red); }
-    .inv-q { font-size: 12px; font-weight: 500; color: var(--text); line-height: 1.45; margin-bottom: 8px; }
+    .inv-q { font-size: 13px; font-weight: 500; color: var(--text); line-height: 1.5; margin-bottom: 10px; }
     .inv-meta { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin-top: 2px; }
-    .inv-price { font-size: 10px; font-family: 'JetBrains Mono', monospace; color: var(--grey2); }
-    .inv-pnl { font-size: 11px; font-weight: 700; font-family: 'JetBrains Mono', monospace; margin-left: auto; }
+    .inv-price { font-size: 11px; font-family: 'JetBrains Mono', monospace; color: var(--grey2); }
+    .inv-pnl { font-size: 12px; font-weight: 700; font-family: 'JetBrains Mono', monospace; margin-left: auto; }
     .inv-actions { display: flex; gap: 4px; margin-top: 6px; }
     .inv-btn { font-size: 9px; font-weight: 600; padding: 2px 8px; border-radius: 3px; border: 1px solid var(--border); background: var(--surface2); color: var(--grey2); cursor: pointer; transition: all 0.12s; }
     .inv-btn.won-btn:hover { background: var(--green-dim); border-color: rgba(22,163,74,0.3); color: var(--green); }
@@ -326,6 +326,20 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:'Inter'
               <option value="tech">Tech</option>
               <option value="sports">Sports</option>
             </select>
+          </div>
+        </div>
+
+        <!-- Optional: Mark as placed immediately -->
+        <div style="background:var(--green-dim);border:1px solid rgba(22,163,74,0.2);border-radius:7px;padding:9px 12px">
+          <div class="field-label" style="color:var(--green);margin-bottom:6px">Already placed? (optional)</div>
+          <div style="display:flex;gap:6px;align-items:center">
+            <select class="field-input" id="importSide" style="width:80px;padding:5px 7px;font-size:11px;flex-shrink:0">
+              <option value="">Side</option>
+              <option value="YES">YES</option>
+              <option value="NO">NO</option>
+            </select>
+            <input class="price-input" id="importAmount" type="number" min="1" placeholder="Amount $" style="flex:1;font-size:11px;padding:5px 9px;width:auto"/>
+            <div style="font-size:10px;color:var(--grey2);flex-shrink:0">Leave blank if still researching</div>
           </div>
         </div>
 
@@ -471,21 +485,31 @@ function updateProbBar(yes, no) {
 }
 
 function importBet(){
-  var q     = document.getElementById('importQ').value.trim();
-  var yes   = parseInt(document.getElementById('importYes').value);
-  var no    = parseInt(document.getElementById('importNo').value);
-  var close = document.getElementById('importClose').value.trim();
-  var cat   = document.getElementById('importCat').value;
-  var url   = document.getElementById('importUrl').value.trim();
+  var q      = document.getElementById('importQ').value.trim();
+  var yes    = parseInt(document.getElementById('importYes').value);
+  var no     = parseInt(document.getElementById('importNo').value);
+  var close  = document.getElementById('importClose').value.trim();
+  var cat    = document.getElementById('importCat').value;
+  var url    = document.getElementById('importUrl').value.trim();
+  var side   = document.getElementById('importSide').value;
+  var amount = parseFloat(document.getElementById('importAmount').value);
   if(!q){ document.getElementById('importQ').focus(); return; }
   if(!yes||!no){ alert('Please enter YES and NO prices'); return; }
-  var bet = { id: Date.now().toString(), q, yes, no, close, cat, url, created: Date.now() };
+  var bet = {
+    id: Date.now().toString(), q, yes, no, close, cat, url, created: Date.now(),
+    placed: !!(side && amount),
+    placedSide: side || null,
+    placedAmount: (side && amount) ? amount.toFixed(2) : null
+  };
   bets.unshift(bet);
   localStorage.setItem('onyx_mkt_bets', JSON.stringify(bets));
-  // Clear form
-  ['importQ','importYes','importNo','importClose','importUrl'].forEach(function(id){
+  ['importQ','importYes','importNo','importClose','importUrl','importAmount'].forEach(function(id){
     document.getElementById(id).value='';
   });
+  document.getElementById('importSide').value = '';
+  document.getElementById('probPreview').style.display = 'none';
+  document.getElementById('urlStatus').textContent = 'Paste a Kalshi market URL, then fill in the details below.';
+  document.getElementById('urlStatus').style.color = 'var(--grey)';
   renderBetList();
   selectBet(bet.id);
 }
