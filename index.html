@@ -955,7 +955,10 @@ function renderSidebarPanels(){
   }catch(e){}
 }
 function toggleSP(id){var c=document.getElementById(id);if(c)c.classList.toggle('open');}
-function spGoStock(ticker){if(window.location.pathname==='/'){{if(typeof selectStock==='function')selectStock(ticker);}}else{{window.location.href='/';}}  }
+function spGoStock(ticker){
+  if(window.location.pathname==='/'){if(typeof selectStock==='function')selectStock(ticker);}
+  else{sessionStorage.setItem('onyx_select_ticker',ticker);window.location.href='/';}
+}
 function spGoResearch(sid){if(window.location.pathname==='/search'){{if(typeof loadSession==='function')loadSession(sid);}}else{{window.location.href='/search';}}  }
 function goToMarkets(){window.location.href='/markets';}
 try{renderSidebarPanels();}catch(e){}
