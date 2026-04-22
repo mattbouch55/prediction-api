@@ -924,63 +924,68 @@ function selectBetFromInventory(marketId){
 
 function toggleSP(id){ var c=document.getElementById(id); if(c) c.classList.toggle('open'); }
 
-function renderSidebarPanels(){
-  try{
-    var wl=JSON.parse(localStorage.getItem('onyx_wl_v3')||'[]');
-    var port=JSON.parse(localStorage.getItem('onyx_portfolio')||'[]');
-    document.getElementById('spWlCount').textContent=wl.length+' stock'+(wl.length!==1?'s':'');
-    var wb=document.getElementById('spWlBody');
-    if(!wl.length){ wb.innerHTML='<div class="sp-empty">No stocks added yet</div>'; }
-    else {
-      wb.innerHTML=wl.slice(0,12).map(function(w){
-        var p=port.find(function(p){return p.ticker===w.ticker;});
-        var tv='';
-        if(p&&p.shares&&p.buyPrice){
-          var lp=p.points&&p.points.length?p.points[p.points.length-1].p:p.buyPrice;
-          var t=p.shares*lp,pnl=(lp-p.buyPrice)*p.shares;
-          tv='<span style="font-family:JetBrains Mono,monospace;font-size:10px;color:'+(pnl>=0?'var(--green)':'var(--red)')+';font-weight:600">$'+t.toFixed(2)+'</span>';
-        }
-        return '<div class="sp-row" onclick="window.location.href=\'/'+'\'"><span class="sp-ticker">'+w.ticker+'</span>'+(tv||'<span style="font-size:10px;color:var(--grey)">-</span>')+'</div>';
-      }).join('');
-    }
-  }catch(e){}
-  try{
-    var sessions=JSON.parse(localStorage.getItem('onyx_sessions')||'[]');
-    document.getElementById('spRsCount').textContent=sessions.length+' session'+(sessions.length!==1?'s':'');
-    var rb=document.getElementById('spRsBody');
-    if(!sessions.length){ rb.innerHTML='<div class="sp-empty">No research sessions yet</div>'; }
-    else {
-      rb.innerHTML=sessions.slice().reverse().slice(0,8).map(function(s){
-        var name=s.name||s.topic||'Untitled';
-        var date=new Date(s.created).toLocaleDateString('en-US',{month:'short',day:'numeric'});
-        return '<div class="sp-log-row" onclick="window.location.href=\'/search\'"><div class="sp-log-name">'+name.substring(0,28)+(name.length>28?'...':'')+'</div><div class="sp-log-date">'+date+'</div></div>';
-      }).join('');
-    }
-  }catch(e){}
-  // Kalshi Bets
+function renderSidebarPanels() {
+  // Mini Watchlist
   try {
-    var sidBets = JSON.parse(localStorage.getItem('onyx_mkt_bets') || '[]');
-    var btCount = document.getElementById('spBtCount');
-    var btBody  = document.getElementById('spBtBody');
-    if(btCount) btCount.textContent = sidBets.length + ' bet' + (sidBets.length !== 1 ? 's' : '');
-    if(btBody){
-      if(!sidBets.length){
-        btBody.innerHTML = '<div class="sp-empty">No bets imported yet</div>';
+    var wl = JSON.parse(localStorage.getItem('onyx_wl_v3') || '[]');
+    var wlCount = document.getElementById('spWlCount');
+    var wlBody  = document.getElementById('spWlBody');
+    if (wlCount) wlCount.textContent = wl.length + ' stock' + (wl.length !== 1 ? 's' : '');
+    if (wlBody) {
+      if (!wl.length) {
+        wlBody.innerHTML = '<div class="sp-empty">No stocks added yet</div>';
       } else {
-        btBody.innerHTML = sidBets.slice(0, 8).map(function(b){
-          var q = b.q || '';
-          var short = q.length > 32 ? q.substring(0, 32) + '...' : q;
-          var oddsStr = '<span style="color:var(--blue)">' + b.yes + '</span>/<span style="color:var(--yellow)">' + b.no + '</span>';
-          var sideStr = b.placed ? ' &middot; <span style="color:' + (b.placedSide === 'YES' ? 'var(--blue)' : 'var(--yellow)') + ';font-weight:700">' + b.placedSide + '</span>' : '';
-          return '<div class="sp-log-row" onclick="goToMarkets()">' +
-            '<div class="sp-log-name">' + short + '</div>' +
-            '<div class="sp-log-date">' + oddsStr + sideStr + '</div>' +
+        var portfolio = [];
+          try { portfolio = JSON.parse(localStorage.getItem('onyx_portfolio') || '[]'); } catch(e) {}
+          wlBody.innerHTML = wl.slice(0, 15).map(function(w) {
+          var port = portfolio.find(function(p) { return p.ticker === w.ticker; });
+          var totalVal = '';
+          if (port && port.shares && port.buyPrice) {
+            var lastPt = port.points && port.points.length ? port.points[port.points.length-1].p : port.buyPrice;
+            var total = port.shares * lastPt;
+            var pnl = (lastPt - port.buyPrice) * port.shares;
+            var color = pnl >= 0 ? 'var(--green)' : 'var(--red)';
+            var sign = pnl >= 0 ? '+' : '';
+            totalVal = '<span style="font-family:JetBrains Mono,monospace;font-size:10px;color:' + color + ';font-weight:600">'
+              + '$' + total.toFixed(2) + '</span>';
+          }
+          return '<div class="sp-stock-row" data-ticker="' + w.ticker + '">' +
+            '<span class="sp-ticker">' + w.ticker + '</span>' +
+            (totalVal || '<span class="sp-price">—</span>') +
           '</div>';
         }).join('');
+        wlBody.querySelectorAll('.sp-stock-row').forEach(function(row) {
+          row.addEventListener('click', function() { spGoStock(row.dataset.ticker); });
+        });
       }
     }
-  } catch(e){}
+  } catch(e) {}
 
+  // Research Log
+  try {
+    var sessions = JSON.parse(localStorage.getItem('onyx_sessions') || '[]');
+    var rsCount = document.getElementById('spRsCount');
+    var rsBody  = document.getElementById('spRsBody');
+    if (rsCount) rsCount.textContent = sessions.length + ' session' + (sessions.length !== 1 ? 's' : '');
+    if (rsBody) {
+      if (!sessions.length) {
+        rsBody.innerHTML = '<div class="sp-empty">No research sessions yet</div>';
+      } else {
+        var sorted = sessions.slice().reverse().slice(0, 10);
+        rsBody.innerHTML = sorted.map(function(s) {
+          var name = s.name || s.topic || 'Untitled';
+          var date = new Date(s.created).toLocaleDateString('en-US', {month:'short', day:'numeric'});
+          return '<div class="sp-log-row" data-sid="' + s.id + '">' +
+            '<div class="sp-log-name">' + name.substring(0, 28) + (name.length > 28 ? '...' : '') + '</div>' +
+            '<div class="sp-log-date">' + date + '</div>' +
+          '</div>';
+        }).join('');
+        rsBody.querySelectorAll('.sp-log-row').forEach(function(row) {
+          row.addEventListener('click', function() { spGoResearch(row.dataset.sid); });
+        });
+      }
+    }
+  } catch(e) {}
 }
 
   setInterval(renderSidebarPanels,30000);
