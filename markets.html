@@ -643,7 +643,9 @@ function renderResearchWorkspace(){
         '</div>'
       :
         '<div style="display:flex;align-items:center;gap:8px;flex:1">' +
-          '<span style="font-size:11px;font-weight:700;color:var(--green)">✓ Placed ' + (b.placedSide||'') + ' · $' + (b.placedAmount||'') + '</span>' +
+          '<span style="font-size:11px;font-weight:600;color:var(--text2)">✓ Placed </span>' +
+          '<span style="font-size:11px;font-weight:700;color:'+(b.placedSide==='YES'?'var(--blue)':'var(--yellow)')+'">'+( b.placedSide||'')+'</span>' +
+          '<span style="font-size:11px;font-weight:700;color:var(--green)"> · $'+(b.placedAmount||'')+'</span>' +
           '<button onclick="rwUnmarkPlaced()" style="background:none;border:1px solid var(--border);color:var(--grey2);cursor:pointer;font-size:9px;padding:2px 7px;border-radius:3px;font-family:Inter,sans-serif;margin-left:auto">Reset</button>' +
         '</div>') +
     '</div>' +
