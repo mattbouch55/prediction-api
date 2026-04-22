@@ -188,9 +188,9 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:'Inter'
     .inv-status.lost { background: var(--red-dim); color: var(--red); }
     .inv-del { background: none; border: none; color: var(--grey); cursor: pointer; font-size: 16px; padding: 0 3px; flex-shrink: 0; margin-left: auto; line-height: 1; }
     .inv-del:hover { color: var(--red); }
-    .inv-q { font-size: 11px; font-weight: 600; color: var(--text); line-height: 1.4; margin-bottom: 8px; }
-    .inv-meta { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 4px; }
-    .inv-meta-item { background: var(--surface); border: 1px solid var(--border); border-radius: 4px; padding: 4px 7px; }
+    .inv-q { font-size: 11px; font-weight: 600; color: var(--text); line-height: 1.35; margin-bottom: 5px; }
+    .inv-meta { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 3px; }
+    .inv-meta-item { background: var(--surface); border: 1px solid var(--border); border-radius: 4px; padding: 3px 6px; }
     .inv-meta-label { font-size: 8px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.04em; color: var(--grey); margin-bottom: 1px; }
     .inv-meta-val { font-size: 10px; font-weight: 700; font-family: 'JetBrains Mono', monospace; color: var(--text); }
     .inv-meta-val.green { color: var(--green); font-size: 10px; }
@@ -583,7 +583,7 @@ function renderBetList(){
           '<div class="inv-meta-val"><span style="color:var(--blue)">'+b.yes+'¢</span> <span style="color:var(--grey)">/</span> <span style="color:var(--yellow)">'+b.no+'¢</span></div>'+
         '</div>'+
         '<div class="inv-meta-item" style="border:'+(placed?'1px solid rgba(22,163,74,0.25)':'1px solid var(--border)')+';background:'+(placed?'var(--green-dim)':'var(--surface)')+'">'+
-          '<div class="inv-meta-label" style="color:'+(placed?'var(--green)':'var(--grey)')+'">Bet Placed</div>'+
+          
           '<div style="font-size:13px;font-weight:700;font-family:Inter,sans-serif;color:'+(placed?'var(--green)':'var(--grey2)')+'">'+(placed?'<span style="color:'+(b.placedSide==='YES'?'var(--blue)':'var(--yellow)')+'">'+b.placedSide+'</span><span style="color:var(--green)"> $'+b.placedAmount+'</span>':'Not Owned')+'</div>'+
         '</div>'+
         '<div class="inv-meta-item">'+
@@ -1129,9 +1129,9 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:'Inter'
     .inv-status.lost { background: var(--red-dim); color: var(--red); }
     .inv-del { background: none; border: none; color: var(--grey); cursor: pointer; font-size: 16px; padding: 0 3px; flex-shrink: 0; margin-left: auto; line-height: 1; }
     .inv-del:hover { color: var(--red); }
-    .inv-q { font-size: 11px; font-weight: 600; color: var(--text); line-height: 1.4; margin-bottom: 8px; }
-    .inv-meta { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 4px; }
-    .inv-meta-item { background: var(--surface); border: 1px solid var(--border); border-radius: 4px; padding: 4px 7px; }
+    .inv-q { font-size: 11px; font-weight: 600; color: var(--text); line-height: 1.35; margin-bottom: 5px; }
+    .inv-meta { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 3px; }
+    .inv-meta-item { background: var(--surface); border: 1px solid var(--border); border-radius: 4px; padding: 3px 6px; }
     .inv-meta-label { font-size: 8px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.04em; color: var(--grey); margin-bottom: 1px; }
     .inv-meta-val { font-size: 10px; font-weight: 700; font-family: 'JetBrains Mono', monospace; color: var(--text); }
     .inv-meta-val.green { color: var(--green); font-size: 10px; }
@@ -1510,7 +1510,7 @@ function renderBetList(){
           '<div class="inv-meta-val"><span style="color:var(--blue)">'+b.yes+'¢</span> <span style="color:var(--grey)">/</span> <span style="color:var(--yellow)">'+b.no+'¢</span></div>'+
         '</div>'+
         '<div class="inv-meta-item" style="border:'+(placed?'1px solid rgba(22,163,74,0.25)':'1px solid var(--border)')+';background:'+(placed?'var(--green-dim)':'var(--surface)')+'">'+
-          '<div class="inv-meta-label" style="color:'+(placed?'var(--green)':'var(--grey)')+'">Bet Placed</div>'+
+          
           '<div style="font-size:13px;font-weight:700;font-family:Inter,sans-serif;color:'+(placed?'var(--green)':'var(--grey2)')+'">'+(placed?'<span style="color:'+(b.placedSide==='YES'?'var(--blue)':'var(--yellow)')+'">'+b.placedSide+'</span><span style="color:var(--green)"> $'+b.placedAmount+'</span>':'Not Owned')+'</div>'+
         '</div>'+
         '<div class="inv-meta-item">'+
