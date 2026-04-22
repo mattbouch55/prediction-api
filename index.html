@@ -687,8 +687,7 @@ function renderPanel(ticker){
     '</div>':'')
     :'<div style="font-size:12px;color:var(--grey2);margin-bottom:16px;padding:12px;background:var(--surface2);border-radius:6px">No scan data yet — click <strong>Scan</strong>.</div>';
 
-  document.getElementById('panelBody').innerHTML=scoreHTML+
-    '<hr class="panel-divider"/>'+
+  document.getElementById('panelBody').innerHTML=
     '<div class="panel-hist-notes">'+
       '<div><div class="panel-section-label">Scan History</div><div class="panel-hist-scroll">'+histHTML+'</div></div>'+
       '<div class="notes-col">'+
@@ -698,10 +697,12 @@ function renderPanel(ticker){
         '<div style="display:flex;flex-direction:column;flex:1;gap:6px">'+
           '<div class="panel-section-label">Notes</div>'+
           '<textarea class="notes-textarea" id="cmt-'+ticker+'" placeholder="Your notes, thesis, trade plan...">'+comment+'</textarea>'+
-          '<button class="notes-save-btn" onclick="saveNotes(\''+ticker+'\')">Save</button>'+
+          '<button class="notes-save-btn" onclick="saveNotes(''+ticker+'')">Save</button>'+
         '</div>'+
       '</div>'+
-    '</div>';
+    '</div>'+
+    '<hr class="panel-divider"/>'+
+    scoreHTML
 }
 
 function saveNotes(ticker){
