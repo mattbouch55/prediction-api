@@ -172,6 +172,39 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:'Inter'
 .empty-icon{font-size:28px;margin-bottom:10px;opacity:0.2}
 .empty-text{font-size:13px;font-weight:500;color:var(--text2);margin-bottom:4px}
 .empty-sub{font-size:11px;color:var(--grey);line-height:1.6}
+
+    /* Inventory grid */
+    .inv-grid { display: flex; flex-direction: column; gap: 0; }
+    .inv-item { padding: 10px 14px; border-bottom: 1px solid var(--border); cursor: pointer; transition: background 0.1s; }
+    .inv-item:last-child { border-bottom: none; }
+    .inv-item:hover { background: var(--surface2); }
+    .inv-item.active { background: var(--blue-soft); }
+    .inv-top { display: flex; align-items: center; gap: 6px; margin-bottom: 5px; }
+    .inv-side { font-size: 9px; font-weight: 800; padding: 2px 7px; border-radius: 3px; text-transform: uppercase; letter-spacing: 0.04em; flex-shrink: 0; }
+    .inv-side.yes { background: var(--green); color: #fff; }
+    .inv-side.no { background: var(--red); color: #fff; }
+    .inv-status { font-size: 9px; font-weight: 600; padding: 1px 6px; border-radius: 3px; flex-shrink: 0; margin-left: auto; }
+    .inv-status.open { background: var(--blue-soft); color: var(--blue); }
+    .inv-status.won { background: var(--green-dim); color: var(--green); }
+    .inv-status.lost { background: var(--red-dim); color: var(--red); }
+    .inv-del { background: none; border: none; color: var(--grey); cursor: pointer; font-size: 14px; padding: 0 2px; flex-shrink: 0; }
+    .inv-del:hover { color: var(--red); }
+    .inv-q { font-size: 11px; font-weight: 500; color: var(--text); line-height: 1.4; margin-bottom: 6px; }
+    .inv-meta { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+    .inv-price { font-size: 10px; font-family: 'JetBrains Mono', monospace; color: var(--grey2); }
+    .inv-pnl { font-size: 11px; font-weight: 700; font-family: 'JetBrains Mono', monospace; margin-left: auto; }
+    .inv-actions { display: flex; gap: 4px; margin-top: 6px; }
+    .inv-btn { font-size: 9px; font-weight: 600; padding: 2px 8px; border-radius: 3px; border: 1px solid var(--border); background: var(--surface2); color: var(--grey2); cursor: pointer; transition: all 0.12s; }
+    .inv-btn.won-btn:hover { background: var(--green-dim); border-color: rgba(22,163,74,0.3); color: var(--green); }
+    .inv-btn.lost-btn:hover { background: var(--red-dim); border-color: rgba(220,38,38,0.3); color: var(--red); }
+    .inv-btn.open-btn:hover { background: var(--blue-soft); border-color: rgba(21,101,255,0.3); color: var(--blue); }
+    /* Summary strip */
+    .pnl-strip { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 6px; padding: 10px 12px; }
+    .pnl-box { background: var(--surface2); border-radius: 6px; padding: 7px 8px; text-align: center; }
+    .pnl-val { font-size: 15px; font-weight: 800; font-family: 'JetBrains Mono', monospace; }
+    .pnl-lbl { font-size: 9px; color: var(--grey); text-transform: uppercase; letter-spacing: 0.05em; margin-top: 1px; }
+    /* Add position form */
+    .add-pos-form { padding: 10px 12px; border-top: 1px solid var(--border); display: flex; flex-direction: column; gap: 6px; background: var(--surface2); }
 </style>
 </head>
 <body>
@@ -312,43 +345,47 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:'Inter'
     </div>
   </div>
 
-  <!-- COL 3: POSITIONS TRACKER -->
+  <!-- COL 3: BET INVENTORY -->
   <div class="col-tracker">
+    <div class="card" style="flex:1;display:flex;flex-direction:column;min-height:0;overflow:hidden">
 
-    <!-- Active positions -->
-    <div class="card">
+      <!-- Header with P&L strip -->
       <div class="ch">
-        <span class="ct">Positions</span>
-        <span class="cs" id="posCount">0 tracked</span>
+        <span class="ct">Bet Inventory</span>
+        <span class="cs" id="posCount">0 bets</span>
       </div>
-      <div id="posList">
-        <div class="sp-empty">No positions yet. After placing a bet on Kalshi, track it here.</div>
+
+      <!-- Summary strip -->
+      <div class="pnl-strip" id="pnlSummary">
+        <div class="pnl-box"><div class="pnl-val" style="color:var(--grey)">$0</div><div class="pnl-lbl">P&L</div></div>
+        <div class="pnl-box"><div class="pnl-val" style="color:var(--green)">0</div><div class="pnl-lbl">Won</div></div>
+        <div class="pnl-box"><div class="pnl-val" style="color:var(--red)">0</div><div class="pnl-lbl">Lost</div></div>
       </div>
-      <!-- Add position form -->
-      <div style="padding:10px 12px;border-top:1px solid var(--border);display:flex;flex-direction:column;gap:6px">
-        <div style="font-size:10px;font-weight:600;color:var(--grey);text-transform:uppercase;letter-spacing:0.06em">Track a placed bet</div>
+
+      <!-- Inventory list -->
+      <div style="flex:1;overflow-y:auto;border-top:1px solid var(--border)">
+        <div class="inv-grid" id="posList">
+          <div class="sp-empty" style="padding:24px">No bets tracked yet.<br>Place a bet on Kalshi then log it below.</div>
+        </div>
+      </div>
+
+      <!-- Add bet form -->
+      <div class="add-pos-form">
+        <div style="font-size:10px;font-weight:700;color:var(--grey);text-transform:uppercase;letter-spacing:0.06em">Log a Kalshi bet</div>
         <select class="field-input" id="posMarket" style="font-size:11px;padding:5px 8px"></select>
-        <div class="field-row" style="gap:5px">
+        <div style="display:flex;gap:5px">
           <select class="field-input" id="posSide" style="font-size:11px;padding:5px 8px;flex:1">
             <option value="YES">YES</option>
             <option value="NO">NO</option>
           </select>
-          <input class="price-input" id="posEntry" type="number" placeholder="¢" style="width:60px;font-size:11px;padding:5px 8px"/>
-          <input class="price-input" id="posAmount" type="number" placeholder="$" style="width:60px;font-size:11px;padding:5px 8px"/>
+          <input class="price-input" id="posEntry" type="number" min="1" max="99" placeholder="Entry ¢" style="flex:1;font-size:11px;padding:5px 8px;width:auto"/>
+          <input class="price-input" id="posAmount" type="number" min="1" placeholder="Stake $" style="flex:1;font-size:11px;padding:5px 8px;width:auto"/>
         </div>
-        <button class="import-btn" style="font-size:11px;padding:6px" onclick="addPosition()">+ Add Position</button>
-        <div style="font-size:9px;color:var(--grey);line-height:1.4">Track bets you've already placed on Kalshi. Onyx never handles real money.</div>
+        <button class="import-btn" style="font-size:11px;padding:6px" onclick="addPosition()">+ Log Bet</button>
+        <div style="font-size:9px;color:var(--grey);line-height:1.4;text-align:center">Onyx tracks only. All bets placed on <a href="https://kalshi.com" target="_blank" style="color:var(--blue)">Kalshi</a>.</div>
       </div>
-    </div>
 
-    <!-- P&L Summary -->
-    <div class="card">
-      <div class="ch"><span class="ct">P&L Summary</span></div>
-      <div style="padding:10px 12px" id="pnlSummary">
-        <div class="sp-empty">No positions to summarise</div>
-      </div>
     </div>
-
   </div>
 
 </div><!-- /main -->
@@ -631,39 +668,27 @@ function renderPositions(){
 
 function renderPnl(){
   var el = document.getElementById('pnlSummary');
-  if(!positions.length){ el.innerHTML='<div class="sp-empty">No positions to summarise</div>'; return; }
-  var open=0,won=0,lost=0,totalPnl=0;
+  var won=0, lost=0, totalPnl=0;
   positions.forEach(function(p){
     var currentPrice = p.side==='YES' ? p.yes : p.no;
     var pnl = ((currentPrice - p.entryPrice)/100)*p.amount;
-    if(p.status==='open') open++;
-    else if(p.status==='won') won++;
-    else lost++;
+    if(p.status==='won') won++;
+    else if(p.status==='lost') lost++;
     totalPnl += pnl;
   });
-  var pnlColor = totalPnl>=0?'var(--green)':'var(--red)';
+  var pnlColor = totalPnl>=0 ? 'var(--green)' : 'var(--red)';
   el.innerHTML =
-    '<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;padding:2px">' +
-      '<div style="background:var(--surface2);border-radius:6px;padding:8px;text-align:center">' +
-        '<div style="font-size:18px;font-weight:800;font-family:JetBrains Mono,monospace;color:'+pnlColor+'">'+(totalPnl>=0?'+':'')+'$'+Math.abs(totalPnl).toFixed(2)+'</div>' +
-        '<div style="font-size:9px;color:var(--grey);text-transform:uppercase;letter-spacing:0.06em;margin-top:2px">Total P&L</div>' +
-      '</div>' +
-      '<div style="background:var(--surface2);border-radius:6px;padding:8px;text-align:center">' +
-        '<div style="font-size:18px;font-weight:800;font-family:JetBrains Mono,monospace;color:var(--text)">'+positions.length+'</div>' +
-        '<div style="font-size:9px;color:var(--grey);text-transform:uppercase;letter-spacing:0.06em;margin-top:2px">Total Bets</div>' +
-      '</div>' +
-      '<div style="background:var(--green-dim);border-radius:6px;padding:6px;text-align:center">' +
-        '<div style="font-size:15px;font-weight:700;color:var(--green)">'+won+'</div>' +
-        '<div style="font-size:9px;color:var(--green)">Won</div>' +
-      '</div>' +
-      '<div style="background:var(--red-dim);border-radius:6px;padding:6px;text-align:center">' +
-        '<div style="font-size:15px;font-weight:700;color:var(--red)">'+lost+'</div>' +
-        '<div style="font-size:9px;color:var(--red)">Lost</div>' +
-      '</div>' +
-    '</div>';
+    '<div class="pnl-box"><div class="pnl-val" style="color:'+pnlColor+'">'+(totalPnl>=0?'+':'')+'$'+Math.abs(totalPnl).toFixed(2)+'</div><div class="pnl-lbl">P&L</div></div>' +
+    '<div class="pnl-box"><div class="pnl-val" style="color:var(--green)">'+won+'</div><div class="pnl-lbl">Won</div></div>' +
+    '<div class="pnl-box"><div class="pnl-val" style="color:var(--red)">'+lost+'</div><div class="pnl-lbl">Lost</div></div>';
 }
 
 // ── SIDEBAR ───────────────────────────────────────────────────
+function selectBetFromInventory(marketId){
+  var bet = bets.find(function(b){return b.id===marketId;});
+  if(bet){ activeBet=bet; renderBetList(); renderResearchWorkspace(); }
+}
+
 function toggleSP(id){ var c=document.getElementById(id); if(c) c.classList.toggle('open'); }
 
 function renderSidebarPanels(){
