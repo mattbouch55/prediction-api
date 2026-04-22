@@ -91,10 +91,10 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:'Inter'
 
 /* MARKET CARDS */
 .market-list{padding:10px 14px;display:flex;flex-direction:column;gap:8px;max-height:420px;overflow-y:auto}
-.market-card{background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:11px 13px;cursor:pointer;transition:all 0.15s}
+.market-card{background:var(--surface2);border:1px solid var(--border);border-radius:7px;padding:8px 11px;cursor:pointer;transition:all 0.15s}
 .market-card:hover{border-color:var(--blue);background:var(--blue-soft)}
 .market-card.selected{border-color:var(--blue);background:var(--blue-soft)}
-.market-q{font-size:12px;font-weight:500;color:var(--text);line-height:1.5;margin-bottom:8px}
+.market-q{font-size:11px;font-weight:500;color:var(--text);line-height:1.4;margin-bottom:5px}
 .market-meta{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
 .market-cat{font-size:9px;font-weight:700;text-transform:uppercase;padding:2px 6px;border-radius:3px;letter-spacing:0.05em}
 .market-cat.politics{background:var(--purple-dim);color:var(--purple)}
@@ -106,11 +106,10 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:'Inter'
 .market-vol{font-size:10px;color:var(--grey);font-family:'JetBrains Mono',monospace}
 .market-close{font-size:10px;color:var(--grey)}
 .yes-no{display:flex;gap:6px;margin-top:8px}
-.yes-btn,.no-btn{flex:1;text-align:center;padding:4px 0;border-radius:5px;font-size:11px;font-weight:700;border:none;cursor:pointer;transition:all 0.12s}
-.yes-btn{background:var(--green-dim);color:var(--green)}
-.yes-btn:hover{background:var(--green);color:#fff}
-.no-btn{background:var(--red-dim);color:var(--red)}
-.no-btn:hover{background:var(--red);color:#fff}
+.yes-pill{font-size:10px;font-weight:700;padding:2px 8px;border-radius:3px;background:var(--green-dim);color:var(--green)}
+.no-pill{font-size:10px;font-weight:700;padding:2px 8px;border-radius:3px;background:var(--red-dim);color:var(--red)}
+.kalshi-link{font-size:10px;font-weight:600;color:var(--blue);text-decoration:none;padding:2px 8px;border:1px solid rgba(21,101,255,0.3);border-radius:4px;background:var(--blue-soft);transition:all 0.12s;white-space:nowrap}
+.kalshi-link:hover{background:var(--blue);color:#fff}
 
 /* MARKET DETAIL */
 .detail-placeholder{padding:40px 20px;text-align:center}
@@ -131,7 +130,7 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:'Inter'
 .detail-section{margin-bottom:8px}
 .detail-label{font-size:9px;font-weight:600;text-transform:uppercase;letter-spacing:0.08em;color:var(--grey);margin-bottom:4px}
 .detail-text{font-size:11px;color:var(--text2);line-height:1.6;padding:8px 10px;background:var(--surface2);border-radius:5px;border-left:3px solid var(--blue)}
-.trade-btn{width:100%;padding:7px;border:none;border-radius:6px;font-family:'Inter',sans-serif;font-size:12px;font-weight:700;cursor:pointer;transition:all 0.12s;display:flex;align-items:center;justify-content:center;gap:5px}
+.trade-btn{width:100%;padding:6px;border:none;border-radius:5px;font-family:'Inter',sans-serif;font-size:11px;font-weight:700;cursor:pointer;transition:all 0.12s;display:flex;align-items:center;justify-content:center;gap:5px}
 .trade-btn.yes{background:var(--green);color:#fff;margin-bottom:5px}
 .trade-btn.yes:hover{background:#15803d}
 .trade-btn.no{background:var(--red);color:#fff}
@@ -349,22 +348,7 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:'Inter'
       </div>
     </div>
 
-    <!-- Kalshi Link -->
-    <div class="card">
-      <div class="card-header">
-        <div class="card-title">Trade on Kalshi</div>
-      </div>
-      <div style="padding:14px 16px;text-align:center">
-        <div style="font-size:28px;margin-bottom:10px">🔗</div>
-        <div style="font-size:12px;color:var(--text2);line-height:1.6;margin-bottom:14px">Onyx helps you research and decide. Execute your trades directly on Kalshi's regulated platform.</div>
-        <a href="https://kalshi.com" target="_blank"
-          style="display:block;background:var(--text);color:#fff;text-decoration:none;font-family:'Inter',sans-serif;font-size:12px;font-weight:700;padding:10px;border-radius:7px;transition:opacity 0.12s"
-          onmouseover="this.style.opacity=0.8" onmouseout="this.style.opacity=1">
-          Open Kalshi →
-        </a>
-        <div style="font-size:10px;color:var(--grey);margin-top:8px">All trading happens on Kalshi. Onyx is for research only.</div>
-      </div>
-    </div>
+
 
   </div>
 
@@ -445,9 +429,11 @@ function renderMarkets() {
         '<span class="market-vol">Vol: '+m.vol+'</span>' +
         '<span class="market-close">Closes '+m.close+'</span>' +
       '</div>' +
-      '<div class="yes-no">' +
-        '<button class="yes-btn" onclick="event.stopPropagation();trackPosition(\''+m.id+'\',\'YES\')">YES '+m.yes+'¢</button>' +
-        '<button class="no-btn" onclick="event.stopPropagation();trackPosition(\''+m.id+'\',\'NO\')">NO '+m.no+'¢</button>' +
+      '<div style="display:flex;align-items:center;gap:6px;margin-top:6px">' +
+        '<span class="yes-pill">YES '+m.yes+'¢</span>' +
+        '<span class="no-pill">NO '+m.no+'¢</span>' +
+        '<a class="kalshi-link" href="https://kalshi.com/markets" target="_blank" onclick="event.stopPropagation()">Trade on Kalshi →</a>' +
+        '<button style="margin-left:auto;background:none;border:1px solid var(--border);color:var(--grey2);font-family:Inter,sans-serif;font-size:9px;padding:2px 7px;border-radius:3px;cursor:pointer" onclick="event.stopPropagation();trackPosition(\''+m.id+'\',\'YES\')">+ Track</button>' +
       '</div>' +
     '</div>';
   }).join('');
@@ -475,10 +461,14 @@ function renderDetail() {
       '<div class="detail-label">About this market</div>' +
       '<div class="detail-text">This market resolves YES if the stated event occurs before the close date of '+m.close+'. Volume traded: '+m.vol+'. Current odds reflect the collective wisdom of all traders on Kalshi.</div>' +
     '</div>' +
-    '<button class="trade-btn yes" onclick="trackPosition(\''+m.id+'\',\'YES\')">Track YES Position at '+m.yes+'¢</button>' +
-    '<button class="trade-btn no" onclick="trackPosition(\''+m.id+'\',\'NO\')">Track NO Position at '+m.no+'¢</button>' +
-    '<a href="https://kalshi.com" target="_blank" class="trade-btn" style="background:var(--surface2);color:var(--text);text-decoration:none;border:1px solid var(--border);margin-top:8px">Trade on Kalshi →</a>' +
-    '<div class="trade-note">Onyx tracks positions for research. All real trades are placed on Kalshi directly.</div>';
+    '<div style="display:flex;gap:6px;margin-bottom:8px">' +
+      '<button onclick="trackPosition(\''+m.id+'\',\'YES\')" style="flex:1;background:var(--green-dim);color:var(--green);border:1px solid rgba(22,163,74,0.3);font-family:Inter,sans-serif;font-size:11px;font-weight:600;padding:5px;border-radius:5px;cursor:pointer">+ Track YES</button>' +
+      '<button onclick="trackPosition(\''+m.id+'\',\'NO\')" style="flex:1;background:var(--red-dim);color:var(--red);border:1px solid rgba(220,38,38,0.3);font-family:Inter,sans-serif;font-size:11px;font-weight:600;padding:5px;border-radius:5px;cursor:pointer">+ Track NO</button>' +
+    '</div>' +
+    '<a href="https://kalshi.com/markets" target="_blank" style="display:flex;align-items:center;justify-content:center;gap:6px;width:100%;background:var(--blue);color:#fff;text-decoration:none;font-family:Inter,sans-serif;font-size:12px;font-weight:700;padding:8px;border-radius:6px">' +
+      '🔗 Bet on Kalshi →' +
+    '</a>' +
+    '<div class="trade-note">Onyx is for research only. All bets are placed directly on Kalshi.</div>';
 }
 
 // ── POSITIONS ────────────────────────────────────────────────
