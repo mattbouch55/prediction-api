@@ -402,15 +402,15 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:'Inter'
     <div class="card" style="flex:1;display:flex;flex-direction:column;min-height:0;overflow:hidden">
 
       <!-- Header with P&L strip -->
-      <div class="ch">
-        <span class="ct">Bet Inventory</span>
-        <div style="display:flex;align-items:center;gap:6px;margin-left:auto">
+      <div class="ch" style="flex-direction:column;align-items:stretch;gap:6px;padding:10px 14px">
+        <div style="display:flex;align-items:center;justify-content:space-between">
+          <span class="ct">Bet Inventory</span>
           <span class="cs" id="betCount">0 markets</span>
-          <button onclick="openKalshiPortfolio()" id="portfolioBtn"
-            style="background:var(--blue-soft);color:var(--blue);border:1px solid rgba(21,101,255,0.3);font-family:'Inter',sans-serif;font-size:10px;font-weight:600;padding:2px 9px;border-radius:4px;cursor:pointer;white-space:nowrap;transition:all 0.12s"
-            onmouseover="this.style.background='var(--blue)';this.style.color='#fff'" onmouseout="this.style.background='var(--blue-soft)';this.style.color='var(--blue)'"
-            title="Open your Kalshi portfolio">Kalshi Portfolio ↗</button>
         </div>
+        <button onclick="openKalshiPortfolio()" id="portfolioBtn"
+          style="width:100%;background:var(--blue-soft);color:var(--blue);border:1px solid rgba(21,101,255,0.3);font-family:'Inter',sans-serif;font-size:11px;font-weight:600;padding:5px;border-radius:5px;cursor:pointer;transition:all 0.12s;text-align:center"
+          onmouseover="this.style.background='var(--blue)';this.style.color='#fff'" onmouseout="this.style.background='var(--blue-soft)';this.style.color='var(--blue)'"
+          title="Open your Kalshi portfolio">Kalshi Portfolio ↗</button>
       </div>
 
       <!-- Portfolio URL popup -->
@@ -1434,15 +1434,15 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:'Inter'
     <div class="card" style="flex:1;display:flex;flex-direction:column;min-height:0;overflow:hidden">
 
       <!-- Header with P&L strip -->
-      <div class="ch">
-        <span class="ct">Bet Inventory</span>
-        <div style="display:flex;align-items:center;gap:6px;margin-left:auto">
+      <div class="ch" style="flex-direction:column;align-items:stretch;gap:6px;padding:10px 14px">
+        <div style="display:flex;align-items:center;justify-content:space-between">
+          <span class="ct">Bet Inventory</span>
           <span class="cs" id="betCount">0 markets</span>
-          <button onclick="openKalshiPortfolio()" id="portfolioBtn"
-            style="background:var(--blue-soft);color:var(--blue);border:1px solid rgba(21,101,255,0.3);font-family:'Inter',sans-serif;font-size:10px;font-weight:600;padding:2px 9px;border-radius:4px;cursor:pointer;white-space:nowrap;transition:all 0.12s"
-            onmouseover="this.style.background='var(--blue)';this.style.color='#fff'" onmouseout="this.style.background='var(--blue-soft)';this.style.color='var(--blue)'"
-            title="Open your Kalshi portfolio">Kalshi Portfolio ↗</button>
         </div>
+        <button onclick="openKalshiPortfolio()" id="portfolioBtn"
+          style="width:100%;background:var(--blue-soft);color:var(--blue);border:1px solid rgba(21,101,255,0.3);font-family:'Inter',sans-serif;font-size:11px;font-weight:600;padding:5px;border-radius:5px;cursor:pointer;transition:all 0.12s;text-align:center"
+          onmouseover="this.style.background='var(--blue)';this.style.color='#fff'" onmouseout="this.style.background='var(--blue-soft)';this.style.color='var(--blue)'"
+          title="Open your Kalshi portfolio">Kalshi Portfolio ↗</button>
       </div>
 
       <!-- Portfolio URL popup -->
