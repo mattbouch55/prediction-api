@@ -637,9 +637,9 @@ function renderResearchWorkspace(){
       (!b.placed ?
         '<div style="display:flex;align-items:center;gap:5px;flex:1">' +
           '<button id="rwSideYes" onclick="rwSelectSide(\'YES\')" style="padding:2px 10px;border-radius:4px;border:1px solid rgba(21,101,255,0.3);background:var(--surface);color:var(--grey2);font-family:Inter,sans-serif;font-size:10px;font-weight:700;cursor:pointer;transition:all 0.12s">YES</button>' +
-          '<button id="rwSideNo" onclick="rwSelectSide(\'NO\')" style="padding:2px 10px;border-radius:4px;border:1px solid rgba(217,119,6,0.3);background:var(--surface);color:var(--grey2);font-family:Inter,sans-serif;font-size:10px;font-weight:700;cursor:pointer;transition:all 0.12s">NO</button>' +
+          '<button id="rwSideNo" onclick="rwSelectSide(\'NO\')" style="padding:2px 10px;border-radius:4px;border:1px solid rgba(217,119,6,0.3);background:var(--surface);color:var(--grey2);font-family:Inter,sans-serif;font-size:10px;font-weight:700;cursor:pointer;transition:all 0.12s;margin-left:auto">NO</button>' +
           '<input id="rwAmount" type="number" min="1" placeholder="$ amount" style="width:90px;background:var(--bg);border:1px solid var(--border2);border-radius:4px;font-family:Inter,sans-serif;font-size:10px;padding:3px 7px;outline:none;color:var(--text)"/>' +
-          '<button onclick="rwMarkPlaced()" style="background:var(--green);color:#fff;border:none;font-family:Inter,sans-serif;font-size:10px;font-weight:600;padding:3px 10px;border-radius:4px;cursor:pointer;white-space:nowrap">✓ Mark Placed</button>' +
+          '<button onclick="rwMarkPlaced()" style="background:var(--blue);color:#fff;border:none;font-family:Inter,sans-serif;font-size:10px;font-weight:600;padding:3px 9px;border-radius:4px;cursor:pointer;white-space:nowrap">Save</button>' +
         '</div>'
       :
         '<div style="display:flex;align-items:center;gap:8px;flex:1">' +
@@ -686,9 +686,7 @@ function renderResearchWorkspace(){
       '</div>' +
       '<textarea class="notes-area" id="betNotes" placeholder="Write your research notes, thesis, reasons to bet YES or NO...">'+notes+'</textarea>' +
     '</div>' +
-    '<div style="padding:10px 14px;border-top:1px solid var(--border)">' +
-      '<a href="'+(b.url||'https://kalshi.com')+'" target="_blank" class="kalshi-btn">🔗 Open on Kalshi to Bet →</a>' +
-    '</div>';
+    '';
 }
 
 
@@ -1609,9 +1607,7 @@ function renderResearchWorkspace(){
     '</div>' +
 
     // Kalshi link — single clean button at the bottom
-    '<div style="padding:10px 14px;border-top:1px solid var(--border)">' +
-      '<a href="'+(b.url||'https://kalshi.com')+'" target="_blank" class="kalshi-btn">🔗 Open on Kalshi to Bet →</a>' +
-    '</div>';
+    '';
 }
 
 function renderAIResult(d){
