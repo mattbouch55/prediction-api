@@ -25,8 +25,9 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:'Inter'
 /* SIDEBAR */
 .sidebar{width:var(--sidebar-w);background:var(--surface);border-right:1px solid var(--border);display:flex;flex-direction:column;flex-shrink:0;height:100vh}
 .sidebar-logo{height:107px;display:flex;align-items:center;padding:0 20px;border-bottom:1px solid var(--border);flex-shrink:0}
+.logo-row{display:flex;align-items:center;gap:9px}
 .logo-icon{width:28px;height:28px;background:var(--blue);border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;color:#fff;font-family:'JetBrains Mono',monospace;flex-shrink:0}
-.logo-name{font-size:16px;font-weight:700;color:var(--text);margin-left:10px}
+.logo-name{font-size:16px;font-weight:700;color:var(--text)}
 .logo-sub{font-size:11px;color:var(--grey);letter-spacing:0.07em;text-transform:uppercase;margin-top:3px}
 .sidebar-nav{padding:12px 10px;flex-shrink:0;overflow-y:auto}
 .nav-sec{font-size:10px;font-weight:600;letter-spacing:0.1em;text-transform:uppercase;color:var(--grey);padding:10px 10px 5px}
@@ -210,10 +211,12 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:'Inter'
 <!-- SIDEBAR -->
 <aside class="sidebar">
   <div class="sidebar-logo">
-    <div class="logo-icon">O</div>
-    <div>
-      <div class="logo-name">Onyx AI</div>
-      <div class="logo-sub">Intelligence</div>
+    <div class="logo-row">
+      <div class="logo-icon">O</div>
+      <div>
+        <div class="logo-name">Onyx AI</div>
+        <div class="logo-sub">Intelligence</div>
+      </div>
     </div>
   </div>
   <nav class="sidebar-nav">
@@ -957,3 +960,4 @@ setInterval(renderSidebarPanels, 30000);
 </script>
 </body>
 </html>
+
