@@ -1458,6 +1458,8 @@ updateCharCount();
 
 
 // ── SIDEBAR PANELS ────────────────────────────────────────────
+function goToMarkets(){ window.location.href = "/markets"; }
+
 function toggleSP(id) {
   var card = document.getElementById(id);
   if (card) card.classList.toggle('open');
@@ -1547,26 +1549,22 @@ renderSidebarPanels();
 
   // Kalshi Bets
   try {
-    var bets = JSON.parse(localStorage.getItem('onyx_mkt_bets') || '[]');
+    var sidBets = JSON.parse(localStorage.getItem('onyx_mkt_bets') || '[]');
     var btCount = document.getElementById('spBtCount');
     var btBody  = document.getElementById('spBtBody');
-    if(btCount) btCount.textContent = bets.length + ' bet'+(bets.length!==1?'s':'');
+    if(btCount) btCount.textContent = sidBets.length + ' bet' + (sidBets.length !== 1 ? 's' : '');
     if(btBody){
-      if(!bets.length){ btBody.innerHTML='<div class="sp-empty">No bets imported yet</div>'; }
-      else {
-        btBody.innerHTML = bets.slice(0,10).map(function(b){
-          var placed = b.placed;
-          var sideColor = b.placedSide==='YES'?'var(--blue)':'var(--yellow)';
-          return '<div class="sp-row" onclick="window.location.href=\'/markets\'">' +
-            '<div style="flex:1;min-width:0">' +
-              '<div style="font-size:10px;font-weight:600;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'+b.q.substring(0,28)+'...</div>' +
-              '<div style="font-size:9px;color:var(--grey);font-family:JetBrains Mono,monospace;margin-top:1px">' +
-                '<span style="color:var(--blue)">YES '+b.yes+'</span>' +
-                '<span style="color:var(--grey)"> / </span>' +
-                '<span style="color:var(--yellow)">NO '+b.no+'</span>' +
-              '</div>' +
-            '</div>' +
-            (placed ? '<span style="font-size:9px;font-weight:700;color:'+sideColor+';flex-shrink:0">'+b.placedSide+'</span>' : '<span style="font-size:9px;color:var(--grey);flex-shrink:0">—</span>') +
+      if(!sidBets.length){
+        btBody.innerHTML = '<div class="sp-empty">No bets imported yet</div>';
+      } else {
+        btBody.innerHTML = sidBets.slice(0, 8).map(function(b){
+          var q = b.q || '';
+          var short = q.length > 32 ? q.substring(0, 32) + '...' : q;
+          var oddsStr = '<span style="color:var(--blue)">' + b.yes + '</span>/<span style="color:var(--yellow)">' + b.no + '</span>';
+          var sideStr = b.placed ? ' · <span style="color:' + (b.placedSide === 'YES' ? 'var(--blue)' : 'var(--yellow)') + ';font-weight:700">' + b.placedSide + '</span>' : '';
+          return '<div class="sp-log-row" onclick="goToMarkets()">' +
+            '<div class="sp-log-name">' + short + '</div>' +
+            '<div class="sp-log-date">' + oddsStr + sideStr + '</div>' +
           '</div>';
         }).join('');
       }
