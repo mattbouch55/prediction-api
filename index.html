@@ -178,7 +178,7 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:'Inter'
     .sp-arrow { font-size: 9px; color: var(--grey); transition: transform 0.2s; }
     .sp-card.open .sp-arrow { transform: rotate(90deg); }
     .sp-body { display: none; border-top: 1px solid var(--border); }
-    .sp-card.open .sp-body { display: block; }
+    .sp-card.open .sp-body { display: block;  overflow-y: auto; scrollbar-width: thin; scrollbar-color: var(--border2) transparent; }
     .sp-stock-row { display: flex; align-items: center; gap: 6px; padding: 6px 10px; border-bottom: 1px solid var(--border); cursor: pointer; transition: background 0.1s; }
     .sp-stock-row:last-child { border-bottom: none; }
     .sp-stock-row:hover { background: var(--surface); }
