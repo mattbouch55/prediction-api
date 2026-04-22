@@ -580,12 +580,11 @@ function renderBetList(){
       '<div class="inv-q">'+b.q+'</div>'+
       '<div class="inv-meta" style="grid-template-columns:1fr 1fr 1fr;gap:4px">'+
         '<div class="inv-meta-item">'+
-          '<div class="inv-meta-label">YES / NO</div>'+
           '<div class="inv-meta-val"><span style="color:var(--blue)">'+b.yes+'¢</span> <span style="color:var(--grey)">/</span> <span style="color:var(--yellow)">'+b.no+'¢</span></div>'+
         '</div>'+
         '<div class="inv-meta-item" style="border:'+(placed?'1px solid rgba(22,163,74,0.25)':'1px solid var(--border)')+';background:'+(placed?'var(--green-dim)':'var(--surface)')+'">'+
           '<div class="inv-meta-label" style="color:'+(placed?'var(--green)':'var(--grey)')+'">Bet Placed</div>'+
-          '<div style="font-size:13px;font-weight:700;font-family:Inter,sans-serif;color:'+(placed?'var(--green)':'var(--grey2)')+'">'+(placed?(b.placedSide||'')+' · $'+(b.placedAmount||''):'Not Owned')+'</div>'+
+          '<div style="font-size:13px;font-weight:700;font-family:Inter,sans-serif;color:'+(placed?'var(--green)':'var(--grey2)')+'">'+(placed?'<span style="color:'+(b.placedSide==='YES'?'var(--blue)':'var(--yellow)')+'">'+b.placedSide+'</span><span style="color:var(--green)"> $'+b.placedAmount+'</span>':'Not Owned')+'</div>'+
         '</div>'+
         '<div class="inv-meta-item">'+
           '<div class="inv-meta-label">Closes</div>'+
@@ -1508,12 +1507,11 @@ function renderBetList(){
       '<div class="inv-q">'+b.q+'</div>'+
       '<div class="inv-meta" style="grid-template-columns:1fr 1fr 1fr;gap:4px">'+
         '<div class="inv-meta-item">'+
-          '<div class="inv-meta-label">YES / NO</div>'+
           '<div class="inv-meta-val"><span style="color:var(--blue)">'+b.yes+'¢</span> <span style="color:var(--grey)">/</span> <span style="color:var(--yellow)">'+b.no+'¢</span></div>'+
         '</div>'+
         '<div class="inv-meta-item" style="border:'+(placed?'1px solid rgba(22,163,74,0.25)':'1px solid var(--border)')+';background:'+(placed?'var(--green-dim)':'var(--surface)')+'">'+
           '<div class="inv-meta-label" style="color:'+(placed?'var(--green)':'var(--grey)')+'">Bet Placed</div>'+
-          '<div style="font-size:13px;font-weight:700;font-family:Inter,sans-serif;color:'+(placed?'var(--green)':'var(--grey2)')+'">'+(placed?(b.placedSide||'')+' · $'+(b.placedAmount||''):'Not Owned')+'</div>'+
+          '<div style="font-size:13px;font-weight:700;font-family:Inter,sans-serif;color:'+(placed?'var(--green)':'var(--grey2)')+'">'+(placed?'<span style="color:'+(b.placedSide==='YES'?'var(--blue)':'var(--yellow)')+'">'+b.placedSide+'</span><span style="color:var(--green)"> $'+b.placedAmount+'</span>':'Not Owned')+'</div>'+
         '</div>'+
         '<div class="inv-meta-item">'+
           '<div class="inv-meta-label">Closes</div>'+
