@@ -269,6 +269,9 @@ AI_BAR_JS = r"""
 
 def inject(html: str) -> str:
     html = html.replace("  </style>", AI_BAR_CSS + "  </style>", 1)
-    html = html.replace('<div class="app">', AI_BAR_HTML + '\n<div class="app">', 1)
+    for wrapper in ['<div class="app">', '<div class="layout">']:
+        if wrapper in html:
+            html = html.replace(wrapper, AI_BAR_HTML + "\n" + wrapper, 1)
+            break
     html = html.replace("</body>", AI_BAR_JS + "\n</body>", 1)
     return html
