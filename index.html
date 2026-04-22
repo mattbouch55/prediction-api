@@ -172,6 +172,36 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:'Inter'
 .notes-textarea::placeholder{color:var(--grey)}
 .notes-save-btn{background:var(--blue);border:none;color:#fff;font-family:'Inter',sans-serif;font-size:11px;font-weight:600;padding:5px 12px;border-radius:5px;cursor:pointer;transition:background 0.12s}
 .notes-save-btn:hover{background:#1a6fff}
+
+    /* ── Sidebar panels ── */
+    .sidebar-panels { padding: 10px; display: flex; flex-direction: column; gap: 8px; overflow-y: auto; }
+    .sidebar-panels::-webkit-scrollbar { width: 3px; }
+    .sidebar-panels::-webkit-scrollbar-thumb { background: var(--border2); border-radius: 2px; }
+    .sp-card { background: var(--surface2); border: 1px solid var(--border); border-radius: 8px; overflow: hidden; }
+    .sp-header { display: flex; align-items: center; justify-content: space-between; padding: 8px 10px; cursor: pointer; user-select: none; transition: background 0.1s; }
+    .sp-header:hover { background: var(--border); }
+    .sp-title { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em; color: var(--text2); }
+    .sp-count { font-size: 9px; color: var(--grey); font-family: 'JetBrains Mono', monospace; }
+    .sp-arrow { font-size: 9px; color: var(--grey); transition: transform 0.2s; }
+    .sp-card.open .sp-arrow { transform: rotate(90deg); }
+    .sp-body { display: none; border-top: 1px solid var(--border); }
+    .sp-card.open .sp-body { display: block; }
+    .sp-stock-row { display: flex; align-items: center; gap: 6px; padding: 6px 10px; border-bottom: 1px solid var(--border); cursor: pointer; transition: background 0.1s; }
+    .sp-stock-row:last-child { border-bottom: none; }
+    .sp-stock-row:hover { background: var(--surface); }
+    .sp-ticker { font-family: 'JetBrains Mono', monospace; font-size: 11px; font-weight: 600; color: var(--text); min-width: 38px; }
+    .sp-price { font-size: 10px; color: var(--grey2); flex: 1; font-family: 'JetBrains Mono', monospace; }
+    .sp-sig { font-size: 8px; font-weight: 700; padding: 1px 5px; border-radius: 3px; text-transform: uppercase; flex-shrink: 0; }
+    .sp-sig.buy { background: var(--green-dim); color: var(--green); }
+    .sp-sig.sell { background: var(--red-dim); color: var(--red); }
+    .sp-sig.watch { background: var(--yellow-dim); color: var(--yellow); }
+    .sp-sig.hold { background: var(--surface); color: var(--grey2); border: 1px solid var(--border); }
+    .sp-log-row { padding: 7px 10px; border-bottom: 1px solid var(--border); cursor: pointer; transition: background 0.1s; }
+    .sp-log-row:last-child { border-bottom: none; }
+    .sp-log-row:hover { background: var(--surface); }
+    .sp-log-name { font-size: 11px; font-weight: 500; color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .sp-log-date { font-size: 9px; color: var(--grey); font-family: 'JetBrains Mono', monospace; margin-top: 1px; }
+    .sp-empty { padding: 12px 10px; font-size: 11px; color: var(--grey); font-style: italic; text-align: center; }
 </style>
 </head>
 <body>
@@ -811,6 +841,87 @@ drawChart();
 if(watchlist.length>0) refreshPrices();
 if(portfolio.length>0) setTimeout(autoUpdatePortfolioPrices,500);
 new ResizeObserver(function(){drawChart();}).observe(document.querySelector('.chart-card')||document.body);
+
+// ── SIDEBAR PANELS ────────────────────────────────────────────
+function toggleSP(id) {
+  var card = document.getElementById(id);
+  if (card) card.classList.toggle('open');
+}
+
+function renderSidebarPanels() {
+  // Mini Watchlist
+  try {
+    var wl = JSON.parse(localStorage.getItem('onyx_wl_v3') || '[]');
+    var wlCount = document.getElementById('spWlCount');
+    var wlBody  = document.getElementById('spWlBody');
+    if (wlCount) wlCount.textContent = wl.length + ' stock' + (wl.length !== 1 ? 's' : '');
+    if (wlBody) {
+      if (!wl.length) {
+        wlBody.innerHTML = '<div class="sp-empty">No stocks added yet</div>';
+      } else {
+        wlBody.innerHTML = wl.slice(0, 12).map(function(w) {
+          var sigCls = w.signal ? w.signal.toLowerCase() : '';
+          var sigBadge = w.signal
+            ? '<span class="sp-sig ' + sigCls + '">' + w.signal + '</span>' : '';
+          return '<div class="sp-stock-row" data-ticker="' + w.ticker + '">' +
+            '<span class="sp-ticker">' + w.ticker + '</span>' +
+            '<span class="sp-price">' + (w.score ? w.score.toFixed(1) : '—') + '</span>' +
+            sigBadge +
+          '</div>';
+        }).join('');
+        wlBody.querySelectorAll('.sp-stock-row').forEach(function(row) {
+          row.addEventListener('click', function() { spGoStock(row.dataset.ticker); });
+        });
+      }
+    }
+  } catch(e) {}
+
+  // Research Log
+  try {
+    var sessions = JSON.parse(localStorage.getItem('onyx_sessions') || '[]');
+    var rsCount = document.getElementById('spRsCount');
+    var rsBody  = document.getElementById('spRsBody');
+    if (rsCount) rsCount.textContent = sessions.length + ' session' + (sessions.length !== 1 ? 's' : '');
+    if (rsBody) {
+      if (!sessions.length) {
+        rsBody.innerHTML = '<div class="sp-empty">No research sessions yet</div>';
+      } else {
+        var sorted = sessions.slice().reverse().slice(0, 10);
+        rsBody.innerHTML = sorted.map(function(s) {
+          var name = s.name || s.topic || 'Untitled';
+          var date = new Date(s.created).toLocaleDateString('en-US', {month:'short', day:'numeric'});
+          return '<div class="sp-log-row" data-sid="' + s.id + '">' +
+            '<div class="sp-log-name">' + name.substring(0, 28) + (name.length > 28 ? '...' : '') + '</div>' +
+            '<div class="sp-log-date">' + date + '</div>' +
+          '</div>';
+        }).join('');
+        rsBody.querySelectorAll('.sp-log-row').forEach(function(row) {
+          row.addEventListener('click', function() { spGoResearch(row.dataset.sid); });
+        });
+      }
+    }
+  } catch(e) {}
+}
+
+function spGoStock(ticker) {
+  if (window.location.pathname === '/') {
+    if (typeof selectStock === 'function') selectStock(ticker);
+  } else {
+    window.location.href = '/';
+  }
+}
+
+function spGoResearch(sessionId) {
+  if (window.location.pathname === '/search') {
+    if (typeof loadSession === 'function') loadSession(sessionId);
+  } else {
+    window.location.href = '/search';
+  }
+}
+
+renderSidebarPanels();
+setInterval(renderSidebarPanels, 30000);
+
 </script>
 </body>
 </html>
