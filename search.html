@@ -43,14 +43,14 @@
     .dot.closed { background: var(--red); }
 
     /* ── TWO COLUMN LAYOUT ── */
-    .research { flex: 1; display: grid; grid-template-columns: 1fr 1fr; height: 100vh; overflow: hidden; padding-top: 107px; }
+    .research { flex: 1; display: grid; grid-template-columns: 1fr 1fr; height: 100vh; overflow: hidden; padding-top: 131px; }
 
     /* ── LEFT: AI ENGINE ── */
-    .ai-col { display: flex; flex-direction: column; height: calc(100vh - 107px); border-right: 1px solid var(--border); background: var(--bg); }
+    .ai-col { display: flex; flex-direction: column; height: calc(100vh - 131px); border-right: 1px solid var(--border); background: var(--bg); }
 
     /* Session bar */
-    .session-bar { display: flex; align-items: center; gap: 8px; padding: 7px 16px; background: var(--surface); border-bottom: 1px solid var(--border); flex-shrink: 0; }
-    .session-name-input { flex: 1; background: var(--bg); border: 1px solid var(--border2); color: var(--text); font-family: 'Inter', sans-serif; font-size: 11px; font-weight: 500; padding: 5px 9px; border-radius: 5px; outline: none; transition: border-color 0.15s; }
+    .session-bar { display: flex; align-items: center; gap: 8px; padding: 9px 18px; background: var(--surface); border-bottom: 1px solid var(--border); flex-shrink: 0; }
+    .session-name-input { flex: 2; background: var(--bg); border: 1px solid var(--border2); color: var(--text); font-family: 'Inter', sans-serif; font-size: 11px; font-weight: 500; padding: 5px 9px; border-radius: 5px; outline: none; transition: border-color 0.15s; }
     .session-name-input:focus { border-color: var(--blue); box-shadow: 0 0 0 2px var(--blue-glow); }
     .session-name-input::placeholder { color: var(--grey); font-weight: 400; }
     .session-save-btn { background: var(--blue); color: white; border: none; font-family: 'Inter', sans-serif; font-size: 11px; font-weight: 600; padding: 5px 12px; border-radius: 5px; cursor: pointer; transition: background 0.12s; white-space: nowrap; }
@@ -132,7 +132,7 @@
     .empty-sub { font-size: 12px; color: var(--grey); line-height: 1.7; }
 
     /* ── RIGHT: SOURCES + NOTES ── */
-    .right-col { display: flex; flex-direction: column; height: calc(100vh - 107px); }
+    .right-col { display: flex; flex-direction: column; height: calc(100vh - 131px); border-left: 1px solid var(--border); }
 
     /* Sources panel */
     .sources-panel { display: flex; flex-direction: column; flex: 0 0 38%; border-bottom: 1px solid var(--border); overflow: hidden; background: var(--surface); }
