@@ -536,7 +536,7 @@ function importBet(){
   if(!q){ document.getElementById('importQ').focus(); return; }
   if(!yes||!no){ alert('Please enter YES and NO prices'); return; }
   var bet = {
-    id: Date.now().toString(), q, yes, no, close, cat, url, desc, created: Date.now(),
+    id: Date.now().toString(), q, yes, no, close, cat, url, desc: desc||'', created: Date.now(),
     placed: !!(side && amount),
     placedSide: side || null,
     placedAmount: (side && amount) ? amount.toFixed(2) : null
@@ -666,7 +666,7 @@ function renderResearchWorkspace(){
 
     '<div class="bet-detail-header">' +
       '<div class="bet-detail-q">'+b.q+'</div>' +
-      (b.desc ? '<div style="font-size:11px;color:var(--text2);line-height:1.6;padding:6px 10px;background:var(--surface2);border-radius:5px;border-left:2px solid var(--border2);margin-bottom:6px">'+b.desc+'</div>' : '') +
+      (b.desc !== undefined ? '<div style="margin-bottom:8px"><div style="font-size:9px;font-weight:600;text-transform:uppercase;letter-spacing:0.07em;color:var(--grey);margin-bottom:3px">Bet Description</div><textarea id="rwDesc" style="width:100%;background:var(--surface2);border:1px solid var(--border);border-radius:5px;font-family:Inter,sans-serif;font-size:11px;color:var(--text2);padding:6px 9px;resize:none;outline:none;line-height:1.6;min-height:48px;" placeholder="Paste resolution criteria or bet description from Kalshi..." oninput="saveRwDesc()" >'+( b.desc||'')+'</textarea></div>' : '') +
       '<div style="display:flex;align-items:center">' +
         '<div style="display:flex;align-items:center;gap:4px">' +
           '<span class="yes-pill" style="min-width:52px;text-align:center" id="rwYesPill">YES '+b.yes+'¢</span>' +
@@ -796,6 +796,15 @@ function updateBetPrices(id, yes, no){
   var fill=document.getElementById('rwProbFill'); if(fill) fill.style.width=b.yes+'%';
   localStorage.setItem('onyx_mkt_bets', JSON.stringify(bets));
   renderBetList();
+}
+
+function saveRwDesc(){
+  if(!activeBet) return;
+  var el = document.getElementById('rwDesc');
+  if(!el) return;
+  activeBet.desc = el.value;
+  var idx = bets.findIndex(function(b){return b.id===activeBet.id;}); if(idx>=0) bets[idx]=activeBet;
+  localStorage.setItem('onyx_mkt_bets', JSON.stringify(bets));
 }
 
 function adjustPrice(yDelta, nDelta){
@@ -1521,7 +1530,7 @@ function importBet(){
   if(!q){ document.getElementById('importQ').focus(); return; }
   if(!yes||!no){ alert('Please enter YES and NO prices'); return; }
   var bet = {
-    id: Date.now().toString(), q, yes, no, close, cat, url, desc, created: Date.now(),
+    id: Date.now().toString(), q, yes, no, close, cat, url, desc: desc||'', created: Date.now(),
     placed: !!(side && amount),
     placedSide: side || null,
     placedAmount: (side && amount) ? amount.toFixed(2) : null
@@ -1632,7 +1641,7 @@ function renderResearchWorkspace(){
     // Market header
     '<div class="bet-detail-header">' +
       '<div class="bet-detail-q">'+b.q+'</div>' +
-      (b.desc ? '<div style="font-size:11px;color:var(--text2);line-height:1.6;padding:6px 10px;background:var(--surface2);border-radius:5px;border-left:2px solid var(--border2);margin-bottom:6px">'+b.desc+'</div>' : '') +
+      (b.desc !== undefined ? '<div style="margin-bottom:8px"><div style="font-size:9px;font-weight:600;text-transform:uppercase;letter-spacing:0.07em;color:var(--grey);margin-bottom:3px">Bet Description</div><textarea id="rwDesc" style="width:100%;background:var(--surface2);border:1px solid var(--border);border-radius:5px;font-family:Inter,sans-serif;font-size:11px;color:var(--text2);padding:6px 9px;resize:none;outline:none;line-height:1.6;min-height:48px;" placeholder="Paste resolution criteria or bet description from Kalshi..." oninput="saveRwDesc()" >'+( b.desc||'')+'</textarea></div>' : '') +
       '<div class="bet-meta">' +
         '<div class="odds-strip">' +
           '<span class="yes-pill">YES '+b.yes+'¢</span>' +
@@ -1831,6 +1840,15 @@ function updateBetPrices(id, yes, no){
   var fill=document.getElementById('rwProbFill'); if(fill) fill.style.width=b.yes+'%';
   localStorage.setItem('onyx_mkt_bets', JSON.stringify(bets));
   renderBetList();
+}
+
+function saveRwDesc(){
+  if(!activeBet) return;
+  var el = document.getElementById('rwDesc');
+  if(!el) return;
+  activeBet.desc = el.value;
+  var idx = bets.findIndex(function(b){return b.id===activeBet.id;}); if(idx>=0) bets[idx]=activeBet;
+  localStorage.setItem('onyx_mkt_bets', JSON.stringify(bets));
 }
 
 function adjustPrice(yDelta, nDelta){
