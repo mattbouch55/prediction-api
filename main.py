@@ -345,6 +345,31 @@ async def get_kalshi_market(url: str = "", ticker: str = ""):
     except Exception as ex:
         return {"error": str(ex)}
 
+
+@app.post("/analyse-market")
+async def analyse_market(request: dict):
+    question = (request.get("question") or "").strip()
+    if not question:
+        return {"error": "No question provided"}
+
+    client = anthropic.Anthropic(api_key=ANTHROPIC_KEY)
+    try:
+        resp = client.messages.create(
+            model="claude-sonnet-4-5", max_tokens=600,
+            tools=[{"type": "web_search_20250305", "name": "web_search"}],
+            messages=[{"role": "user", "content": question}]
+        )
+        text = "".join(b.text for b in resp.content if hasattr(b, "text") and b.text)
+        s, e = text.find("{"), text.rfind("}") + 1
+        if s >= 0 and e > s:
+            try:
+                return json.loads(text[s:e])
+            except Exception:
+                pass
+        return {"error": "Could not parse response", "raw": text[:300]}
+    except Exception as ex:
+        return {"error": str(ex)}
+
 @app.get("/health")
 def health():
     return {"status": "ok"}
