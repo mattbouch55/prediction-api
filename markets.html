@@ -950,7 +950,30 @@ function renderSidebarPanels(){
     }
   }catch(e){}
 }
-setInterval(renderSidebarPanels,30000);
+// Kalshi Bets
+  try {
+    var sidBets = JSON.parse(localStorage.getItem('onyx_mkt_bets') || '[]');
+    var btCount = document.getElementById('spBtCount');
+    var btBody  = document.getElementById('spBtBody');
+    if(btCount) btCount.textContent = sidBets.length + ' bet' + (sidBets.length !== 1 ? 's' : '');
+    if(btBody){
+      if(!sidBets.length){
+        btBody.innerHTML = '<div class="sp-empty">No bets imported yet</div>';
+      } else {
+        btBody.innerHTML = sidBets.slice(0, 8).map(function(b){
+          var q = b.q || '';
+          var short = q.length > 32 ? q.substring(0, 32) + '...' : q;
+          var oddsStr = '<span style="color:var(--blue)">' + b.yes + '</span>/<span style="color:var(--yellow)">' + b.no + '</span>';
+          var sideStr = b.placed ? ' &middot; <span style="color:' + (b.placedSide === 'YES' ? 'var(--blue)' : 'var(--yellow)') + ';font-weight:700">' + b.placedSide + '</span>' : '';
+          return '<div class="sp-log-row" onclick="goToMarkets()">' +
+            '<div class="sp-log-name">' + short + '</div>' +
+            '<div class="sp-log-date">' + oddsStr + sideStr + '</div>' +
+          '</div>';
+        }).join('');
+      }
+    }
+  } catch(e){}
+  setInterval(renderSidebarPanels,30000);
 
 // ── IMPORT PANEL TOGGLE ───────────────────────────────────────
 function toggleTrackerPanel(){
@@ -1096,6 +1119,9 @@ async function runAnalysis(){
     if(btn) btn.disabled = false;
   }
 }
+
+
+function goToMarkets(){ window.location.href = '/markets'; }
 
 </script>
 </body>
