@@ -1,299 +1,670 @@
-import os
-import json
-import time
-import asyncio
-import requests
-import anthropic
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<title>Onyx AI — Markets</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#f7f7f6;--surface:#ffffff;--surface2:#f3f3f2;
+  --border:#e5e4e2;--border2:#d1d0cd;
+  --blue:#1565ff;--blue-soft:#eff3ff;--blue-glow:rgba(21,101,255,0.08);
+  --text:#111827;--text2:#4b5563;--grey:#9ca3af;--grey2:#6b7280;
+  --green:#16a34a;--green-dim:rgba(22,163,74,0.08);
+  --red:#dc2626;--red-dim:rgba(220,38,38,0.08);
+  --yellow:#d97706;--yellow-dim:rgba(217,119,6,0.08);
+  --purple:#7c3aed;--purple-dim:rgba(124,58,237,0.08);
+  --shadow:0 2px 8px rgba(0,0,0,0.08),0 1px 3px rgba(0,0,0,0.05);
+  --sidebar-w:300px;
+}
+html,body{height:100%;background:var(--bg);color:var(--text);font-family:'Inter',sans-serif;font-size:13px;overflow:hidden}
+*::-webkit-scrollbar{width:4px;height:4px}
+*::-webkit-scrollbar-track{background:transparent}
+*::-webkit-scrollbar-thumb{background:var(--border2);border-radius:2px}
+*::-webkit-scrollbar-thumb:hover{background:var(--grey)}
+*{scrollbar-width:thin;scrollbar-color:var(--border2) transparent}
+.layout{display:flex;height:100vh}
 
-from fastapi import FastAPI
-from fastapi.responses import HTMLResponse
-from fastapi.middleware.cors import CORSMiddleware
+/* SIDEBAR */
+.sidebar{width:var(--sidebar-w);background:var(--surface);border-right:1px solid var(--border);display:flex;flex-direction:column;flex-shrink:0;height:100vh}
+.sidebar-logo{height:107px;display:flex;align-items:center;padding:0 20px;border-bottom:1px solid var(--border);flex-shrink:0}
+.logo-row{display:flex;align-items:center;gap:9px}
+.logo-icon{width:28px;height:28px;background:var(--blue);border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;color:#fff;font-family:'JetBrains Mono',monospace;flex-shrink:0}
+.logo-name{font-size:16px;font-weight:700;color:var(--text)}
+.logo-sub{font-size:11px;color:var(--grey);letter-spacing:0.06em;text-transform:uppercase;margin-top:2px}
+.sidebar-nav{padding:12px 10px;flex-shrink:0;overflow-y:auto}
+.nav-sec{font-size:10px;font-weight:600;letter-spacing:0.1em;text-transform:uppercase;color:var(--grey);padding:10px 10px 5px}
+.nav-item{display:flex;align-items:center;gap:10px;padding:9px 12px;border-radius:7px;color:var(--grey2);text-decoration:none;font-size:13px;font-weight:500;transition:all 0.12s;margin-bottom:2px}
+.nav-item:hover{background:var(--surface2);color:var(--text)}
+.nav-item.active{background:var(--blue-soft);color:var(--blue)}
+.sidebar-panels{padding:10px;display:flex;flex-direction:column;gap:8px;overflow-y:auto;flex:1;min-height:0}
+.sp-card{background:var(--surface2);border:1px solid var(--border);border-radius:8px;overflow:hidden}
+.sp-header{display:flex;align-items:center;justify-content:space-between;padding:8px 10px;cursor:pointer;user-select:none;transition:background 0.1s}
+.sp-header:hover{background:var(--border)}
+.sp-title{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:0.08em;color:var(--text2)}
+.sp-count{font-size:9px;color:var(--grey);font-family:'JetBrains Mono',monospace}
+.sp-arrow{font-size:9px;color:var(--grey);transition:transform 0.2s}
+.sp-card.open .sp-arrow{transform:rotate(90deg)}
+.sp-body{display:none;border-top:1px solid var(--border)}
+.sp-card.open .sp-body{display:block}
+.sp-stock-row{display:flex;align-items:center;gap:6px;padding:6px 10px;border-bottom:1px solid var(--border);cursor:pointer;transition:background 0.1s}
+.sp-stock-row:last-child{border-bottom:none}
+.sp-stock-row:hover{background:var(--surface)}
+.sp-ticker{font-family:'JetBrains Mono',monospace;font-size:11px;font-weight:600;color:var(--text);min-width:38px}
+.sp-sig{font-size:8px;font-weight:700;padding:1px 5px;border-radius:3px;text-transform:uppercase;flex-shrink:0}
+.sp-sig.buy{background:var(--green-dim);color:var(--green)}
+.sp-sig.sell{background:var(--red-dim);color:var(--red)}
+.sp-sig.watch{background:var(--yellow-dim);color:var(--yellow)}
+.sp-log-row{padding:7px 10px;border-bottom:1px solid var(--border);cursor:pointer;transition:background 0.1s}
+.sp-log-row:last-child{border-bottom:none}
+.sp-log-row:hover{background:var(--surface)}
+.sp-log-name{font-size:11px;font-weight:500;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.sp-log-date{font-size:9px;color:var(--grey);font-family:'JetBrains Mono',monospace;margin-top:1px}
+.sp-empty{padding:12px 10px;font-size:11px;color:var(--grey);font-style:italic;text-align:center}
+.sidebar-footer{padding:14px 20px;border-top:1px solid var(--border);flex-shrink:0}
+.mkt-pill{display:flex;align-items:center;gap:7px;font-size:11px;color:var(--text2)}
+.dot{width:6px;height:6px;border-radius:50%}
+.dot.open{background:var(--green)}.dot.closed{background:var(--red)}
 
-from models import PredictionRequest, InvestmentRequest
-from agent import PredictionAgent, InvestmentAgent
-from database import Database
-from ai_bar import inject as inject_ai_bar
+/* MAIN LAYOUT */
+.main{flex:1;padding:24px;padding-top:131px;display:flex;gap:16px;overflow:hidden;height:100vh}
 
-# ── App ────────────────────────────────────────────────────────
-app = FastAPI(title="Onyx AI")
-app.add_middleware(CORSMiddleware, allow_origins=["*"], allow_methods=["*"], allow_headers=["*"])
+/* THREE COLUMNS */
+.col-left{width:340px;flex-shrink:0;display:flex;flex-direction:column;gap:16px;overflow-y:auto}
+.col-mid{flex:1;min-width:0;display:flex;flex-direction:column;gap:16px;overflow-y:auto}
+.col-right{width:300px;flex-shrink:0;display:flex;flex-direction:column;gap:16px;overflow-y:auto}
 
-db = Database()
-db.initialize()
-predict_agent = PredictionAgent()
-invest_agent  = InvestmentAgent()
+/* CARDS */
+.card{background:var(--surface);border:1px solid var(--border);border-radius:10px;overflow:hidden;box-shadow:var(--shadow)}
+.card-header{padding:12px 16px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between}
+.card-title{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.08em;color:var(--text)}
+.card-sub{font-size:11px;color:var(--grey)}
 
-ANTHROPIC_KEY = os.environ.get("ANTHROPIC_API_KEY", "")
-FINNHUB_KEY   = os.environ.get("FINNHUB_API_KEY", "")
-HEADERS       = {"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36"}
+/* CATEGORY PILLS */
+.cat-row{display:flex;flex-wrap:wrap;gap:5px;padding:10px 14px;border-bottom:1px solid var(--border)}
+.cat-pill{font-size:10px;font-weight:600;padding:3px 10px;border-radius:12px;border:1px solid var(--border2);background:var(--surface2);color:var(--grey2);cursor:pointer;transition:all 0.12s;user-select:none}
+.cat-pill.active{background:var(--blue-soft);border-color:rgba(21,101,255,0.3);color:var(--blue)}
+.cat-pill:hover:not(.active){color:var(--text);background:var(--surface)}
 
-# ── Pages ──────────────────────────────────────────────────────
-@app.get("/", response_class=HTMLResponse)
-def dashboard():
-    return inject_ai_bar(open("index.html").read())
+/* MARKET CARDS */
+.market-list{padding:10px 14px;display:flex;flex-direction:column;gap:8px;max-height:420px;overflow-y:auto}
+.market-card{background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:11px 13px;cursor:pointer;transition:all 0.15s}
+.market-card:hover{border-color:var(--blue);background:var(--blue-soft)}
+.market-card.selected{border-color:var(--blue);background:var(--blue-soft)}
+.market-q{font-size:12px;font-weight:500;color:var(--text);line-height:1.5;margin-bottom:8px}
+.market-meta{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.market-cat{font-size:9px;font-weight:700;text-transform:uppercase;padding:2px 6px;border-radius:3px;letter-spacing:0.05em}
+.market-cat.politics{background:var(--purple-dim);color:var(--purple)}
+.market-cat.finance{background:var(--green-dim);color:var(--green)}
+.market-cat.crypto{background:var(--yellow-dim);color:var(--yellow)}
+.market-cat.sports{background:var(--red-dim);color:var(--red)}
+.market-cat.tech{background:var(--blue-soft);color:var(--blue)}
+.market-cat.macro{background:var(--surface2);color:var(--grey2);border:1px solid var(--border)}
+.market-vol{font-size:10px;color:var(--grey);font-family:'JetBrains Mono',monospace}
+.market-close{font-size:10px;color:var(--grey)}
+.yes-no{display:flex;gap:6px;margin-top:8px}
+.yes-btn,.no-btn{flex:1;text-align:center;padding:4px 0;border-radius:5px;font-size:11px;font-weight:700;border:none;cursor:pointer;transition:all 0.12s}
+.yes-btn{background:var(--green-dim);color:var(--green)}
+.yes-btn:hover{background:var(--green);color:#fff}
+.no-btn{background:var(--red-dim);color:var(--red)}
+.no-btn:hover{background:var(--red);color:#fff}
 
-@app.get("/search", response_class=HTMLResponse)
-def research():
-    return inject_ai_bar(open("search.html").read())
+/* MARKET DETAIL */
+.detail-placeholder{padding:40px 20px;text-align:center}
+.detail-q{font-size:15px;font-weight:600;color:var(--text);line-height:1.5;margin-bottom:14px}
+.detail-odds{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:16px}
+.odds-box{padding:14px;border-radius:8px;text-align:center}
+.odds-box.yes{background:var(--green-dim);border:1px solid rgba(22,163,74,0.2)}
+.odds-box.no{background:var(--red-dim);border:1px solid rgba(220,38,38,0.2)}
+.odds-label{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:0.08em;margin-bottom:4px}
+.odds-box.yes .odds-label{color:var(--green)}
+.odds-box.no .odds-label{color:var(--red)}
+.odds-val{font-size:28px;font-weight:800;font-family:'JetBrains Mono',monospace}
+.odds-box.yes .odds-val{color:var(--green)}
+.odds-box.no .odds-val{color:var(--red)}
+.odds-cents{font-size:11px;color:var(--grey);margin-top:2px}
+.detail-bar{height:8px;background:var(--red-dim);border-radius:4px;overflow:hidden;margin-bottom:12px}
+.detail-bar-fill{height:8px;background:var(--green);border-radius:4px;transition:width 0.5s}
+.detail-section{margin-bottom:14px}
+.detail-label{font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:0.08em;color:var(--grey);margin-bottom:6px}
+.detail-text{font-size:12px;color:var(--text2);line-height:1.7;padding:10px;background:var(--surface2);border-radius:6px;border-left:3px solid var(--blue)}
+.trade-btn{width:100%;padding:10px;border:none;border-radius:7px;font-family:'Inter',sans-serif;font-size:13px;font-weight:700;cursor:pointer;transition:all 0.12s;display:flex;align-items:center;justify-content:center;gap:6px}
+.trade-btn.yes{background:var(--green);color:#fff;margin-bottom:8px}
+.trade-btn.yes:hover{background:#15803d}
+.trade-btn.no{background:var(--red);color:#fff}
+.trade-btn.no:hover{background:#b91c1c}
+.trade-note{font-size:10px;color:var(--grey);text-align:center;margin-top:8px;line-height:1.5}
 
-# ── Prices ─────────────────────────────────────────────────────
-@app.get("/prices")
-def get_prices(tickers: str):
-    ticker_list = [t.strip().upper() for t in tickers.split(",") if t.strip()]
-    result = {}
-    for ticker in ticker_list:
-        price, prev = None, None
+/* AI PICKS */
+.picks-list{padding:10px 14px;display:flex;flex-direction:column;gap:8px;max-height:360px;overflow-y:auto}
+.pick-card{background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:11px 13px}
+.pick-header{display:flex;align-items:center;gap:8px;margin-bottom:6px}
+.pick-verdict{font-size:10px;font-weight:700;padding:2px 8px;border-radius:4px;text-transform:uppercase;letter-spacing:0.05em;flex-shrink:0}
+.pick-verdict.yes{background:var(--green-dim);color:var(--green)}
+.pick-verdict.no{background:var(--red-dim);color:var(--red)}
+.pick-verdict.skip{background:var(--surface2);color:var(--grey2);border:1px solid var(--border)}
+.pick-q{font-size:11px;font-weight:500;color:var(--text);flex:1;line-height:1.4}
+.pick-conf{font-size:10px;color:var(--grey);margin-bottom:4px}
+.pick-reason{font-size:11px;color:var(--text2);line-height:1.5}
+.pick-action{margin-top:8px}
+.pick-link{font-size:10px;color:var(--blue);text-decoration:none;font-weight:600}
+.pick-link:hover{text-decoration:underline}
+.ai-run-btn{width:100%;background:var(--text);color:var(--surface);border:none;font-family:'Inter',sans-serif;font-size:12px;font-weight:600;padding:9px;border-radius:7px;cursor:pointer;transition:opacity 0.12s;margin:10px 14px;width:calc(100% - 28px)}
+.ai-run-btn:hover{opacity:0.8}
+.ai-run-btn:disabled{opacity:0.4;cursor:not-allowed}
 
-        # Finnhub (primary)
-        if FINNHUB_KEY:
-            try:
-                r = requests.get(
-                    f"https://finnhub.io/api/v1/quote?symbol={ticker}&token={FINNHUB_KEY}",
-                    timeout=5, headers=HEADERS
-                )
-                if r.status_code == 200:
-                    d = r.json()
-                    c, pc = d.get("c", 0), d.get("pc", 0)
-                    best = c if (c and float(c) > 0) else pc
-                    if best and float(best) > 0:
-                        price = round(float(best), 2)
-                        prev  = round(float(pc), 2) if pc else price
-            except Exception:
-                pass
+/* POSITIONS */
+.pos-list{padding:10px 14px;display:flex;flex-direction:column;gap:7px;max-height:320px;overflow-y:auto}
+.pos-card{background:var(--surface2);border:1px solid var(--border);border-radius:7px;padding:10px 12px}
+.pos-top{display:flex;align-items:center;gap:8px;margin-bottom:5px}
+.pos-side{font-size:10px;font-weight:700;padding:2px 7px;border-radius:3px;text-transform:uppercase;flex-shrink:0}
+.pos-side.yes{background:var(--green-dim);color:var(--green)}
+.pos-side.no{background:var(--red-dim);color:var(--red)}
+.pos-q{font-size:11px;font-weight:500;color:var(--text);flex:1;line-height:1.4}
+.pos-del{background:none;border:none;color:var(--grey);cursor:pointer;font-size:14px;padding:0 2px;transition:color 0.12s;flex-shrink:0}
+.pos-del:hover{color:var(--red)}
+.pos-meta{display:flex;gap:10px;font-size:10px;color:var(--grey2);font-family:'JetBrains Mono',monospace}
+.pos-pnl{font-weight:700}
+.pos-add-form{padding:10px 14px;border-top:1px solid var(--border)}
+.pos-add-btn{width:100%;background:var(--blue);color:#fff;border:none;font-family:'Inter',sans-serif;font-size:11px;font-weight:600;padding:7px;border-radius:6px;cursor:pointer;transition:background 0.12s}
+.pos-add-btn:hover{background:#1a6fff}
 
-        # Yahoo Finance v8 (fallback)
-        if not price:
-            try:
-                r = requests.get(
-                    f"https://query1.finance.yahoo.com/v8/finance/chart/{ticker}?interval=1m&range=1d",
-                    timeout=5, headers=HEADERS
-                )
-                if r.status_code == 200:
-                    res = r.json().get("chart", {}).get("result", [])
-                    if res:
-                        meta = res[0].get("meta", {})
-                        p  = meta.get("regularMarketPrice") or meta.get("previousClose")
-                        pc = meta.get("previousClose") or p
-                        if p and float(p) > 0:
-                            price = round(float(p), 2)
-                            prev  = round(float(pc), 2) if pc else price
-            except Exception:
-                pass
+/* STATUS BAR */
+.status-bar{display:none;align-items:center;gap:8px;padding:8px 14px;background:var(--blue-soft);border-bottom:1px solid rgba(21,101,255,0.15);font-size:11px;color:var(--blue);font-family:'JetBrains Mono',monospace}
+.status-bar.active{display:flex}
+.spinner{width:12px;height:12px;border:2px solid rgba(21,101,255,0.2);border-top-color:var(--blue);border-radius:50%;animation:spin 0.7s linear infinite;flex-shrink:0}
+@keyframes spin{to{transform:rotate(360deg)}}
 
-        if price:
-            chg = round(((price - prev) / prev) * 100, 2) if prev and prev > 0 else 0
-            result[ticker] = {"price": price, "prev_close": prev, "change_pct": chg}
-        else:
-            result[ticker] = {"price": None, "change_pct": None, "error": "No data"}
+/* NOTES */
+.mkt-notes{width:100%;background:var(--bg);border:1px solid var(--border2);border-radius:6px;color:var(--text);font-family:'Inter',sans-serif;font-size:12px;padding:9px 11px;resize:none;outline:none;line-height:1.6;min-height:80px;transition:border-color 0.15s}
+.mkt-notes:focus{border-color:var(--blue)}
+.save-notes-btn{background:var(--blue);border:none;color:#fff;font-family:'Inter',sans-serif;font-size:11px;font-weight:600;padding:5px 14px;border-radius:5px;cursor:pointer;transition:background 0.12s}
+.save-notes-btn:hover{background:#1a6fff}
+</style>
+</head>
+<body>
+<div class="layout">
 
-    return result
+<!-- SIDEBAR -->
+<aside class="sidebar">
+  <div class="sidebar-logo">
+    <div class="logo-row">
+      <div class="logo-icon">O</div>
+      <div>
+        <div class="logo-name">Onyx AI</div>
+        <div class="logo-sub">Intelligence</div>
+      </div>
+    </div>
+  </div>
+  <nav class="sidebar-nav">
+    <div class="nav-sec">Main</div>
+    <a class="nav-item" href="/">
+      <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor"><path d="M2 2h5v5H2V2zm0 7h5v5H2V9zm7-7h5v5H9V2zm0 7h5v5H9V9z"/></svg>
+      Dashboard
+    </a>
+    <a class="nav-item" href="/search">
+      <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor"><path d="M11.742 10.344a6.5 6.5 0 1 0-1.397 1.398h-.001l3.85 3.85a1 1 0 0 0 1.415-1.414l-3.85-3.85zm-5.242 1.656a5.5 5.5 0 1 1 0-11 5.5 5.5 0 0 1 0 11z"/></svg>
+      Research
+    </a>
+    <a class="nav-item active" href="/markets">
+      <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor"><path d="M0 11l3-5 4 3 3-7 3 4 3-2v7H0z"/></svg>
+      Markets
+    </a>
+  </nav>
+  <div style="padding:10px 10px 4px;flex-shrink:0">
+    <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:0.1em;color:var(--grey);padding:6px 2px 4px">Portfolio</div>
+  </div>
+  <div class="sidebar-panels" id="sidebarPanels">
+    <div class="sp-card open" id="spWatchlist">
+      <div class="sp-header" onclick="toggleSP('spWatchlist')">
+        <span class="sp-title">Watchlist</span>
+        <div style="display:flex;align-items:center;gap:6px">
+          <span class="sp-count" id="spWlCount">0 stocks</span>
+          <span class="sp-arrow">▶</span>
+        </div>
+      </div>
+      <div class="sp-body" id="spWlBody"><div class="sp-empty">No stocks added yet</div></div>
+    </div>
+    <div class="sp-card open" id="spResearch">
+      <div class="sp-header" onclick="toggleSP('spResearch')">
+        <span class="sp-title">Research Log</span>
+        <div style="display:flex;align-items:center;gap:6px">
+          <span class="sp-count" id="spRsCount">0 sessions</span>
+          <span class="sp-arrow">▶</span>
+        </div>
+      </div>
+      <div class="sp-body" id="spRsBody"><div class="sp-empty">No research sessions yet</div></div>
+    </div>
+  </div>
+  <div class="sidebar-footer">
+    <div class="mkt-pill">
+      <div class="dot" id="mktDot"></div>
+      <span id="mktTxt">Checking...</span>
+    </div>
+  </div>
+</aside>
 
-# ── Chart ──────────────────────────────────────────────────────
-@app.get("/chart")
-def get_chart(ticker: str, from_ts: int = None, to_ts: int = None, resolution: str = "5"):
-    now = int(time.time())
-    try:
-        r = requests.get(
-            f"https://finnhub.io/api/v1/stock/candle"
-            f"?symbol={ticker}&resolution={resolution}"
-            f"&from={from_ts or now-86400}&to={to_ts or now}&token={FINNHUB_KEY}",
-            timeout=8
-        )
-        d = r.json()
-        if d.get("s") == "ok":
-            return {"ticker": ticker, "prices": [{"t": t, "p": c} for t, c in zip(d["t"], d["c"])]}
-    except Exception:
-        pass
-    return {"ticker": ticker, "prices": []}
+<!-- MAIN -->
+<div class="main">
 
-# ── AI: Predict ────────────────────────────────────────────────
-@app.post("/predict")
-async def predict(request: PredictionRequest):
-    result = await predict_agent.run(
-        topic=request.topic,
-        domain=request.domain,
-        time_horizon=request.time_horizon,
-        custom_source=getattr(request, "custom_source", None)
-    )
-    try:
-        db.save_prediction(result)
-    except Exception:
-        pass
-    return result
+  <!-- LEFT: MARKET BROWSER -->
+  <div class="col-left">
+    <div class="card">
+      <div class="card-header">
+        <div class="card-title">Prediction Markets</div>
+        <span class="card-sub" id="mktCount">0 markets</span>
+      </div>
+      <!-- Search -->
+      <div style="padding:10px 14px;border-bottom:1px solid var(--border)">
+        <input id="mktSearch" type="text" placeholder="Search markets..."
+          style="width:100%;background:var(--bg);border:1px solid var(--border2);border-radius:6px;color:var(--text);font-family:'Inter',sans-serif;font-size:12px;padding:7px 10px;outline:none;transition:border-color 0.15s"
+          oninput="filterMarkets()"/>
+      </div>
+      <!-- Categories -->
+      <div class="cat-row">
+        <div class="cat-pill active" data-cat="all" onclick="setCategory(this)">All</div>
+        <div class="cat-pill" data-cat="politics" onclick="setCategory(this)">Politics</div>
+        <div class="cat-pill" data-cat="finance" onclick="setCategory(this)">Finance</div>
+        <div class="cat-pill" data-cat="crypto" onclick="setCategory(this)">Crypto</div>
+        <div class="cat-pill" data-cat="tech" onclick="setCategory(this)">Tech</div>
+        <div class="cat-pill" data-cat="macro" onclick="setCategory(this)">Macro</div>
+        <div class="cat-pill" data-cat="sports" onclick="setCategory(this)">Sports</div>
+      </div>
+      <!-- Market list -->
+      <div class="market-list" id="marketList"></div>
+    </div>
+  </div>
 
-# ── AI: Invest ─────────────────────────────────────────────────
-@app.post("/invest")
-async def invest(request: InvestmentRequest):
-    return await invest_agent.run(
-        ticker=request.ticker,
-        asset_type=request.asset_type,
-        custom_source=getattr(request, "custom_source", None)
-    )
+  <!-- MID: MARKET DETAIL + AI PICKS -->
+  <div class="col-mid">
 
-# ── AI: Stock Effect ───────────────────────────────────────────
-@app.post("/stock-effect")
-async def stock_effect(request: dict):
-    prediction = (request.get("prediction") or "").strip()
-    ticker     = (request.get("ticker") or "").upper().strip()
-    confidence = request.get("confidence") or ""
-    topic      = request.get("topic") or prediction
+    <!-- Market detail -->
+    <div class="card" id="detailCard">
+      <div class="card-header">
+        <div class="card-title">Market Detail</div>
+        <span class="card-sub" id="detailSub">Select a market</span>
+      </div>
+      <div style="padding:14px 16px" id="detailBody">
+        <div class="detail-placeholder">
+          <div style="font-size:32px;margin-bottom:12px;opacity:0.12">📊</div>
+          <div style="font-size:13px;font-weight:500;color:var(--text2);margin-bottom:6px">No market selected</div>
+          <div style="font-size:12px;color:var(--grey);line-height:1.6">Click any market on the left to view details, odds, and AI analysis.</div>
+        </div>
+      </div>
+    </div>
 
-    if not prediction or not ticker:
-        return {"error": "prediction and ticker required"}
+    <!-- AI Picks -->
+    <div class="card">
+      <div class="card-header">
+        <div class="card-title">Onyx AI Picks</div>
+        <span class="card-sub" id="picksStatus">AI-powered market analysis</span>
+      </div>
+      <div class="status-bar" id="aiPicksStatus">
+        <div class="spinner"></div>
+        <span id="aiPicksText">Analysing markets...</span>
+      </div>
+      <button class="ai-run-btn" id="aiPicksBtn" onclick="runAIPicks()">
+        ✦ Analyse All Markets with Onyx
+      </button>
+      <div class="picks-list" id="picksList">
+        <div style="text-align:center;padding:20px;color:var(--grey);font-size:12px;font-style:italic">
+          Click "Analyse All Markets" to get Onyx AI picks and recommendations
+        </div>
+      </div>
+    </div>
 
-    client = anthropic.Anthropic(api_key=ANTHROPIC_KEY)
-    prompt = f"""You are a senior equity analyst.
+  </div>
 
-TOPIC: {topic}
-PREDICTION: {prediction}
-CONFIDENCE: {confidence}
+  <!-- RIGHT: POSITIONS + NOTES -->
+  <div class="col-right">
 
-Analyse how this prediction affects {ticker}. Search the web for current data.
+    <!-- My Positions -->
+    <div class="card">
+      <div class="card-header">
+        <div class="card-title">My Positions</div>
+        <span class="card-sub" id="posCount">0 positions</span>
+      </div>
+      <div class="pos-list" id="posList">
+        <div class="sp-empty">No positions tracked yet. Select a market and click YES or NO to track.</div>
+      </div>
+      <div class="pos-add-form">
+        <div style="font-size:10px;color:var(--grey);margin-bottom:6px;line-height:1.4">Positions are for tracking only. Trade directly on <a href="https://kalshi.com" target="_blank" style="color:var(--blue)">Kalshi.com</a></div>
+      </div>
+    </div>
 
-Return ONLY valid JSON:
-{{
-  "ticker": "{ticker}",
-  "company_name": "Full name",
-  "impact": "High|Medium|Low|Minimal",
-  "direction": "Bullish|Bearish|Neutral|Mixed",
-  "impact_score": 0,
-  "summary": "2-3 sentence explanation",
-  "bull_scenario": "If prediction correct",
-  "bull_price_direction": "Increase|Decrease",
-  "bull_price_magnitude": "+5-10%",
-  "bear_scenario": "If prediction wrong",
-  "bear_price_direction": "Increase|Decrease",
-  "bear_price_magnitude": "-3-7%",
-  "key_factors": ["factor1","factor2","factor3"],
-  "time_horizon": "2-4 weeks",
-  "confidence": "High|Medium|Low"
-}}"""
+    <!-- Market Notes -->
+    <div class="card">
+      <div class="card-header">
+        <div class="card-title">Notes</div>
+        <span class="card-sub" id="notesIndicator">Not saved</span>
+      </div>
+      <div style="padding:10px 14px;display:flex;flex-direction:column;gap:8px">
+        <textarea class="mkt-notes" id="mktNotes" placeholder="Your market research notes, thesis, open questions..."></textarea>
+        <div style="display:flex;justify-content:flex-end">
+          <button class="save-notes-btn" onclick="saveMarketNotes()">Save Notes</button>
+        </div>
+      </div>
+    </div>
 
-    defaults = {
-        "ticker": ticker, "company_name": ticker, "impact": "Medium",
-        "direction": "Neutral", "impact_score": 0,
-        "summary": "Analysis unavailable.", "bull_scenario": "N/A",
-        "bull_price_direction": "Increase", "bull_price_magnitude": "Unknown",
-        "bear_scenario": "N/A", "bear_price_direction": "Decrease",
-        "bear_price_magnitude": "Unknown", "key_factors": [],
-        "time_horizon": "Unknown", "confidence": "Low"
+    <!-- Kalshi Link -->
+    <div class="card">
+      <div class="card-header">
+        <div class="card-title">Trade on Kalshi</div>
+      </div>
+      <div style="padding:14px 16px;text-align:center">
+        <div style="font-size:28px;margin-bottom:10px">🔗</div>
+        <div style="font-size:12px;color:var(--text2);line-height:1.6;margin-bottom:14px">Onyx helps you research and decide. Execute your trades directly on Kalshi's regulated platform.</div>
+        <a href="https://kalshi.com" target="_blank"
+          style="display:block;background:var(--text);color:#fff;text-decoration:none;font-family:'Inter',sans-serif;font-size:12px;font-weight:700;padding:10px;border-radius:7px;transition:opacity 0.12s"
+          onmouseover="this.style.opacity=0.8" onmouseout="this.style.opacity=1">
+          Open Kalshi →
+        </a>
+        <div style="font-size:10px;color:var(--grey);margin-top:8px">All trading happens on Kalshi. Onyx is for research only.</div>
+      </div>
+    </div>
+
+  </div>
+
+</div><!-- /main -->
+</div><!-- /layout -->
+
+<script>
+const API = 'https://prediction-api-production-ad66.up.railway.app';
+
+// ── STATE ─────────────────────────────────────────────────────
+let positions  = JSON.parse(localStorage.getItem('onyx_mkt_pos')   || '[]');
+let mktNotes   = localStorage.getItem('onyx_mkt_notes') || '';
+let activeCategory = 'all';
+let selectedMarket = null;
+
+// Sample markets (real Kalshi-style markets — replace with API later)
+const MARKETS = [
+  {id:'fed-cut-jun',  q:'Will the Fed cut rates at the June 2025 meeting?',     cat:'finance', vol:'$2.4M', close:'Jun 18',  yes:62, no:38},
+  {id:'btc-100k',     q:'Will Bitcoin hit $100,000 before July 2025?',            cat:'crypto',  vol:'$5.1M', close:'Jun 30',  yes:41, no:59},
+  {id:'sp500-5500',   q:'Will the S&P 500 close above 5,500 this week?',         cat:'finance', vol:'$890K', close:'Apr 25',  yes:55, no:45},
+  {id:'trump-tariff', q:'Will Trump announce new tariffs on EU goods in April?',  cat:'politics',vol:'$3.2M', close:'Apr 30',  yes:33, no:67},
+  {id:'apple-ai',     q:'Will Apple announce a major AI model at WWDC 2025?',    cat:'tech',    vol:'$1.1M', close:'Jun 10',  yes:78, no:22},
+  {id:'recession-25', q:'Will the US enter a recession in 2025?',                cat:'macro',   vol:'$8.7M', close:'Dec 31',  yes:28, no:72},
+  {id:'eth-3k',       q:'Will Ethereum reach $3,000 before May 2025?',           cat:'crypto',  vol:'$2.0M', close:'Apr 30',  yes:37, no:63},
+  {id:'cpi-march',    q:'Will March CPI come in below 3.0%?',                    cat:'macro',   vol:'$1.5M', close:'Apr 10',  yes:49, no:51},
+  {id:'nvidia-200',   q:'Will NVDA close above $200 before June?',               cat:'finance', vol:'$980K', close:'May 30',  yes:58, no:42},
+  {id:'nba-finals',   q:'Will the Boston Celtics win the 2025 NBA Finals?',      cat:'sports',  vol:'$3.3M', close:'Jun 22',  yes:31, no:69},
+  {id:'gpt5',         q:'Will OpenAI release GPT-5 before August 2025?',         cat:'tech',    vol:'$2.8M', close:'Jul 31',  yes:44, no:56},
+  {id:'gold-3k',      q:'Will gold reach $3,500/oz before July 2025?',           cat:'finance', vol:'$1.7M', close:'Jun 30',  yes:52, no:48},
+];
+
+// ── INIT ─────────────────────────────────────────────────────
+(function(){
+  var now=new Date(),h=now.getUTCHours(),d=now.getUTCDay();
+  var open=d>0&&d<6&&h>=13&&h<21;
+  document.getElementById('mktDot').className='dot '+(open?'open':'closed');
+  document.getElementById('mktTxt').textContent=open?'Market Open':'Market Closed';
+})();
+
+document.getElementById('mktNotes').value = mktNotes;
+document.getElementById('mktNotes').addEventListener('input', function() {
+  mktNotes = this.value;
+});
+
+renderSidebarPanels();
+renderMarkets();
+renderPositions();
+
+// ── MARKETS ──────────────────────────────────────────────────
+function setCategory(el) {
+  document.querySelectorAll('.cat-pill').forEach(function(p){p.classList.remove('active');});
+  el.classList.add('active');
+  activeCategory = el.dataset.cat;
+  renderMarkets();
+}
+
+function filterMarkets() { renderMarkets(); }
+
+function renderMarkets() {
+  var search = document.getElementById('mktSearch').value.toLowerCase();
+  var filtered = MARKETS.filter(function(m) {
+    var catMatch = activeCategory === 'all' || m.cat === activeCategory;
+    var searchMatch = !search || m.q.toLowerCase().includes(search);
+    return catMatch && searchMatch;
+  });
+  document.getElementById('mktCount').textContent = filtered.length + ' markets';
+  var list = document.getElementById('marketList');
+  if (!filtered.length) {
+    list.innerHTML = '<div style="padding:20px;text-align:center;color:var(--grey);font-size:12px">No markets found</div>';
+    return;
+  }
+  list.innerHTML = filtered.map(function(m) {
+    var isSelected = selectedMarket && selectedMarket.id === m.id;
+    return '<div class="market-card'+(isSelected?' selected':'')+'" onclick="selectMarket(\''+m.id+'\')">' +
+      '<div class="market-q">'+m.q+'</div>' +
+      '<div class="market-meta">' +
+        '<span class="market-cat '+m.cat+'">'+m.cat+'</span>' +
+        '<span class="market-vol">Vol: '+m.vol+'</span>' +
+        '<span class="market-close">Closes '+m.close+'</span>' +
+      '</div>' +
+      '<div class="yes-no">' +
+        '<button class="yes-btn" onclick="event.stopPropagation();trackPosition(\''+m.id+'\',\'YES\')">YES '+m.yes+'¢</button>' +
+        '<button class="no-btn" onclick="event.stopPropagation();trackPosition(\''+m.id+'\',\'NO\')">NO '+m.no+'¢</button>' +
+      '</div>' +
+    '</div>';
+  }).join('');
+}
+
+function selectMarket(id) {
+  selectedMarket = MARKETS.find(function(m){return m.id===id;});
+  if (!selectedMarket) return;
+  renderMarkets();
+  renderDetail();
+}
+
+function renderDetail() {
+  var m = selectedMarket;
+  if (!m) return;
+  document.getElementById('detailSub').textContent = m.cat + ' · ' + m.vol + ' volume';
+  document.getElementById('detailBody').innerHTML =
+    '<div class="detail-q">'+m.q+'</div>' +
+    '<div class="detail-odds">' +
+      '<div class="odds-box yes"><div class="odds-label">Yes</div><div class="odds-val">'+m.yes+'¢</div><div class="odds-cents">'+m.yes+'% implied probability</div></div>' +
+      '<div class="odds-box no"><div class="odds-label">No</div><div class="odds-val">'+m.no+'¢</div><div class="odds-cents">'+m.no+'% implied probability</div></div>' +
+    '</div>' +
+    '<div class="detail-bar"><div class="detail-bar-fill" style="width:'+m.yes+'%"></div></div>' +
+    '<div class="detail-section">' +
+      '<div class="detail-label">About this market</div>' +
+      '<div class="detail-text">This market resolves YES if the stated event occurs before the close date of '+m.close+'. Volume traded: '+m.vol+'. Current odds reflect the collective wisdom of all traders on Kalshi.</div>' +
+    '</div>' +
+    '<button class="trade-btn yes" onclick="trackPosition(\''+m.id+'\',\'YES\')">Track YES Position at '+m.yes+'¢</button>' +
+    '<button class="trade-btn no" onclick="trackPosition(\''+m.id+'\',\'NO\')">Track NO Position at '+m.no+'¢</button>' +
+    '<a href="https://kalshi.com" target="_blank" class="trade-btn" style="background:var(--surface2);color:var(--text);text-decoration:none;border:1px solid var(--border);margin-top:8px">Trade on Kalshi →</a>' +
+    '<div class="trade-note">Onyx tracks positions for research. All real trades are placed on Kalshi directly.</div>';
+}
+
+// ── POSITIONS ────────────────────────────────────────────────
+function trackPosition(marketId, side) {
+  var m = MARKETS.find(function(m){return m.id===marketId;});
+  if (!m) return;
+  if (positions.find(function(p){return p.marketId===marketId && p.side===side;})) return;
+  var price = side === 'YES' ? m.yes : m.no;
+  positions.unshift({ marketId:marketId, side:side, q:m.q, cat:m.cat, entryPrice:price, id:Date.now() });
+  localStorage.setItem('onyx_mkt_pos', JSON.stringify(positions));
+  renderPositions();
+}
+
+function deletePosition(id) {
+  positions = positions.filter(function(p){return p.id!==id;});
+  localStorage.setItem('onyx_mkt_pos', JSON.stringify(positions));
+  renderPositions();
+}
+
+function renderPositions() {
+  var list = document.getElementById('posList');
+  document.getElementById('posCount').textContent = positions.length + ' position' + (positions.length!==1?'s':'');
+  if (!positions.length) {
+    list.innerHTML = '<div class="sp-empty">No positions tracked yet. Click YES or NO on any market.</div>';
+    return;
+  }
+  list.innerHTML = positions.map(function(p) {
+    var m = MARKETS.find(function(m){return m.id===p.marketId;});
+    var currentPrice = m ? (p.side==='YES' ? m.yes : m.no) : p.entryPrice;
+    var pnl = currentPrice - p.entryPrice;
+    var pnlColor = pnl >= 0 ? 'var(--green)' : 'var(--red)';
+    var pnlStr = (pnl>=0?'+':'')+pnl.toFixed(0)+'¢';
+    return '<div class="pos-card">' +
+      '<div class="pos-top">' +
+        '<span class="pos-side '+p.side.toLowerCase()+'">'+p.side+'</span>' +
+        '<div class="pos-q">'+p.q.substring(0,50)+(p.q.length>50?'...':'')+'</div>' +
+        '<button class="pos-del" onclick="deletePosition('+p.id+')">×</button>' +
+      '</div>' +
+      '<div class="pos-meta">' +
+        '<span>Entry: '+p.entryPrice+'¢</span>' +
+        '<span>Now: '+currentPrice+'¢</span>' +
+        '<span class="pos-pnl" style="color:'+pnlColor+'">P&L: '+pnlStr+'</span>' +
+      '</div>' +
+    '</div>';
+  }).join('');
+}
+
+// ── AI PICKS ─────────────────────────────────────────────────
+async function runAIPicks() {
+  var btn = document.getElementById('aiPicksBtn');
+  var statusBar = document.getElementById('aiPicksStatus');
+  var statusText = document.getElementById('aiPicksText');
+  btn.disabled = true;
+  statusBar.classList.add('active');
+  document.getElementById('picksStatus').textContent = 'Analysing...';
+
+  var markets = MARKETS.map(function(m){
+    return m.q + ' (YES: '+m.yes+'¢, NO: '+m.no+'¢, closes: '+m.close+')';
+  }).join('\n');
+
+  var messages = [
+    'Searching for recent news on each market...',
+    'Analysing probability vs current odds...',
+    'Generating trade recommendations...'
+  ];
+  var mi = 0;
+  var interval = setInterval(function(){
+    if (mi < messages.length) statusText.textContent = messages[mi++];
+  }, 4000);
+
+  try {
+    var res = await fetch(API + '/ask', {
+      method: 'POST',
+      headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({
+        question: 'You are a prediction market analyst. For each of these Kalshi markets, search the web for current information and give a verdict (YES, NO, or SKIP) with a confidence level and brief reasoning. Markets:\n\n' + markets + '\n\nReturn ONLY a JSON array: [{"id":"market-id","verdict":"YES","confidence":"High/Medium/Low","reason":"brief reason"}]. Use the market IDs: ' + MARKETS.map(function(m){return m.id;}).join(', ')
+      })
+    });
+    var data = await res.json();
+    clearInterval(interval);
+    // Try to parse JSON from answer
+    var text = data.answer || '';
+    var s = text.indexOf('['), e = text.lastIndexOf(']')+1;
+    if (s >= 0 && e > s) {
+      var picks = JSON.parse(text.substring(s, e));
+      renderPicks(picks);
+      document.getElementById('picksStatus').textContent = picks.length + ' picks generated';
+    } else {
+      throw new Error('Could not parse picks');
     }
+  } catch(err) {
+    clearInterval(interval);
+    document.getElementById('picksList').innerHTML =
+      '<div style="padding:14px;font-size:12px;color:var(--red)">Could not load AI picks. Try again.</div>';
+    document.getElementById('picksStatus').textContent = 'Error — try again';
+  } finally {
+    statusBar.classList.remove('active');
+    btn.disabled = false;
+  }
+}
 
-    try:
-        resp = client.messages.create(
-            model="claude-sonnet-4-5", max_tokens=800,
-            tools=[{"type": "web_search_20250305", "name": "web_search"}],
-            messages=[{"role": "user", "content": prompt}]
-        )
-        text = "".join(b.text for b in resp.content if hasattr(b, "text") and b.text)
-        s, e = text.find("{"), text.rfind("}") + 1
-        if s >= 0 and e > s:
-            result = json.loads(text[s:e])
-            for k, v in defaults.items():
-                if result.get(k) is None:
-                    result[k] = v
-            return result
-    except Exception as ex:
-        return {"error": str(ex)}
+function renderPicks(picks) {
+  var list = document.getElementById('picksList');
+  list.innerHTML = picks.map(function(p) {
+    var m = MARKETS.find(function(m){return m.id===p.id;});
+    var vClass = p.verdict==='YES' ? 'yes' : p.verdict==='NO' ? 'no' : 'skip';
+    var price = m ? (p.verdict==='YES' ? m.yes : p.verdict==='NO' ? m.no : '—') : '—';
+    return '<div class="pick-card">' +
+      '<div class="pick-header">' +
+        '<span class="pick-verdict '+vClass+'">'+p.verdict+'</span>' +
+        '<div class="pick-q">'+(m?m.q:p.id)+'</div>' +
+      '</div>' +
+      '<div class="pick-conf">Confidence: '+p.confidence+(price!=='—'?' · Trade at '+price+'¢':'')+'</div>' +
+      '<div class="pick-reason">'+p.reason+'</div>' +
+      (p.verdict!=='SKIP' && m ? '<div class="pick-action"><button onclick="trackPosition(\''+m.id+'\',\''+p.verdict+'\')" style="background:none;border:1px solid var(--border);color:var(--blue);font-family:Inter,sans-serif;font-size:10px;font-weight:600;padding:3px 10px;border-radius:4px;cursor:pointer">+ Track this position</button></div>' : '') +
+    '</div>';
+  }).join('');
+}
 
-    return {"error": "Could not parse response"}
+// ── NOTES ────────────────────────────────────────────────────
+function saveMarketNotes() {
+  localStorage.setItem('onyx_mkt_notes', mktNotes);
+  var ind = document.getElementById('notesIndicator');
+  var t = new Date().toLocaleTimeString('en-US',{hour:'numeric',minute:'2-digit'});
+  ind.textContent = 'Saved ' + t;
+  var btn = document.querySelector('.save-notes-btn');
+  btn.textContent = 'Saved ✓'; btn.style.background = 'var(--green)';
+  setTimeout(function(){btn.textContent='Save Notes';btn.style.background='';}, 1500);
+}
 
-# ── AI: Ask ────────────────────────────────────────────────────
-@app.post("/ask")
-async def ask(request: dict):
-    question = (request.get("question") or "").strip()
-    context  = request.get("context") or {}
-    if not question:
-        return {"answer": "Please ask a question.", "action": None}
+// ── SIDEBAR PANELS ────────────────────────────────────────────
+function toggleSP(id) {
+  var card = document.getElementById(id);
+  if (card) card.classList.toggle('open');
+}
 
-    client = anthropic.Anthropic(api_key=ANTHROPIC_KEY)
+function renderSidebarPanels() {
+  try {
+    var wl = JSON.parse(localStorage.getItem('onyx_wl_v3') || '[]');
+    var portfolio = JSON.parse(localStorage.getItem('onyx_portfolio') || '[]');
+    var wlCount = document.getElementById('spWlCount');
+    var wlBody = document.getElementById('spWlBody');
+    if (wlCount) wlCount.textContent = wl.length + ' stock'+(wl.length!==1?'s':'');
+    if (wlBody) {
+      if (!wl.length) { wlBody.innerHTML = '<div class="sp-empty">No stocks added yet</div>'; }
+      else {
+        wlBody.innerHTML = wl.slice(0,12).map(function(w) {
+          var port = portfolio.find(function(p){return p.ticker===w.ticker;});
+          var totalVal = '';
+          if (port && port.shares && port.buyPrice) {
+            var lastPt = port.points && port.points.length ? port.points[port.points.length-1].p : port.buyPrice;
+            var total = port.shares * lastPt;
+            var pnl = (lastPt - port.buyPrice) * port.shares;
+            var color = pnl >= 0 ? 'var(--green)' : 'var(--red)';
+            totalVal = '<span style="font-family:JetBrains Mono,monospace;font-size:10px;color:'+color+';font-weight:600">$'+total.toFixed(2)+'</span>';
+          }
+          return '<div class="sp-stock-row" onclick="window.location.href=\'/\'">' +
+            '<span class="sp-ticker">'+w.ticker+'</span>' +
+            (totalVal || '<span style="font-size:10px;color:var(--grey)">—</span>') +
+          '</div>';
+        }).join('');
+      }
+    }
+  } catch(e) {}
+  try {
+    var sessions = JSON.parse(localStorage.getItem('onyx_sessions') || '[]');
+    var rsCount = document.getElementById('spRsCount');
+    var rsBody = document.getElementById('spRsBody');
+    if (rsCount) rsCount.textContent = sessions.length + ' session'+(sessions.length!==1?'s':'');
+    if (rsBody) {
+      if (!sessions.length) { rsBody.innerHTML = '<div class="sp-empty">No research sessions yet</div>'; }
+      else {
+        rsBody.innerHTML = sessions.slice().reverse().slice(0,8).map(function(s) {
+          var name = s.name || s.topic || 'Untitled';
+          var date = new Date(s.created).toLocaleDateString('en-US',{month:'short',day:'numeric'});
+          return '<div class="sp-log-row" onclick="window.location.href=\'/search\'">' +
+            '<div class="sp-log-name">'+name.substring(0,28)+(name.length>28?'...':'')+'</div>' +
+            '<div class="sp-log-date">'+date+'</div>' +
+          '</div>';
+        }).join('');
+      }
+    }
+  } catch(e) {}
+}
 
-    system = """You are Onyx, an AI agent embedded in a stock investment dashboard.
-You can answer questions AND control the dashboard by returning actions.
-
-If the user wants to:
-- Add a stock to watchlist: action={"type":"addTicker","ticker":"TSLA"}
-- Buy a stock: action={"type":"buy","ticker":"TSLA","shares":5}
-- Sell a stock: action={"type":"sell","ticker":"TSLA","shares":5}
-- Scan/analyse a stock: action={"type":"scan","ticker":"TSLA"}
-- Go to research page: action={"type":"navigate","page":"research"}
-- Go to dashboard: action={"type":"navigate","page":"dashboard"}
-- Search a topic: action={"type":"research","topic":"Federal Reserve rates"}
-- No action needed: action=null
-
-Always respond with JSON:
-{"answer": "your 1-3 sentence response", "action": null or action object}
-
-Be conversational and helpful. If buying/selling, confirm what you did."""
-
-    try:
-        resp = client.messages.create(
-            model="claude-sonnet-4-5", max_tokens=400,
-            tools=[{"type": "web_search_20250305", "name": "web_search"}],
-            system=system,
-            messages=[{"role": "user", "content":
-                f"User context: {json.dumps(context)}\n\nQuestion/Command: {question}"}]
-        )
-        text = "".join(b.text for b in resp.content if hasattr(b, "text") and b.text)
-        # Try to parse JSON response
-        s, e = text.find("{"), text.rfind("}") + 1
-        if s >= 0 and e > s:
-            try:
-                parsed = json.loads(text[s:e])
-                return {
-                    "answer": parsed.get("answer", text.strip()),
-                    "action": parsed.get("action", None)
-                }
-            except Exception:
-                pass
-        return {"answer": text.strip() or "No answer found.", "action": None}
-    except Exception as ex:
-        return {"answer": f"Error: {str(ex)}", "action": None}
-
-@app.post("/suggest")
-async def suggest(request: dict):
-    """Generate smart next-step suggestions based on user context."""
-    context = request.get("context") or {}
-    client = anthropic.Anthropic(api_key=ANTHROPIC_KEY)
-    try:
-        resp = client.messages.create(
-            model="claude-sonnet-4-5", max_tokens=500,
-            tools=[{"type": "web_search_20250305", "name": "web_search"}],
-            messages=[{"role": "user", "content": f"""You are Onyx, an AI investment assistant.
-
-Based on this user's current dashboard state, suggest 4 specific, actionable next steps to help them trade smarter.
-
-User context: {json.dumps(context)}
-
-Return ONLY a JSON array of 4 suggestions:
-[
-  {{"title": "Short action title", "description": "One sentence explaining why", "action": {{"type": "scan", "ticker": "AAPL"}} or null}},
-  ...
-]
-
-Make suggestions specific to their actual watchlist/portfolio. Search for relevant market info if needed."""}]
-        )
-        text = "".join(b.text for b in resp.content if hasattr(b, "text") and b.text)
-        s, e = text.find("["), text.rfind("]") + 1
-        if s >= 0 and e > s:
-            return {"suggestions": json.loads(text[s:e])}
-    except Exception as ex:
-        pass
-    return {"suggestions": [
-        {"title": "Scan your watchlist", "description": "Get AI signals on all your tracked stocks.", "action": {"type": "scanAll"}},
-        {"title": "Research market trends", "description": "Ask Onyx about current macro conditions.", "action": {"type": "navigate", "page": "research"}},
-        {"title": "Review your portfolio", "description": "Check P&L and consider rebalancing.", "action": None},
-        {"title": "Add a new position", "description": "Diversify by adding a new ticker.", "action": None}
-    ]}
-
-# ── History ────────────────────────────────────────────────────
-@app.get("/predictions")
-def get_predictions(limit: int = 10):
-    try:
-        return db.get_predictions(limit=limit)
-    except Exception:
-        return []
-
-@app.get("/health")
-def health():
-    return {"status": "ok"}
+setInterval(renderSidebarPanels, 30000);
+</script>
+</body>
+</html>
