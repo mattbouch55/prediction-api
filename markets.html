@@ -271,46 +271,50 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:'Inter'
         <a href="https://kalshi.com" target="_blank" style="font-size:10px;color:var(--blue);font-weight:600;text-decoration:none">Open Kalshi ↗</a>
       </div>
       <div class="import-form" style="flex:1;gap:10px">
-        <!-- Step 1: Paste URL -->
-        <div style="background:var(--blue-soft);border:1px solid rgba(21,101,255,0.2);border-radius:7px;padding:10px 12px">
-          <div class="field-label" style="color:var(--blue);margin-bottom:5px">Step 1 — Paste Kalshi Market URL</div>
-          <div style="display:flex;gap:6px">
-            <input class="field-input" id="importUrl" type="url" placeholder="https://kalshi.com/markets/..." style="flex:1"/>
-            <button onclick="fetchKalshiMarket()" id="fetchBtn" style="background:var(--blue);color:#fff;border:none;font-family:'Inter',sans-serif;font-size:11px;font-weight:600;padding:6px 12px;border-radius:5px;cursor:pointer;white-space:nowrap;flex-shrink:0">Fetch ↗</button>
+
+        <!-- Kalshi URL -->
+        <div>
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px">
+            <div class="field-label">Kalshi Market URL</div>
+            <a href="https://kalshi.com" target="_blank" style="font-size:9px;color:var(--blue);font-weight:600;text-decoration:none">Open Kalshi ↗</a>
           </div>
-          <div id="fetchStatus" style="font-size:10px;color:var(--grey);margin-top:5px">Find a market on Kalshi and paste the URL above to auto-load all data.</div>
+          <input class="field-input" id="importUrl" type="url" placeholder="https://kalshi.com/markets/..." oninput="onUrlInput(this.value)"/>
+          <div id="urlStatus" style="font-size:10px;color:var(--grey);margin-top:4px;line-height:1.4">Paste a Kalshi market URL, then fill in the details below.</div>
         </div>
 
-        <!-- Divider -->
-        <div style="display:flex;align-items:center;gap:8px;margin:2px 0">
-          <div style="flex:1;height:1px;background:var(--border)"></div>
-          <span style="font-size:10px;color:var(--grey)">Step 2 — Review & Edit</span>
-          <div style="flex:1;height:1px;background:var(--border)"></div>
-        </div>
-
-        <!-- Auto-filled fields -->
+        <!-- Market Question -->
         <div>
           <div class="field-label">Market Question</div>
-          <input class="field-input" id="importQ" type="text" placeholder="Auto-filled from Kalshi..."/>
+          <textarea class="field-input" id="importQ" rows="2" placeholder="Copy the market question from Kalshi..." style="resize:none;line-height:1.5"></textarea>
         </div>
+
+        <!-- YES / NO prices -->
         <div style="display:flex;gap:6px">
           <div style="flex:1">
-            <div class="field-label">YES (¢)</div>
-            <input class="price-input" id="importYes" type="number" min="1" max="99" placeholder="—" style="width:100%"/>
+            <div class="field-label">YES Price (¢)</div>
+            <input class="price-input" id="importYes" type="number" min="1" max="99" placeholder="e.g. 62" style="width:100%" oninput="syncNo(this.value)"/>
           </div>
           <div style="flex:1">
-            <div class="field-label">NO (¢)</div>
-            <input class="price-input" id="importNo" type="number" min="1" max="99" placeholder="—" style="width:100%"/>
-          </div>
-          <div style="flex:1">
-            <div class="field-label">Volume</div>
-            <input class="field-input" id="importVol" type="text" placeholder="—" style="padding:6px 8px;font-size:11px"/>
+            <div class="field-label">NO Price (¢)</div>
+            <input class="price-input" id="importNo" type="number" min="1" max="99" placeholder="e.g. 38" style="width:100%" oninput="syncYes(this.value)"/>
           </div>
         </div>
+
+        <!-- Prob bar preview -->
+        <div id="probPreview" style="display:none">
+          <div style="height:4px;background:var(--red-dim);border-radius:3px;overflow:hidden">
+            <div id="probFill" style="height:4px;background:var(--green);border-radius:3px;width:50%"></div>
+          </div>
+          <div style="display:flex;justify-content:space-between;font-size:9px;color:var(--grey);margin-top:2px">
+            <span id="probYesLbl">YES 50%</span><span id="probNoLbl">NO 50%</span>
+          </div>
+        </div>
+
+        <!-- Close date + Category -->
         <div style="display:flex;gap:6px">
           <div style="flex:1">
             <div class="field-label">Close Date</div>
-            <input class="field-input" id="importClose" type="text" placeholder="e.g. Jun 18, 2025"/>
+            <input class="field-input" id="importClose" type="text" placeholder="e.g. Mar 17, 2026"/>
           </div>
           <div style="flex:1">
             <div class="field-label">Category</div>
@@ -325,10 +329,13 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:'Inter'
           </div>
         </div>
 
-        <!-- Import button -->
+        <!-- Import -->
         <button class="import-btn" style="margin-top:4px" onclick="importBet()">+ Add to Research Inventory</button>
+
       </div>
-      <div class="kalshi-hint">Paste any Kalshi market URL to auto-load live odds, volume, and close date. Edit if needed, then import.</div>
+      <div class="kalshi-hint" style="background:var(--yellow-dim);border-top:1px solid var(--border)">
+        <strong style="color:var(--yellow)">How to import:</strong> Go to Kalshi, find your market, copy the URL + question + YES/NO prices into the fields above. Onyx does the rest.
+      </div>
     </div>
 
 
@@ -409,93 +416,63 @@ renderSidebarPanels();
 
 // ── IMPORT ────────────────────────────────────────────────────
 document.addEventListener('keydown',function(e){
-  if(e.key==='Enter' && document.getElementById('importUrl')===document.activeElement){ fetchKalshiMarket(); return; }
+
   if(e.key==='Enter' && document.getElementById('importQ')===document.activeElement) importBet();
 });
 
-async function fetchKalshiMarket(){
-  var url = document.getElementById('importUrl').value.trim();
-  if(!url){ document.getElementById('importUrl').focus(); return; }
-
-  var btn = document.getElementById('fetchBtn');
-  var status = document.getElementById('fetchStatus');
-  btn.disabled = true;
-  btn.textContent = '...';
-  status.textContent = 'Fetching from Kalshi...';
-  status.style.color = 'var(--blue)';
-
-  try {
-    // Extract ticker from URL
-    // Kalshi URL: https://kalshi.com/markets/{series}/{slug}/{TICKER}
-    var parts = url.replace(/\/$/, '').split('/');
-    var ticker = parts[parts.length - 1].toUpperCase();
-
-    // Call Kalshi API directly from browser (no CORS restriction since they allow browser requests)
-    var kalshiUrl = 'https://api.elections.kalshi.com/trade-api/v2/markets/' + ticker;
-    var res = await fetch(kalshiUrl, {
-      headers: {
-        'Accept': 'application/json',
-        'Content-Type': 'application/json'
-      }
-    });
-
-    if(!res.ok) {
-      // If direct API fails, try the tickers query param format
-      var res2 = await fetch('https://api.elections.kalshi.com/trade-api/v2/markets?tickers=' + ticker, {
-        headers: { 'Accept': 'application/json' }
-      });
-      if(!res2.ok) throw new Error('Kalshi API returned ' + res.status + '. Make sure you are logged into Kalshi in this browser.');
-      var data2 = await res2.json();
-      var markets = data2.markets || [];
-      if(!markets.length) throw new Error('Market not found for ticker: ' + ticker);
-      fillFromKalshi(markets[0], url);
-      return;
+function onUrlInput(url) {
+  if(!url) return;
+  var status = document.getElementById('urlStatus');
+  // Extract ticker and auto-detect close date from URL slug
+  var parts = url.replace(/\/$/, '').split('/');
+  var ticker = parts[parts.length - 1];
+  // Try to extract date from ticker e.g. kxhormuznorm-26mar17 -> Mar 17, 2026
+  var dateMatch = ticker.match(/(\d{2})(jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec)(\d{2})$/i);
+  if(dateMatch) {
+    var months = {jan:'Jan',feb:'Feb',mar:'Mar',apr:'Apr',may:'May',jun:'Jun',jul:'Jul',aug:'Aug',sep:'Sep',oct:'Oct',nov:'Nov',dec:'Dec'};
+    var mon = months[dateMatch[2].toLowerCase()];
+    var day = parseInt(dateMatch[3]);
+    var year = 2000 + parseInt(dateMatch[1]);
+    document.getElementById('importClose').value = mon + ' ' + day + ', ' + year;
+  }
+  // Auto-detect category from URL
+  var slug = url.toLowerCase();
+  var cats = {politics:['election','president','congress','senate','trump','biden','democrat','republican'],
+               crypto:['bitcoin','btc','eth','ethereum','crypto','solana'],
+               finance:['stock','s&p','sp500','fed','rate','nasdaq','dow'],
+               macro:['gdp','inflation','cpi','unemployment','recession'],
+               tech:['ai','apple','google','meta','microsoft','nvidia','openai'],
+               sports:['nba','nfl','mlb','nhl','world cup','super bowl']};
+  for(var cat in cats) {
+    if(cats[cat].some(function(k){return slug.includes(k);})) {
+      document.getElementById('importCat').value = cat; break;
     }
+  }
+  status.textContent = '✓ URL saved · Ticker: ' + ticker.toUpperCase() + ' · Fill in the question and prices from Kalshi.';
+  status.style.color = 'var(--green)';
+}
 
-    var data = await res.json();
-    var m = data.market || data;
-    fillFromKalshi(m, url);
-
-  } catch(e) {
-    status.textContent = '⚠ ' + e.message;
-    status.style.color = 'var(--red)';
-    btn.disabled = false;
-    btn.textContent = 'Fetch ↗';
+function syncNo(yes) {
+  var y = parseInt(yes);
+  if(y >= 1 && y <= 99) {
+    document.getElementById('importNo').value = 100 - y;
+    updateProbBar(y, 100-y);
   }
 }
 
-function fillFromKalshi(m, originalUrl) {
-  var status = document.getElementById('fetchStatus');
-  var btn = document.getElementById('fetchBtn');
-  try {
-    var yesPrice = m.yes_bid || m.last_price || m.yes_ask || 50;
-    var noPrice  = m.no_bid  || (100 - yesPrice);
-    var closeStr = '';
-    if(m.close_time) {
-      try {
-        var dt = new Date(m.close_time);
-        closeStr = dt.toLocaleDateString('en-US', {month:'short', day:'numeric', year:'numeric'});
-      } catch(e) { closeStr = m.close_time; }
-    }
-    var vol = m.volume || m.volume_24h || 0;
-    var volStr = vol > 0 ? '$' + (vol >= 1000000 ? (vol/1000000).toFixed(1)+'M' : vol >= 1000 ? (vol/1000).toFixed(1)+'K' : vol) : '';
-
-    document.getElementById('importQ').value     = m.title || m.subtitle || '';
-    document.getElementById('importYes').value   = Math.round(yesPrice);
-    document.getElementById('importNo').value    = Math.round(noPrice);
-    document.getElementById('importClose').value = closeStr;
-    document.getElementById('importVol').value   = volStr;
-
-    var ticker = m.ticker || '';
-    status.textContent = '✓ Loaded: ' + ticker + ' · YES ' + Math.round(yesPrice) + '¢ · NO ' + Math.round(noPrice) + '¢';
-    status.style.color = 'var(--green)';
-  } catch(e) {
-    status.textContent = '⚠ Could not parse market data: ' + e.message;
-    status.style.color = 'var(--red)';
-  } finally {
-    btn.disabled = false;
-    btn.textContent = 'Fetch ↗';
+function syncYes(no) {
+  var n = parseInt(no);
+  if(n >= 1 && n <= 99) {
+    document.getElementById('importYes').value = 100 - n;
+    updateProbBar(100-n, n);
   }
+}
+
+function updateProbBar(yes, no) {
+  document.getElementById('probPreview').style.display = 'block';
+  document.getElementById('probFill').style.width = yes + '%';
+  document.getElementById('probYesLbl').textContent = 'YES ' + yes + '%';
+  document.getElementById('probNoLbl').textContent = 'NO ' + no + '%';
 }
 
 function importBet(){
