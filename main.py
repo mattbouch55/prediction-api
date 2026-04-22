@@ -298,6 +298,65 @@ def get_predictions(limit: int = 10):
     except Exception:
         return []
 
+
+@app.get("/kalshi-market")
+async def get_kalshi_market(url: str = "", ticker: str = ""):
+    """Fetch live market data from Kalshi's public API."""
+    import re
+
+    # Extract ticker from URL if provided
+    if url and not ticker:
+        # Kalshi URL format: https://kalshi.com/markets/{event}/{TICKER}
+        parts = url.rstrip('/').split('/')
+        ticker = parts[-1].upper()
+
+    if not ticker:
+        return {"error": "No ticker or URL provided"}
+
+    # Try Kalshi public API
+    kalshi_headers = {
+        "Accept": "application/json",
+        "User-Agent": "Mozilla/5.0 (compatible; OnyxAI/1.0)",
+    }
+
+    endpoints = [
+        f"https://api.elections.kalshi.com/trade-api/v2/markets/{ticker}",
+        f"https://trading-api.kalshi.com/trade-api/v2/markets/{ticker}",
+    ]
+
+    for endpoint in endpoints:
+        try:
+            r = requests.get(endpoint, headers=kalshi_headers, timeout=8)
+            if r.status_code == 200:
+                data = r.json()
+                m = data.get("market", data)
+                # Normalise prices — Kalshi returns cents (0-99)
+                yes_price = m.get("yes_bid") or m.get("last_price") or 50
+                no_price = 100 - int(yes_price) if yes_price else 50
+                close_time = m.get("close_time", "")
+                if close_time:
+                    try:
+                        from datetime import datetime
+                        dt = datetime.fromisoformat(close_time.replace("Z", "+00:00"))
+                        close_time = dt.strftime("%b %d, %Y")
+                    except Exception:
+                        pass
+                return {
+                    "ticker": ticker,
+                    "title": m.get("title") or m.get("subtitle") or "",
+                    "yes": int(yes_price),
+                    "no": int(no_price),
+                    "close": close_time,
+                    "volume": m.get("volume") or m.get("volume_24h") or 0,
+                    "category": m.get("category") or "market",
+                    "url": url or f"https://kalshi.com/markets/{ticker.lower()}",
+                    "status": m.get("status", "open"),
+                }
+        except Exception:
+            continue
+
+    return {"error": f"Could not fetch market data for ticker: {ticker}. Check the URL and try again."}
+
 @app.get("/health")
 def health():
     return {"status": "ok"}
