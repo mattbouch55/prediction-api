@@ -632,14 +632,14 @@ function renderResearchWorkspace(){
   document.getElementById('researchBody').innerHTML =
 
     // Tiny bet status strip at top
-    '<div style="display:flex;align-items:center;gap:6px;padding:6px 14px;border-bottom:1px solid var(--border);background:var(--surface2);flex-shrink:0">' +
-      '<span style="font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:0.07em;color:var(--grey)">Bet Status</span>' +
+    '<div style="display:flex;align-items:center;gap:6px;padding:5px 12px;border-bottom:1px solid var(--border);background:var(--surface2);flex-shrink:0">' +
+      '<span style="font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:0.07em;color:var(--grey);white-space:nowrap">Bet Status</span>' +
       (!b.placed ?
-        '<div style="display:flex;align-items:center;gap:5px;flex:1">' +
-          '<button id="rwSideYes" onclick="rwSelectSide(\'YES\')" style="padding:2px 10px;border-radius:4px;border:1px solid rgba(21,101,255,0.3);background:var(--surface);color:var(--grey2);font-family:Inter,sans-serif;font-size:10px;font-weight:700;cursor:pointer;transition:all 0.12s">YES</button>' +
-          '<button id="rwSideNo" onclick="rwSelectSide(\'NO\')" style="padding:2px 10px;border-radius:4px;border:1px solid rgba(217,119,6,0.3);background:var(--surface);color:var(--grey2);font-family:Inter,sans-serif;font-size:10px;font-weight:700;cursor:pointer;transition:all 0.12s;margin-left:auto">NO</button>' +
-          '<input id="rwAmount" type="number" min="1" placeholder="$ amount" style="width:90px;background:var(--bg);border:1px solid var(--border2);border-radius:4px;font-family:Inter,sans-serif;font-size:10px;padding:3px 7px;outline:none;color:var(--text)"/>' +
-          '<button onclick="rwMarkPlaced()" style="background:var(--blue);color:#fff;border:none;font-family:Inter,sans-serif;font-size:10px;font-weight:600;padding:3px 9px;border-radius:4px;cursor:pointer;white-space:nowrap">Save</button>' +
+        '<div style="display:flex;align-items:center;gap:4px;flex:1">' +
+          '<button id="rwSideYes" onclick="rwSelectSide(\'YES\')" style="padding:2px 9px;border-radius:4px;border:1px solid rgba(21,101,255,0.3);background:var(--surface);color:var(--grey2);font-family:Inter,sans-serif;font-size:10px;font-weight:700;cursor:pointer;transition:all 0.12s">YES</button>' +
+          '<button id="rwSideNo" onclick="rwSelectSide(\'NO\')" style="padding:2px 9px;border-radius:4px;border:1px solid rgba(217,119,6,0.3);background:var(--surface);color:var(--grey2);font-family:Inter,sans-serif;font-size:10px;font-weight:700;cursor:pointer;transition:all 0.12s">NO</button>' +
+          '<input id="rwAmount" type="number" min="1" placeholder="$ amount" style="width:80px;background:var(--bg);border:1px solid var(--border2);border-radius:4px;font-family:Inter,sans-serif;font-size:10px;padding:2px 6px;outline:none;color:var(--text)"/>' +
+          '<button onclick="rwMarkPlaced()" style="background:var(--blue);color:#fff;border:none;font-family:Inter,sans-serif;font-size:10px;font-weight:600;padding:2px 8px;border-radius:4px;cursor:pointer;white-space:nowrap">Save</button>' +
         '</div>'
       :
         '<div style="display:flex;align-items:center;gap:8px;flex:1">' +
@@ -650,7 +650,7 @@ function renderResearchWorkspace(){
 
     '<div class="bet-detail-header">' +
       '<div class="bet-detail-q">'+b.q+'</div>' +
-      '<div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">' +
+      '<div style="display:flex;align-items:center">' +
         '<div style="display:flex;align-items:center;gap:4px">' +
           '<span class="yes-pill" style="min-width:52px;text-align:center" id="rwYesPill">YES '+b.yes+'¢</span>' +
           '<div style="display:flex;flex-direction:column;gap:1px">' +
@@ -658,12 +658,12 @@ function renderResearchWorkspace(){
             '<button onclick="adjustPrice(-1,0)" style="background:none;border:none;cursor:pointer;color:var(--grey);font-size:10px;line-height:1;padding:1px 3px" title="YES -1">▼</button>' +
           '</div>' +
         '</div>' +
-        '<div style="display:flex;align-items:center;gap:4px">' +
-          '<span class="no-pill" style="min-width:52px;text-align:center" id="rwNoPill">NO '+b.no+'¢</span>' +
+        '<div style="display:flex;align-items:center;gap:4px;margin-left:auto">' +
           '<div style="display:flex;flex-direction:column;gap:1px">' +
             '<button onclick="adjustPrice(0,1)" style="background:none;border:none;cursor:pointer;color:var(--yellow);font-size:10px;line-height:1;padding:1px 3px" title="NO +1">▲</button>' +
             '<button onclick="adjustPrice(0,-1)" style="background:none;border:none;cursor:pointer;color:var(--grey);font-size:10px;line-height:1;padding:1px 3px" title="NO -1">▼</button>' +
           '</div>' +
+          '<span class="no-pill" style="min-width:52px;text-align:center" id="rwNoPill">NO '+b.no+'¢</span>' +
         '</div>' +
       '</div>' +
       '<div class="prob-bar" style="margin-top:8px"><div class="prob-fill" id="rwProbFill" style="width:'+b.yes+'%"></div></div>' +
