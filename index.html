@@ -926,7 +926,10 @@ function renderSidebarPanels(){
           return '<div class="sp-log-row" data-sid="'+s.id+'"><div class="sp-log-name">'+name.substring(0,28)+(name.length>28?'...':'')+'</div><div class="sp-log-date">'+date+'</div></div>';
         }).join('');
         rb.querySelectorAll('.sp-log-row').forEach(function(row){
-          row.addEventListener('click',function(){spGoResearch(row.dataset.sid);});
+          row.addEventListener('click',function(e){
+            if(e.target.classList.contains('sp-del-session')){e.stopPropagation();deleteSession(e.target.dataset.sid);return;}
+            spGoResearch(row.dataset.sid);
+          });
         });
       }
     }
