@@ -866,17 +866,13 @@ function renderTable() {
       '<td><div class="score-wrap"><div class="score-n '+sc+'">'+scoreTxt+'</div><div><div class="score-bar"><div class="score-fill" style="width:'+sbWidth+';background:'+sbColor+'"></div></div>'+(w.signal?'<span class="sig '+sigCls+'" style="margin-top:4px;display:inline-block">'+w.signal+'</span>':'')+'</div></div></td>'+
       '<td style="text-align:center">'+sharesCell(w.ticker)+'</td>'+
       '<td style="text-align:center">'+totalValueCell(w.ticker)+'</td>'+
-      '<td style="text-align:right;padding-right:12px"><button class="del-btn" data-ticker="'+w.ticker+'" title="Remove">&times;</button></td>'+
+      '<td style="text-align:right;padding-right:12px"><button class="del-btn" data-ticker="'+ w.ticker +'" onclick="event.stopPropagation();removeTicker(this.dataset.ticker)" title="Remove">&times;</button></td>'+
       '</tr>';
   });
   body.innerHTML=rows;
   body.querySelectorAll('tr.main-row').forEach(function(row){
     var t=row.dataset.ticker;
     row.addEventListener('click',function(){selectStock(t);});
-  });
-  body.querySelectorAll('.del-btn').forEach(function(btn){
-    var t=btn.dataset.ticker;
-    btn.addEventListener('click',function(e){e.stopPropagation();e.preventDefault();removeTicker(t);});
   });
 
 }
@@ -1003,15 +999,6 @@ function sleep(ms){return new Promise(function(r){setTimeout(r,ms);});}
 
 // ── INIT ──────────────────────────────────────────────────────
 // Global failsafe for del-btn clicks
-document.addEventListener('click', function(e) {
-  var btn = e.target.closest('.del-btn');
-  if (btn) {
-    e.stopPropagation();
-    e.preventDefault();
-    var ticker = btn.dataset.ticker;
-    if (ticker) removeTicker(ticker);
-  }
-}, true); // useCapture=true so it fires before bubbling
 renderTable();
 updateChartLegend();
 drawChart();
