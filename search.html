@@ -1,318 +1,175 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8"/>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Onyx AI — Research</title>
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@300;400;500&display=swap" rel="stylesheet">
-  <style>
-    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-    :root {
-      --bg: #f7f7f6; --surface: #ffffff; --surface2: #f3f3f2;
-      --border: #e5e4e2; --border2: #d1d0cd;
-      --blue: #1565ff; --blue-soft: #eff3ff; --blue-glow: rgba(21,101,255,0.08);
-      --text: #111827; --text2: #4b5563; --grey: #9ca3af; --grey2: #6b7280;
-      --green: #16a34a; --green-dim: rgba(22,163,74,0.08);
-      --red: #dc2626; --red-dim: rgba(220,38,38,0.08);
-      --yellow: #d97706; --yellow-dim: rgba(217,119,6,0.08);
-      --shadow: 0 2px 8px rgba(0,0,0,0.08), 0 1px 3px rgba(0,0,0,0.05);
-      --sidebar-w: 300px;
-    }
-    html, body { height: 100%; overflow: hidden; background: var(--bg); color: var(--text); font-family: 'Inter', sans-serif; font-size: 13px; overflow: hidden; }
-    .layout { display: flex; height: 100%; overflow: hidden; }
-    .app { display: flex; height: 100vh; }
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<title>Onyx AI — Dashboard</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#f7f7f6;--surface:#ffffff;--surface2:#f3f3f2;
+  --border:#e5e4e2;--border2:#d1d0cd;
+  --blue:#1565ff;--blue-soft:#eff3ff;--blue-glow:rgba(21,101,255,0.08);
+  --text:#111827;--text2:#4b5563;--grey:#9ca3af;--grey2:#6b7280;
+  --green:#16a34a;--green-dim:rgba(22,163,74,0.08);
+  --red:#dc2626;--red-dim:rgba(220,38,38,0.08);
+  --yellow:#d97706;--yellow-dim:rgba(217,119,6,0.08);
+  --shadow:0 2px 8px rgba(0,0,0,0.08),0 1px 3px rgba(0,0,0,0.05);
+  --sidebar-w:300px;
+}
+html,body{height:100%;background:var(--bg);color:var(--text);font-family:'Inter',sans-serif;font-size:13px;overflow:hidden}
+.layout{display:flex;height:100vh}
 
-    /* ── SIDEBAR ── */
-    .sidebar { width: var(--sidebar-w); background: var(--surface); border-right: 1px solid var(--border); display: flex; flex-direction: column; flex-shrink: 0; }
-    .sidebar-logo { height: 107px; padding: 0 20px; border-bottom: 1px solid var(--border); display: flex; align-items: center; }
-    .logo-row { display: flex; align-items: center; gap: 9px; }
-    .logo-icon { width: 28px; height: 28px; background: var(--blue); border-radius: 6px; display: flex; align-items: center; justify-content: center; font-size: 13px; font-weight: 700; color: white; font-family: 'JetBrains Mono', monospace; }
-    .logo-name { font-size: 16px; font-weight: 700; color: var(--text); }
-    .logo-sub { font-size: 11px; color: var(--grey); letter-spacing: 0.07em; text-transform: uppercase; margin-top: 3px; }
-    .sidebar-nav { padding: 12px 10px; flex-shrink: 0; }
-    .nav-section { font-size: 10px; font-weight: 600; letter-spacing: 0.1em; text-transform: uppercase; color: var(--grey); padding: 10px 8px 5px; }
-    .nav-item { display: flex; align-items: center; gap: 10px; padding: 9px 12px; border-radius: 7px; color: var(--grey2); text-decoration: none; font-size: 13px; font-weight: 500; transition: all 0.12s; margin-bottom: 2px; }
-    .nav-item:hover { background: var(--surface2); color: var(--text); }
-    .nav-item.active { background: var(--blue-soft); color: var(--blue); }
-    .nav-disabled { display: flex; align-items: center; gap: 9px; padding: 8px 10px; color: var(--grey); font-size: 12px; font-weight: 500; opacity: 0.5; cursor: not-allowed; }
-    .nav-chip { font-size: 9px; background: var(--surface2); color: var(--grey); padding: 1px 5px; border-radius: 8px; margin-left: auto; border: 1px solid var(--border); }
-    .sidebar-footer { padding: 14px 16px; border-top: 1px solid var(--border); }
-    .market-pill { display: flex; align-items: center; gap: 7px; font-size: 11px; color: var(--text2); }
-    .dot { width: 6px; height: 6px; border-radius: 50%; }
-    .dot.open { background: var(--green); }
-    .dot.closed { background: var(--red); }
+/* SIDEBAR */
+.sidebar{width:var(--sidebar-w);background:var(--surface);border-right:1px solid var(--border);display:flex;flex-direction:column;flex-shrink:0;height:100vh}
+.sidebar-logo{height:107px;display:flex;align-items:center;padding:0 20px;border-bottom:1px solid var(--border);flex-shrink:0}
+.logo-row{display:flex;align-items:center;gap:9px}
+.logo-icon{width:28px;height:28px;background:var(--blue);border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;color:#fff;font-family:'JetBrains Mono',monospace;flex-shrink:0}
+.logo-name{font-size:16px;font-weight:700;color:var(--text)}
+.logo-sub{font-size:11px;color:var(--grey);letter-spacing:0.07em;text-transform:uppercase;margin-top:3px}
+.sidebar-nav{padding:12px 10px;flex-shrink:0;overflow-y:auto}
+.nav-sec{font-size:10px;font-weight:600;letter-spacing:0.1em;text-transform:uppercase;color:var(--grey);padding:10px 10px 5px}
+.nav-item{display:flex;align-items:center;gap:10px;padding:9px 12px;border-radius:7px;color:var(--grey2);text-decoration:none;font-size:13px;font-weight:500;transition:all 0.12s;margin-bottom:2px}
+.nav-item:hover{background:var(--surface2);color:var(--text)}
+.nav-item.active{background:var(--blue-soft);color:var(--blue)}
+.nav-disabled{display:flex;align-items:center;gap:10px;padding:9px 12px;color:var(--grey);font-size:13px;font-weight:500;opacity:0.5;cursor:not-allowed}
+.nav-chip{font-size:9px;background:var(--surface2);color:var(--grey);padding:1px 5px;border-radius:8px;margin-left:auto;border:1px solid var(--border)}
+.sidebar-footer{padding:14px 20px;border-top:1px solid var(--border);flex-shrink:0}
+.mkt-pill{display:flex;align-items:center;gap:7px;font-size:11px;color:var(--text2)}
+.dot{width:6px;height:6px;border-radius:50%}
+.dot.open{background:var(--green)}.dot.closed{background:var(--red)}
 
-    /* ── TWO COLUMN LAYOUT ── */
-    .research { flex: 1; display: flex; gap: 16px; overflow: hidden; padding: 131px 16px 16px 16px; background: var(--bg); min-height: 0; }
+/* MAIN */
+.main{flex:1;padding:24px;padding-top:131px;display:flex;gap:16px;overflow:hidden;height:100vh;align-items:stretch}
+.left-col{flex:3;min-width:0;display:flex;flex-direction:column;gap:16px;overflow:hidden}
+.right-panel{flex:3;min-width:320px;display:flex;flex-direction:column;gap:0;background:var(--surface);border:1px solid var(--border);border-radius:10px;overflow:hidden;box-shadow:var(--shadow)}
 
-    /* ── LEFT: AI ENGINE ── */
-    .ai-col { display: flex; flex-direction: column; flex: 1; min-width: 0; background: var(--surface); border: 1px solid var(--border); border-radius: 10px; overflow: hidden; height: auto; box-shadow: 0 2px 8px rgba(0,0,0,0.08), 0 1px 3px rgba(0,0,0,0.05); border-right: 1px solid var(--border); background: var(--bg); }
+/* CARDS */
+.card{background:var(--surface);border:1px solid var(--border);border-radius:10px;overflow:visible;box-shadow:var(--shadow)}
+.watchlist-card{flex-shrink:0}
+.chart-card{flex:1;min-height:0;display:flex;flex-direction:column;overflow:hidden}
+.card-header{padding:14px 16px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;gap:8px}
+.card-title{font-size:12px;font-weight:600;text-transform:uppercase;letter-spacing:0.08em;color:var(--text)}
+.card-sub{font-size:11px;color:var(--grey)}
 
-    /* Session bar */
-    .session-bar { display: flex; align-items: center; gap: 6px; padding: 5px 14px; background: var(--surface); border-bottom: 1px solid var(--border); flex-shrink: 0; }
-    .session-name-input { flex: 1; background: var(--bg); border: 1px solid var(--border2); color: var(--text); font-family: 'Inter', sans-serif; font-size: 11px; font-weight: 500; padding: 5px 9px; border-radius: 5px; outline: none; transition: border-color 0.15s; }
-    .session-name-input:focus { border-color: var(--blue); box-shadow: 0 0 0 2px var(--blue-glow); }
-    .session-name-input::placeholder { color: var(--grey); font-weight: 400; }
-    .session-save-btn { background: var(--blue); color: white; border: none; font-family: 'Inter', sans-serif; font-size: 11px; font-weight: 600; padding: 5px 12px; border-radius: 5px; cursor: pointer; transition: background 0.12s; white-space: nowrap; }
-    .session-save-btn:hover { background: #1a6fff; }
-    .session-load-select { background: var(--bg); border: 1px solid var(--border2); color: var(--grey2); font-family: 'Inter', sans-serif; font-size: 10px; padding: 4px 6px; border-radius: 5px; outline: none; cursor: pointer; max-width: 120px; }
+/* WATCHLIST */
+.tbl{width:100%;border-collapse:collapse}
+.tbl th{font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:0.08em;color:var(--grey);padding:8px 12px;text-align:left;border-bottom:1px solid var(--border);white-space:nowrap;background:var(--surface2)}
+.tbl td{padding:8px 12px;border-bottom:1px solid var(--border);vertical-align:middle;overflow:hidden}
+.tbl tr.main-row{cursor:pointer;transition:background 0.1s}
+.tbl tr.main-row:hover{background:var(--surface2)}
+.tbl tr.main-row.selected{background:var(--blue-soft)}
+.ticker-name{font-family:'JetBrains Mono',monospace;font-size:13px;font-weight:500;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;line-height:1.3}
+.ticker-sub{font-size:10px;color:var(--grey);margin-top:1px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;line-height:1.3}
+.alert-pill{font-size:9px;font-weight:700;background:var(--yellow-dim);color:var(--yellow);padding:1px 5px;border-radius:3px;margin-left:5px;vertical-align:middle}
+.price-cell{font-family:'JetBrains Mono',monospace;font-size:12px;font-weight:500;color:var(--text2);white-space:nowrap}
+.score-wrap{display:flex;align-items:center;gap:8px}
+.score-n{font-size:14px;font-weight:700;min-width:26px;font-family:'JetBrains Mono',monospace}
+.score-n.hi{color:var(--green)}.score-n.mi{color:var(--yellow)}.score-n.lo{color:var(--red)}.score-n.nd{color:var(--grey)}
+.score-bar{width:48px;height:4px;background:var(--border);border-radius:2px;overflow:hidden}
+.score-fill{height:4px;border-radius:2px}
+.sig{font-size:10px;font-weight:700;padding:2px 6px;border-radius:3px;text-transform:uppercase;letter-spacing:0.04em;white-space:nowrap}
+.sig.buy{background:var(--green-dim);color:var(--green)}
+.sig.watch{background:var(--yellow-dim);color:var(--yellow)}
+.sig.hold{background:var(--surface2);color:var(--grey2);border:1px solid var(--border)}
+.sig.sell{background:var(--red-dim);color:var(--red)}
+.sig.pending{background:var(--surface2);color:var(--grey);border:1px solid var(--border)}
+.del-btn{background:none;border:none;color:var(--grey);cursor:pointer;font-size:17px;font-weight:300;padding:2px 6px;border-radius:4px;transition:all 0.12s;line-height:1;display:inline-flex;align-items:center}
+.del-btn:hover{color:var(--red);background:var(--red-dim)}
+.empty-cell{padding:32px;text-align:center;color:var(--grey)}
+.empty-icon{font-size:28px;margin-bottom:10px;opacity:0.2}
+.empty-text{font-size:14px;font-weight:500;color:var(--text2);margin-bottom:4px}
+.empty-sub{font-size:12px;color:var(--grey);line-height:1.5}
 
-    /* AI body */
-    .ai-body { flex: 1; overflow-y: auto; padding: 12px 16px; }
+/* ADD TICKER */
+.add-row{display:flex;gap:8px;align-items:center;padding:10px 16px}
+.ticker-input{background:var(--bg);border:1px solid var(--border2);border-radius:6px;color:var(--text);font-family:'JetBrains Mono',monospace;font-size:13px;font-weight:600;padding:7px 10px;outline:none;width:120px;text-transform:uppercase;transition:border-color 0.15s}
+.ticker-input:focus{border-color:var(--blue);box-shadow:0 0 0 2px var(--blue-glow)}
+.ticker-input::placeholder{text-transform:none;font-family:'Inter',sans-serif;font-weight:400;color:var(--grey);font-size:11px}
+.type-select{background:var(--bg);border:1px solid var(--border2);color:var(--text2);font-family:'Inter',sans-serif;font-size:11px;padding:7px 8px;border-radius:6px;outline:none}
+.add-btn{background:var(--blue);color:#fff;border:none;font-family:'Inter',sans-serif;font-size:12px;font-weight:600;padding:7px 14px;border-radius:6px;cursor:pointer;transition:background 0.12s;white-space:nowrap}
+.add-btn:hover{background:#1a6fff}
+.scan-all-btn{background:var(--surface2);border:1px solid var(--border2);color:var(--text2);font-family:'Inter',sans-serif;font-size:11px;font-weight:500;padding:7px 12px;border-radius:6px;cursor:pointer;transition:all 0.12s}
+.scan-all-btn:hover{border-color:var(--blue);color:var(--blue)}
+.scan-all-btn:disabled{opacity:0.4;cursor:not-allowed}
+.timer-badge{font-family:'JetBrains Mono',monospace;font-size:10px;font-weight:500;color:var(--blue);opacity:0.7;padding:2px 6px;background:var(--blue-soft);border-radius:4px;cursor:default}
 
-    /* Search box */
-    .search-card { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 12px; margin-bottom: 12px; box-shadow: var(--shadow); }
-    .search-label { font-size: 10px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.1em; color: var(--grey); margin-bottom: 7px; }
-    .search-input { width: 100%; background: var(--bg); border: 1px solid var(--border2); border-radius: 7px; color: var(--text); font-family: 'Inter', sans-serif; font-size: 13px; padding: 8px 12px; outline: none; transition: border-color 0.15s, box-shadow 0.15s; resize: none; line-height: 1.5; margin-bottom: 8px; }
-    .search-input:focus { border-color: var(--blue); box-shadow: 0 0 0 3px var(--blue-glow); }
-    .search-input::placeholder { color: var(--grey); font-size: 13px; }
-    .domain-row { display: flex; flex-wrap: wrap; gap: 5px; margin: 9px 0 9px; }
-    .domain-pill { font-size: 10px; font-weight: 500; padding: 3px 9px; border-radius: 20px; border: 1px solid var(--border2); background: var(--surface2); color: var(--grey2); cursor: pointer; transition: all 0.12s; user-select: none; }
-    .domain-pill.active { background: var(--blue-soft); border-color: rgba(21,101,255,0.3); color: var(--blue); }
-    .domain-pill:hover:not(.active) { color: var(--text); background: var(--surface); }
-    .search-controls { display: flex; gap: 8px; align-items: center; }
-    .horizon-select { background: var(--bg); border: 1px solid var(--border2); color: var(--text2); font-family: 'Inter', sans-serif; font-size: 11px; padding: 6px 8px; border-radius: 6px; outline: none; cursor: pointer; }
-    .research-btn { flex: 1; background: var(--blue); color: white; border: none; font-family: 'Inter', sans-serif; font-size: 12px; font-weight: 600; padding: 7px; border-radius: 6px; cursor: pointer; transition: background 0.12s; }
-    .research-btn:hover { background: #1a6fff; }
-    .research-btn:disabled { background: var(--border2); color: var(--grey); cursor: not-allowed; }
+/* PROGRESS */
+.progress-wrap{display:none;padding:0 16px 12px;align-items:center;gap:10px}
+.progress-wrap.active{display:flex}
+.progress-bar{flex:1;height:4px;background:var(--border);border-radius:2px;overflow:hidden}
+.progress-fill{height:4px;background:var(--blue);border-radius:2px;transition:width 0.3s}
+.progress-txt{font-size:11px;color:var(--grey);white-space:nowrap;font-family:'JetBrains Mono',monospace}
 
-    /* Status */
-    .status-bar { display: none; align-items: center; gap: 10px; padding: 8px 12px; background: var(--blue-soft); border: 1px solid rgba(21,101,255,0.15); border-radius: 8px; margin-bottom: 16px; font-size: 11px; color: var(--blue); font-family: 'JetBrains Mono', monospace; }
-    .status-bar.active { display: flex; }
-    .status-spinner { width: 14px; height: 14px; border: 2px solid rgba(21,101,255,0.2); border-top-color: var(--blue); border-radius: 50%; animation: spin 0.7s linear infinite; flex-shrink: 0; }
-    @keyframes spin { to { transform: rotate(360deg); } }
+/* CHART */
+.chart-card{position:relative;display:flex;flex-direction:column;flex:1;min-height:0;overflow:hidden}
+.chart-range-row{display:flex;gap:4px;padding:8px 14px;border-bottom:1px solid var(--border);background:var(--surface2)}
+.chart-range-btn{background:none;border:1px solid transparent;color:var(--grey2);font-family:'Inter',sans-serif;font-size:10px;font-weight:600;padding:3px 8px;border-radius:4px;cursor:pointer;transition:all 0.12s}
+.chart-range-btn:hover{color:var(--text)}
+.chart-range-btn.active{background:var(--blue-soft);border-color:rgba(21,101,255,0.3);color:var(--blue)}
+.chart-canvas-wrap{padding:12px 16px;overflow-y:auto;flex:1;min-height:0}
+.chart-legend{display:flex;gap:12px;flex-wrap:wrap;padding:0 16px 10px;font-size:11px;color:var(--text2);flex-shrink:0}
+.chart-legend-item{display:flex;align-items:center;gap:5px}
+.chart-legend-dot{width:8px;height:8px;border-radius:50%}
+.chart-empty{text-align:center;padding:28px;color:var(--grey);font-size:12px;line-height:1.6}
 
-    .error-box { background: var(--red-dim); border: 1px solid rgba(220,38,38,0.2); border-radius: 8px; padding: 8px 12px; color: var(--red); font-size: 12px; margin-bottom: 10px; display: none; }
-    .error-box.active { display: block; }
+/* DETAIL PANEL */
+.panel-head{padding:14px 16px;border-bottom:1px solid var(--border);flex-shrink:0}
+.panel-ticker{font-family:'JetBrains Mono',monospace;font-size:18px;font-weight:700;color:var(--text)}
+.panel-name{font-size:11px;color:var(--grey);margin-top:2px}
+.panel-scan-btn{background:var(--surface2);border:1px solid var(--border2);color:var(--text2);font-family:'Inter',sans-serif;font-size:11px;font-weight:500;padding:5px 12px;border-radius:5px;cursor:pointer;transition:all 0.12s}
+.panel-scan-btn:hover{border-color:var(--blue);color:var(--blue)}
+.panel-scan-btn:disabled{opacity:0.4;cursor:not-allowed}
+.panel-trade-btn{background:var(--text);color:var(--surface);border:none;font-family:'Inter',sans-serif;font-size:11px;font-weight:600;padding:6px 14px;border-radius:5px;cursor:pointer;transition:opacity 0.12s}
+.panel-trade-btn:hover{opacity:0.8}
+.shares-input{width:64px;background:var(--bg);border:1px solid var(--border2);border-radius:5px;color:var(--text);font-family:'JetBrains Mono',monospace;font-size:12px;padding:5px 8px;outline:none;transition:border-color 0.15s;text-align:center}
+.shares-input:focus{border-color:var(--blue)}
+.shares-label{font-size:9px;color:var(--grey);text-align:center;margin-top:2px;font-weight:500;text-transform:uppercase;letter-spacing:0.05em}
+.panel-body{flex:1;overflow-y:auto;padding:14px 16px;display:flex;flex-direction:column}
+.panel-placeholder{padding:40px 20px;text-align:center}
+.panel-section{margin-bottom:14px}
+.panel-score-big{font-family:'JetBrains Mono',monospace;font-size:36px;font-weight:700;line-height:1}
+.panel-score-big.hi{color:var(--green)}.panel-score-big.mi{color:var(--yellow)}.panel-score-big.lo{color:var(--red)}.panel-score-big.nd{color:var(--grey)}
+.conf-track{height:5px;background:var(--border);border-radius:3px;overflow:hidden;width:120px;margin:6px 0}
+.conf-fill{height:5px;background:var(--blue);border-radius:3px}
+.conf-label{font-size:10px;color:var(--grey);font-weight:500}
+.panel-summary{font-size:12px;color:var(--text2);line-height:1.7;padding:10px;background:var(--blue-soft);border-left:3px solid var(--blue);border-radius:0 6px 6px 0;margin-top:10px}
+.panel-two-col{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px}
+.panel-list-card{background:var(--surface2);border-radius:6px;padding:10px}
+.panel-list-title{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:0.06em;margin-bottom:7px}
+.panel-list-title.green{color:var(--green)}.panel-list-title.red{color:var(--red)}
+.panel-ul{list-style:none}
+.panel-li{font-size:11px;color:var(--text2);padding:3px 0;border-bottom:1px solid var(--border);line-height:1.5}
+.panel-li:last-child{border-bottom:none}
+.panel-li.up::before{content:"↑ ";color:var(--green)}
+.panel-li.dn::before{content:"↓ ";color:var(--red)}
+.panel-divider{border:none;border-top:1px solid var(--border);margin:14px 0}
+.panel-hist-notes{display:flex;flex-direction:column;gap:10px;flex:1;min-height:0}
+.panel-section-label{font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:0.08em;color:var(--grey);margin-bottom:8px}
+.panel-hist-scroll{max-height:120px;overflow-y:auto;}
+.phist-entry{padding:8px 0;border-bottom:1px solid var(--border)}
+.phist-entry:last-child{border-bottom:none}
+.phist-top{display:flex;align-items:center;gap:6px;margin-bottom:3px}
+.phist-sig{font-size:10px;font-weight:700;text-transform:uppercase}
+.phist-score{font-size:10px;font-family:'JetBrains Mono',monospace;color:var(--grey2)}
+.phist-time{font-size:10px;color:var(--grey);margin-left:auto}
+.phist-sum{font-size:11px;color:var(--text2);line-height:1.5}
+.no-phist{font-size:11px;color:var(--grey);font-style:italic}
+.notes-col{display:flex;flex-direction:column;gap:6px;}
+.notes-url-input{width:100%;background:var(--bg);border:1px solid var(--border2);border-radius:5px;color:var(--text);font-family:'Inter',sans-serif;font-size:11px;padding:6px 8px;outline:none;transition:border-color 0.15s}
+.notes-url-input:focus{border-color:var(--blue)}
+.notes-url-input::placeholder{color:var(--grey)}
+.notes-url-hint{font-size:10px;color:var(--grey);margin-top:2px}
+.notes-textarea{width:100%;background:var(--bg);border:1px solid var(--border2);border-radius:6px;color:var(--text);font-family:'Inter',sans-serif;font-size:12px;padding:10px 12px;resize:none;outline:none;line-height:1.7;min-height:220px;transition:border-color 0.15s}
+.notes-textarea:focus{border-color:var(--blue)}
+.notes-textarea::placeholder{color:var(--grey)}
+.notes-save-btn{background:var(--blue);border:none;color:#fff;font-family:'Inter',sans-serif;font-size:11px;font-weight:600;padding:5px 12px;border-radius:5px;cursor:pointer;transition:background 0.12s}
+.notes-save-btn:hover{background:#1a6fff}
 
-    /* Overview */
-    .overview-card { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; margin-bottom: 16px; overflow: hidden; box-shadow: var(--shadow); display: none; }
-    .overview-card.active { display: block; }
-    .overview-hero { padding: 12px 16px 10px; border-bottom: 1px solid var(--border); }
-    .overview-eyebrow { font-size: 10px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.1em; color: var(--grey); margin-bottom: 4px; display:inline; margin-right: 8px; }
-    .overview-topic { font-size: 15px; font-weight: 700; color: var(--text); line-height: 1.3; margin-bottom: 7px; display:inline; }
-    .overview-meta { display: flex; flex-wrap: wrap; gap: 5px; margin-bottom: 10px; }
-    .overview-tag { font-size: 10px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.07em; background: var(--surface2); color: var(--grey2); padding: 3px 9px; border-radius: 4px; border: 1px solid var(--border); }
-    .overview-tag.blue { background: var(--blue-soft); color: var(--blue); border-color: rgba(21,101,255,0.2); }
-    .overview-summary { font-size: 12px; color: var(--text2); line-height: 1.65; padding: 10px 12px; background: var(--blue-soft); border-left: 3px solid var(--blue); border-radius: 0 6px 6px 0; margin: 0 16px; }
-    .overview-footer { padding: 8px 16px 10px; display: flex; align-items: center; justify-content: space-between; }
-    .overview-pred-count { font-size: 11px; color: var(--grey); font-family: 'JetBrains Mono', monospace; }
-    .overview-sources-btn { font-size: 11px; color: var(--blue); background: none; border: none; cursor: pointer; font-family: 'Inter', sans-serif; text-decoration: underline; }
-
-    /* Predictions */
-    .pred-section-label { font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.08em; color: var(--grey); margin-bottom: 7px; }
-    .pred-card { background: var(--surface); border: 1px solid var(--border); border-radius: 8px; margin-bottom: 7px; overflow: hidden; box-shadow: var(--shadow); }
-    .pred-top { padding: 10px 14px; display: flex; align-items: flex-start; gap: 10px; cursor: pointer; transition: background 0.1s; }
-    .pred-top:hover { background: var(--surface2); }
-    .conf-badge { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.07em; padding: 3px 8px; border-radius: 4px; flex-shrink: 0; cursor: help; }
-    .conf-badge.high { background: var(--green-dim); color: var(--green); }
-    .conf-badge.medium { background: var(--yellow-dim); color: var(--yellow); }
-    .conf-badge.low { background: var(--surface2); color: var(--grey2); }
-    .pred-legend { font-size: 10px; color: var(--grey); margin-bottom: 8px; display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
-    .pred-legend-item { display: flex; align-items: center; gap: 4px; }
-    .pred-legend-dot { width: 7px; height: 7px; border-radius: 50%; }
-    .pred-stmt { font-size: 12px; font-weight: 500; color: var(--text); line-height: 1.4; flex: 1; }
-    .pred-arrow { font-size: 11px; color: var(--grey); transition: transform 0.2s; flex-shrink: 0; margin-top: 2px; }
-    .pred-card.open .pred-arrow { transform: rotate(90deg); }
-    .pred-body { display: none; padding: 0 14px 12px; border-top: 1px solid var(--border); }
-    .pred-card.open .pred-body { display: block; }
-    .pred-reasoning { font-size: 12px; color: var(--text2); line-height: 1.6; padding-top: 9px; margin-bottom: 7px; }
-    .pred-signals-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 5px; margin-bottom: 7px; }
-    .pred-sig-item { font-size: 11px; color: var(--text2); display: flex; gap: 6px; line-height: 1.4; }
-    .pred-sig-dot { width: 5px; height: 5px; border-radius: 50%; background: var(--blue); flex-shrink: 0; margin-top: 4px; }
-    .pred-horizon { font-size: 10px; color: var(--grey); font-family: 'JetBrains Mono', monospace; }
-    .pred-add-notes { font-size: 11px; color: var(--blue); background: none; border: none; cursor: pointer; font-family: 'Inter', sans-serif; text-decoration: underline; margin-left: 8px; }
-
-    /* Empty */
-    .empty-state { text-align: center; padding: 36px 20px; }
-    .empty-icon { font-size: 40px; margin-bottom: 10px; opacity: 0.12; }
-    .empty-title { font-size: 15px; font-weight: 500; color: var(--text2); margin-bottom: 8px; }
-    .empty-sub { font-size: 12px; color: var(--grey); line-height: 1.7; }
-
-    /* ── RIGHT: SOURCES + NOTES ── */
-    .right-col { display: flex; flex-direction: column; flex: 1; min-width: 0; background: var(--surface); border: 1px solid var(--border); border-radius: 10px; overflow: hidden; height: auto; box-shadow: 0 2px 8px rgba(0,0,0,0.08), 0 1px 3px rgba(0,0,0,0.05); }
-
-    /* Sources panel */
-    .sources-panel { display: flex; flex-direction: column; flex: 0 0 38%; border-bottom: 1px solid var(--border); overflow: hidden; background: var(--surface); }
-    .panel-header { padding: 9px 16px; border-bottom: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; flex-shrink: 0; }
-    .panel-title { font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.08em; color: var(--text); }
-    .panel-sub { font-size: 11px; color: var(--grey); font-family: 'JetBrains Mono', monospace; }
-    .panel-body { flex: 1; overflow-y: auto; padding: 10px 14px; }
-
-    .add-url-row { display: flex; gap: 5px; margin-bottom: 9px; }
-    .url-input { flex: 1; background: var(--bg); border: 1px solid var(--border2); border-radius: 6px; color: var(--text); font-family: 'Inter', sans-serif; font-size: 11px; padding: 5px 9px; outline: none; transition: border-color 0.15s; }
-    .url-input:focus { border-color: var(--blue); box-shadow: 0 0 0 2px var(--blue-glow); }
-    .url-input::placeholder { color: var(--grey); }
-    .add-url-btn { background: var(--surface2); border: 1px solid var(--border2); color: var(--text2); font-family: 'Inter', sans-serif; font-size: 11px; font-weight: 500; padding: 5px 10px; border-radius: 5px; cursor: pointer; white-space: nowrap; transition: all 0.12s; }
-    .add-url-btn:hover { border-color: var(--blue); color: var(--blue); background: var(--blue-soft); }
-
-    .source-row { display: flex; align-items: center; gap: 6px; padding: 5px 8px; border-bottom: 1px solid var(--border); transition: background 0.1s; }
-    .source-row:last-child { border-bottom: none; }
-    .source-row:hover { background: var(--surface2); }
-    .src-del { background: none; border: none; color: var(--grey); cursor: pointer; font-size: 13px; line-height: 1; padding: 0 2px; flex-shrink: 0; transition: color 0.12s; }
-    .src-del:hover { color: var(--red); }
-    .source-favicon { width: 14px; height: 14px; border-radius: 2px; flex-shrink: 0; display: flex; align-items: center; justify-content: center; font-size: 9px; }
-    .source-title { font-size: 11px; font-weight: 500; color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; flex: 1; min-width: 0; }
-    .source-tag { font-size: 8px; font-weight: 700; text-transform: uppercase; padding: 1px 4px; border-radius: 3px; flex-shrink: 0; letter-spacing: 0.04em; }
-    .source-tag.ai { background: var(--blue-soft); color: var(--blue); }
-    .source-tag.user { background: var(--green-dim); color: var(--green); }
-    .src-btn { font-size: 10px; padding: 1px 6px; border-radius: 3px; border: 1px solid var(--border); background: none; color: var(--grey2); cursor: pointer; transition: all 0.12s; flex-shrink: 0; }
-    .src-btn:hover { color: var(--blue); border-color: rgba(21,101,255,0.3); background: var(--blue-soft); }
-    .sources-empty { text-align: center; padding: 20px 14px; color: var(--grey); font-size: 11px; line-height: 1.6; }
-    .sources-list-wrap { border: 1px solid var(--border); border-radius: 6px; overflow: hidden; background: var(--surface); }
-
-    /* Notes panel */
-    .notes-panel { display: flex; flex-direction: column; flex: 1; overflow: hidden; background: var(--surface); }
-    .quick-labels { display: flex; gap: 4px; flex-wrap: wrap; padding: 7px 14px; flex-shrink: 0; border-bottom: 1px solid var(--border); }
-    .ql-btn { font-size: 10px; font-weight: 600; padding: 3px 8px; border-radius: 4px; border: 1px solid var(--border2); background: var(--surface2); color: var(--grey2); cursor: pointer; transition: all 0.12s; }
-    .ql-btn:hover { color: var(--text); background: var(--surface); }
-    .ql-bull { color: var(--green); border-color: rgba(22,163,74,0.3); background: var(--green-dim); }
-    .ql-bear { color: var(--red); border-color: rgba(220,38,38,0.3); background: var(--red-dim); }
-    .ql-catalyst { color: var(--blue); border-color: rgba(21,101,255,0.3); background: var(--blue-soft); }
-    .ql-risk { color: var(--yellow); border-color: rgba(217,119,6,0.3); background: var(--yellow-dim); }
-    .notes-body { flex: 1; display: flex; flex-direction: column; padding: 10px 14px; gap: 8px; overflow: hidden; }
-    .notes-toolbar { display: flex; align-items: center; gap: 2px; padding: 4px 12px; border-bottom: 1px solid var(--border); flex-shrink: 0; flex-wrap: nowrap; overflow-x: auto; background: var(--surface); }
-    .tb-btn { background: none; border: 1px solid transparent; color: var(--grey2); font-family: 'Inter', sans-serif; font-size: 11px; font-weight: 600; padding: 2px 6px; border-radius: 4px; cursor: pointer; transition: all 0.12s; line-height: 1.3; white-space: nowrap; display:inline-flex; align-items:center; gap:3px; flex-shrink:0; }
-    .tb-btn:hover { background: var(--surface2); border-color: var(--border); color: var(--text); }
-    .tb-btn.bold { font-weight: 800; }
-    .tb-btn.italic { font-style: italic; }
-    .tb-btn.underline { text-decoration: underline; }
-    .tb-btn.strike { text-decoration: line-through; }
-    .tb-btn.bull-btn { color: var(--green); border-color: rgba(22,163,74,0.3); background: var(--green-dim); }
-    .tb-btn.bull-btn:hover { background: rgba(22,163,74,0.15); }
-    .tb-btn.bear-btn { color: var(--red); border-color: rgba(220,38,38,0.3); background: var(--red-dim); }
-    .tb-btn.bear-btn:hover { background: rgba(220,38,38,0.15); }
-    .tb-btn.cat-btn { color: var(--blue); border-color: rgba(21,101,255,0.3); background: var(--blue-soft); }
-    .tb-btn.risk-btn { color: var(--yellow); border-color: rgba(217,119,6,0.3); background: var(--yellow-dim); }
-    .tb-btn.dec-btn { color: var(--green); border-color: rgba(22,163,74,0.2); }
-    .tb-divider { width: 1px; height: 14px; background: var(--border2); margin: 0 3px; flex-shrink: 0; }
-    .tb-select { background: var(--bg); border: 1px solid var(--border2); color: var(--text2); font-family: 'Inter', sans-serif; font-size: 11px; padding: 2px 5px; border-radius: 4px; outline: none; cursor: pointer; }
-    .tb-color-wrap { position: relative; display: flex; align-items: center; }
-    .tb-color-btn { font-size: 11px; font-weight: 600; padding: 2px 7px; border-radius: 4px; border: 1px solid var(--border2); background: var(--bg); color: var(--text2); cursor: pointer; font-family: 'Inter', sans-serif; white-space: nowrap; display: flex; align-items: center; gap: 4px; }
-    .tb-color-btn:hover { border-color: var(--border); background: var(--surface2); }
-    .tb-color-swatch { width: 10px; height: 10px; border-radius: 2px; border: 1px solid rgba(0,0,0,0.15); flex-shrink: 0; }
-    .tb-color-picker { position: absolute; top: 100%; left: 0; z-index: 100; background: var(--surface); border: 1px solid var(--border); border-radius: 8px; padding: 8px; display: none; flex-wrap: wrap; gap: 4px; width: 152px; box-shadow: 0 4px 12px rgba(0,0,0,0.12); margin-top: 4px; }
-    .tb-color-picker.open { display: flex; }
-    .tb-color-dot { width: 18px; height: 18px; border-radius: 4px; cursor: pointer; border: 2px solid transparent; transition: border-color 0.1s, transform 0.1s; flex-shrink: 0; }
-    .tb-color-dot:hover { border-color: rgba(0,0,0,0.3); transform: scale(1.15); }
-    .notes-editor { flex: 1; width: 100%; background: var(--bg); border: 1px solid var(--border2); border-radius: 8px; color: var(--text); font-family: 'Inter', sans-serif; font-size: 13px; padding: 10px 13px; outline: none; line-height: 1.8; overflow-y: auto; }
-    .notes-editor:focus { border-color: var(--blue); box-shadow: 0 0 0 3px var(--blue-glow); }
-    .notes-editor:empty::before { content: attr(data-placeholder); color: var(--grey); pointer-events: none; }
-    .notes-textarea { flex: 1; width: 100%; background: var(--bg); border: 1px solid var(--border2); border-radius: 8px; color: var(--text); font-family: 'Inter', sans-serif; font-size: 12px; padding: 10px 13px; resize: none; outline: none; line-height: 1.8; transition: border-color 0.15s, box-shadow 0.15s; }
-    .notes-textarea:focus { border-color: var(--blue); box-shadow: 0 0 0 3px var(--blue-glow); }
-    .notes-textarea::placeholder { color: var(--grey); line-height: 1.8; }
-    .notes-footer { display: flex; align-items: center; justify-content: space-between; flex-shrink: 0; }
-    .char-count { font-size: 10px; color: var(--grey); font-family: 'JetBrains Mono', monospace; }
-    .notes-btns { display: flex; gap: 8px; }
-    .clear-btn { background: none; border: 1px solid var(--border); color: var(--grey2); font-family: 'Inter', sans-serif; font-size: 11px; padding: 5px 12px; border-radius: 5px; cursor: pointer; transition: all 0.12s; }
-    .clear-btn:hover { border-color: var(--red); color: var(--red); }
-    .save-notes-btn { background: var(--blue); border: none; color: white; font-family: 'Inter', sans-serif; font-size: 11px; font-weight: 600; padding: 5px 14px; border-radius: 5px; cursor: pointer; transition: background 0.12s; }
-    .save-notes-btn:hover { background: #1a6fff; }
-
-    /* Stock Effect Panel */
-    .stock-effect-wrap { border-top: 1px solid var(--border); margin-top: 10px; padding-top: 10px; }
-    .stock-effect-input-row { display: flex; gap: 6px; align-items: center; margin-bottom: 10px; }
-    .stock-ticker-input { background: var(--bg); border: 1px solid var(--border2); border-radius: 6px; color: var(--text); font-family: 'JetBrains Mono', monospace; font-size: 13px; font-weight: 600; padding: 6px 10px; outline: none; width: 120px; text-transform: uppercase; transition: border-color 0.15s; }
-    .stock-ticker-input:focus { border-color: var(--blue); box-shadow: 0 0 0 2px var(--blue-glow); }
-    .stock-ticker-input::placeholder { text-transform: none; font-family: 'Inter', sans-serif; font-weight: 400; color: var(--grey); font-size: 11px; }
-    .analyse-btn { background: var(--text); color: var(--surface); border: none; font-family: 'Inter', sans-serif; font-size: 12px; font-weight: 600; padding: 6px 16px; border-radius: 6px; cursor: pointer; transition: opacity 0.12s; white-space: nowrap; }
-    .analyse-btn:hover { opacity: 0.8; }
-    .analyse-btn:disabled { opacity: 0.4; cursor: not-allowed; }
-    .effect-loading { font-size: 11px; color: var(--blue); font-family: 'JetBrains Mono', monospace; display: none; align-items: center; gap: 6px; }
-    .effect-loading.active { display: flex; }
-    .effect-mini-spin { width: 10px; height: 10px; border: 1.5px solid rgba(21,101,255,0.2); border-top-color: var(--blue); border-radius: 50%; animation: spin 0.7s linear infinite; }
-    .effect-result { display: none; background: var(--surface2); border: 1px solid var(--border); border-radius: 8px; padding: 12px 14px; }
-    .effect-result.active { display: block; }
-    .effect-header { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; }
-    .effect-ticker { font-family: 'JetBrains Mono', monospace; font-size: 16px; font-weight: 700; color: var(--text); }
-    .effect-company { font-size: 11px; color: var(--grey); }
-    .effect-direction { font-size: 11px; font-weight: 700; padding: 3px 10px; border-radius: 12px; letter-spacing: 0.05em; }
-    .effect-direction.Bullish { background: var(--green-dim); color: var(--green); }
-    .effect-direction.Bearish { background: var(--red-dim); color: var(--red); }
-    .effect-direction.Neutral { background: var(--surface2); color: var(--grey2); border: 1px solid var(--border); }
-    .effect-direction.Mixed { background: var(--yellow-dim); color: var(--yellow); }
-    .effect-score-bar { flex: 1; height: 6px; background: var(--border); border-radius: 3px; overflow: hidden; position: relative; }
-    .effect-score-fill { height: 6px; border-radius: 3px; position: absolute; top: 0; }
-    .effect-summary { font-size: 12px; color: var(--text2); line-height: 1.65; margin-bottom: 10px; }
-    .effect-scenarios { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 10px; }
-    .effect-scenario { padding: 8px 10px; border-radius: 6px; font-size: 11px; line-height: 1.5; }
-    .effect-scenario.bull { background: var(--green-dim); border-left: 3px solid var(--green); }
-    .effect-scenario.bear { background: var(--red-dim); border-left: 3px solid var(--red); }
-    .effect-scenario-label { font-weight: 700; font-size: 10px; text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 3px; }
-    .effect-scenario.bull .effect-scenario-label { color: var(--green); }
-    .effect-scenario.bear .effect-scenario-label { color: var(--red); }
-    .effect-factors { display: flex; flex-wrap: wrap; gap: 5px; }
-    .effect-factor { font-size: 10px; background: var(--surface); border: 1px solid var(--border); color: var(--text2); padding: 2px 8px; border-radius: 10px; }
-    .add-to-notes-btn { font-size: 11px; color: var(--blue); background: none; border: none; cursor: pointer; font-family: 'Inter', sans-serif; text-decoration: underline; margin-top: 8px; display: block; }
-
-    /* Saved stock effect cards */
-    .stock-cards-list { display: flex; flex-direction: column; gap: 6px; margin-bottom: 8px; }
-    .stock-card { border: 1px solid var(--border); border-radius: 7px; overflow: hidden; background: var(--surface); }
-    .stock-card-header { display: flex; align-items: center; gap: 8px; padding: 7px 10px; cursor: pointer; transition: background 0.1s; user-select: none; }
-    .stock-card-header:hover { background: var(--surface2); }
-    .stock-card-arrow { font-size: 10px; color: var(--grey); transition: transform 0.2s; flex-shrink: 0; }
-    .stock-card.open .stock-card-arrow { transform: rotate(90deg); }
-    .stock-card-ticker { font-family: 'JetBrains Mono', monospace; font-size: 12px; font-weight: 700; color: var(--text); }
-    .stock-card-dir { font-size: 10px; font-weight: 700; padding: 2px 7px; border-radius: 10px; flex-shrink: 0; }
-    .stock-card-dir.Bullish { background: var(--green-dim); color: var(--green); }
-    .stock-card-dir.Bearish { background: var(--red-dim); color: var(--red); }
-    .stock-card-dir.Neutral { background: var(--surface2); color: var(--grey2); border: 1px solid var(--border); }
-    .stock-card-dir.Mixed { background: var(--yellow-dim); color: var(--yellow); }
-    .stock-card-impact { font-size: 10px; color: var(--grey); font-family: 'JetBrains Mono', monospace; }
-    .stock-card-del { margin-left: auto; background: none; border: none; color: var(--grey); cursor: pointer; font-size: 15px; line-height: 1; padding: 0 2px; transition: color 0.12s; flex-shrink: 0; }
-    .stock-card-del:hover { color: var(--red); }
-    .stock-card-body { display: none; border-top: 1px solid var(--border); }
-    .stock-card.open .stock-card-body { display: block; }
-    .stock-card-inner { padding: 10px 12px; }
-
-    /* Custom Prediction Tester */
-    .custom-pred-section { margin-top: 20px; }
-    .custom-pred-header { font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.08em; color: var(--grey); margin-bottom: 10px; display: flex; align-items: center; justify-content: space-between; }
-    .custom-pred-card { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 14px; box-shadow: var(--shadow); }
-    .custom-pred-desc { font-size: 11px; color: var(--grey2); line-height: 1.6; margin-bottom: 12px; padding: 8px 10px; background: var(--surface2); border-radius: 6px; border-left: 3px solid var(--blue); }
-    .custom-pred-input { width: 100%; background: var(--bg); border: 1px solid var(--border2); border-radius: 7px; color: var(--text); font-family: 'Inter', sans-serif; font-size: 13px; padding: 10px 12px; outline: none; transition: border-color 0.15s, box-shadow 0.15s; resize: none; line-height: 1.5; margin-bottom: 10px; }
-    .custom-pred-input:focus { border-color: var(--blue); box-shadow: 0 0 0 3px var(--blue-glow); }
-    .custom-pred-input::placeholder { color: var(--grey); font-size: 12px; }
-    .custom-pred-row { display: flex; gap: 8px; align-items: center; }
-    .custom-pred-ticker { background: var(--bg); border: 1px solid var(--border2); border-radius: 6px; color: var(--text); font-family: 'JetBrains Mono', monospace; font-size: 13px; font-weight: 600; padding: 8px 12px; outline: none; width: 130px; text-transform: uppercase; transition: border-color 0.15s; flex-shrink: 0; }
-    .custom-pred-ticker:focus { border-color: var(--blue); box-shadow: 0 0 0 2px var(--blue-glow); }
-    .custom-pred-ticker::placeholder { text-transform: none; font-family: 'Inter', sans-serif; font-weight: 400; color: var(--grey); font-size: 11px; }
-    .custom-pred-btn { flex: 1; background: var(--text); color: var(--surface); border: none; font-family: 'Inter', sans-serif; font-size: 12px; font-weight: 600; padding: 8px; border-radius: 6px; cursor: pointer; transition: opacity 0.12s; }
-    .custom-pred-btn:hover { opacity: 0.8; }
-    .custom-pred-btn:disabled { opacity: 0.4; cursor: not-allowed; }
-    .custom-pred-status { font-size: 11px; color: var(--blue); font-family: 'JetBrains Mono', monospace; display: none; align-items: center; gap: 6px; margin-top: 10px; }
-    .custom-pred-status.active { display: flex; }
-    .custom-results-list { margin-top: 12px; display: flex; flex-direction: column; gap: 6px; }
-
-    
-  
     /* ── Sidebar panels ── */
     .sidebar-panels { padding: 10px; display: flex; flex-direction: column; gap: 8px; overflow-y: auto; flex: 1; min-height: 0; }
-    .sp-card { background: var(--surface2); border: 1px solid var(--border); border-radius: 8px; overflow: hidden; }
-    .sp-title { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em; color: var(--text2); }
-    .sp-count { font-size: 9px; color: var(--grey); font-family: 'JetBrains Mono', monospace; }
-    .sp-card.open .sp-arrow { transform: rotate(90deg); }
-    .sp-card.open .sp-body { display: block;  overflow-y: auto; scrollbar-width: thin; scrollbar-color: var(--border2) transparent; }
-    .sp-ticker { font-family: 'JetBrains Mono', monospace; font-size: 11px; font-weight: 600; color: var(--text); min-width: 38px; }
-    .sp-price { font-size: 11px; color: var(--grey); font-family: 'JetBrains Mono', monospace; }
-    .sp-sig { font-size: 8px; font-weight: 700; padding: 1px 5px; border-radius: 3px; text-transform: uppercase; flex-shrink: 0; }
-    .sp-sig.buy { background: var(--green-dim); color: var(--green); }
-    .sp-sig.sell { background: var(--red-dim); color: var(--red); }
-    .sp-sig.watch { background: var(--yellow-dim); color: var(--yellow); }
-    .sp-sig.hold { background: var(--surface); color: var(--grey2); border: 1px solid var(--border); }
-    .sp-log-name { font-size: 11px; font-weight: 500; color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-    .sp-log-date { font-size: 9px; color: var(--grey); font-family: 'JetBrains Mono', monospace; margin-top: 1px; }
-    .sp-empty { padding: 12px 10px; font-size: 11px; color: var(--grey); font-style: italic; text-align: center; }
-
-    /* ── Global scrollbars ── */
-    *::-webkit-scrollbar { width: 4px; height: 4px; }
-    *::-webkit-scrollbar-track { background: transparent; }
-    *::-webkit-scrollbar-thumb { background: var(--border2); border-radius: 2px; }
-    *::-webkit-scrollbar-thumb:hover { background: var(--grey); }
-    * { scrollbar-width: thin; scrollbar-color: var(--border2) transparent; }
-
-    /* ── SIDEBAR PANELS ── */
     .sp-card{background:var(--surface2);border:1px solid var(--border);border-radius:8px;overflow:hidden;min-width:0}
     .sp-header{display:flex;align-items:center;justify-content:space-between;padding:8px 10px;cursor:pointer;user-select:none}
     .sp-header:hover{background:rgba(0,0,0,0.03)}
@@ -321,13 +178,13 @@
     .sp-arrow{font-size:9px;color:var(--grey);transition:transform 0.2s}
     .sp-card.open .sp-arrow{transform:rotate(90deg)}
     .sp-body{display:none;border-top:1px solid var(--border)}
-    .sp-card.open .sp-body{display:block;overflow-y:auto;max-height:160px;scrollbar-width:thin;scrollbar-color:var(--border2) transparent}
+    .sp-card.open .sp-body{display:block;overflow-y:scroll;max-height:150px;scrollbar-width:thin;scrollbar-color:var(--border2) transparent;}
     .sp-empty{font-size:10px;color:var(--grey);font-style:italic;padding:10px 12px;text-align:center}
     .sp-stock-row{display:flex;align-items:center;justify-content:space-between;padding:7px 12px;border-bottom:1px solid var(--border);cursor:pointer;transition:background 0.1s}
     .sp-stock-row:last-child{border-bottom:none}
     .sp-stock-row:hover{background:var(--surface)}
     .sp-ticker{font-family:'JetBrains Mono',monospace;font-size:11px;font-weight:600;color:var(--text)}
-    .sp-price { font-size: 11px; color: var(--grey); font-family: 'JetBrains Mono', monospace; }
+    .sp-price{font-size:11px;color:var(--grey);font-family:'JetBrains Mono',monospace}
     .sp-log-row{padding:7px 12px;border-bottom:1px solid var(--border);cursor:pointer;transition:background 0.1s}
     .sp-log-row:last-child{border-bottom:none}
     .sp-log-row:hover{background:var(--surface)}
@@ -336,37 +193,34 @@
   </style>
 </head>
 <body>
-
-    
 <div class="layout">
 
-  <!-- ── SIDEBAR ── -->
-  <aside class="sidebar">
-    <div class="sidebar-logo">
-      <div class="logo-row">
-        <div class="logo-icon">O</div>
-        <div>
-          <div class="logo-name">Onyx AI</div>
-          <div class="logo-sub">Intelligence</div>
-        </div>
+<!-- SIDEBAR -->
+<aside class="sidebar">
+  <div class="sidebar-logo">
+    <div class="logo-row">
+      <div class="logo-icon">O</div>
+      <div>
+        <div class="logo-name">Onyx AI</div>
+        <div class="logo-sub">Intelligence</div>
       </div>
     </div>
-    <nav class="sidebar-nav">
-      <div class="nav-section">Main</div>
-      <a class="nav-item" href="/">
-        <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor"><path d="M2 2h5v5H2V2zm0 7h5v5H2V9zm7-7h5v5H9V2zm0 7h5v5H9V9z"/></svg>
-        Dashboard
-      </a>
-      <a class="nav-item active" href="/search">
-        <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor"><path d="M11.742 10.344a6.5 6.5 0 1 0-1.397 1.398h-.001l3.85 3.85a1 1 0 0 0 1.415-1.414l-3.85-3.85zm-5.242 1.656a5.5 5.5 0 1 1 0-11 5.5 5.5 0 0 1 0 11z"/></svg>
-        Research
-      </a>
-      <a class="nav-item" href="/markets">
-        <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor"><path d="M0 11l3-5 4 3 3-7 3 4 3-2v7H0z"/></svg>
-        Markets
-      </a>
-
-    </nav>
+  </div>
+  <nav class="sidebar-nav">
+    <div class="nav-sec">Main</div>
+    <a class="nav-item active" href="/">
+      <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor"><path d="M2 2h5v5H2V2zm0 7h5v5H2V9zm7-7h5v5H9V2zm0 7h5v5H9V9z"/></svg>
+      Dashboard
+    </a>
+    <a class="nav-item" href="/search">
+      <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor"><path d="M11.742 10.344a6.5 6.5 0 1 0-1.397 1.398h-.001l3.85 3.85a1 1 0 0 0 1.415-1.414l-3.85-3.85zm-5.242 1.656a5.5 5.5 0 1 1 0-11 5.5 5.5 0 0 1 0 11z"/></svg>
+      Research
+    </a>
+    <a class="nav-item" href="/markets">
+      <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor"><path d="M0 11l3-5 4 3 3-7 3 4 3-2v7H0z"/></svg>
+      Markets
+    </a>
+  </nav>
       <div style="padding:10px 10px 4px;flex-shrink:0">
         <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:0.1em;color:var(--grey);padding:6px 2px 4px">Portfolio</div>
       </div>
@@ -393,1068 +247,640 @@
       <div class="sp-body" id="spBtBody"><div class="sp-empty">No bets imported yet</div></div>
     </div>
   </div>
-    <div class="sidebar-footer">
-      <div class="market-pill">
-        <div class="dot" id="mktDot"></div>
-        <span id="mktTxt">Checking...</span>
-      </div>
+  <div class="sidebar-footer">
+    <div class="mkt-pill">
+      <div class="dot" id="mktDot"></div>
+      <span id="mktTxt">Checking...</span>
     </div>
-  </aside>
+  </div>
+</aside>
 
-  <!-- ── RESEARCH ── -->
-  <div class="research">
+<!-- MAIN -->
+<div class="main">
 
-    <!-- ── LEFT: AI ENGINE ── -->
-    <div class="ai-col">
+  <!-- LEFT COL -->
+  <div class="left-col">
 
-      <!-- Session bar -->
-      <div class="session-bar">
-        <input class="session-name-input" type="text" id="sessionName" placeholder="Session name..."/>
-        <select class="session-load-select" id="sessionSelect" onchange="loadSession(this.value)" title="Load a saved session">
-          <option value="">Load...</option>
+    <!-- WATCHLIST CARD -->
+    <div class="card">
+      <div class="card-header">
+        <div>
+          <div class="card-title">Watchlist</div>
+          <div class="card-sub" id="cardSubtitle">0 tickers</div>
+        </div>
+        <button class="scan-all-btn" id="scanAllBtn" onclick="scanAll()">Scan All</button>
+      </div>
+      <div class="add-row">
+        <input class="ticker-input" type="text" id="tickerInput" placeholder="Ticker e.g. AAPL" maxlength="10"/>
+        <select class="type-select" id="assetType">
+          <option value="stock">Stock</option>
+          <option value="etf">ETF</option>
+          <option value="crypto">Crypto</option>
+          <option value="commodity">Commodity</option>
         </select>
-        <button class="session-save-btn" onclick="saveSession()">Save</button>
+        <button class="add-btn" onclick="addTicker()">+ Add</button>
+        <div style="margin-left:auto;display:flex;align-items:center;gap:6px">
+          <span class="timer-badge" id="priceTimer" title="Auto-refreshes prices every 2 min">2:00</span>
+          <button class="scan-all-btn" onclick="manualRefreshPrices()" title="Refresh prices now">↻ Refresh</button>
+        </div>
       </div>
-
-      <div class="ai-body">
-
-        <!-- Search card -->
-        <div class="search-card">
-          <div class="search-label">Research Topic</div>
-          <textarea class="search-input" id="topicInput" rows="1" placeholder="What do you want to research?  e.g. Federal Reserve rate cuts, TSLA earnings outlook, AI chip demand in 2025..."></textarea>
-          <div style="display:flex;align-items:center;gap:5px;flex-wrap:wrap">
-            <div class="domain-pill active" data-domain="markets" onclick="toggleDomain(this)">Markets</div>
-            <div class="domain-pill" data-domain="tech" onclick="toggleDomain(this)">Tech</div>
-            <div class="domain-pill" data-domain="geopolitics" onclick="toggleDomain(this)">Geopolitics</div>
-            <div class="domain-pill" data-domain="economics" onclick="toggleDomain(this)">Economics</div>
-            <div class="domain-pill" data-domain="macro" onclick="toggleDomain(this)">Macro</div>
-            <div style="display:flex;gap:5px;margin-left:auto;flex-shrink:0">
-              <select class="horizon-select" id="horizonSelect">
-                <option value="1-2 weeks">1-2 weeks</option>
-                <option value="1-7 days">1-7 days</option>
-                <option value="3-4 weeks">3-4 weeks</option>
-                <option value="1-3 months">1-3 months</option>
-              </select>
-              <button class="research-btn" id="researchBtn" onclick="runResearch()" style="padding:5px 16px;white-space:nowrap">Research →</button>
-            </div>
-          </div>
-        </div>
-
-        <!-- Status -->
-        <div class="status-bar" id="statusBar">
-          <div class="status-spinner"></div>
-          <span id="statusText">Initialising research agent...</span>
-        </div>
-
-        <!-- Error -->
-        <div class="error-box" id="errorBox"></div>
-
-        <!-- Overview card -->
-        <div class="overview-card" id="overviewCard">
-          <div class="overview-hero">
-            <div class="overview-eyebrow">Research Overview</div>
-            <div class="overview-topic" id="overviewTopic"></div>
-            <div class="overview-meta" id="overviewMeta"></div>
-            <div class="overview-summary" id="overviewSummary"></div>
-          </div>
-          <div class="overview-footer">
-            <span class="overview-pred-count" id="overviewPredCount"></span>
-            <button class="overview-sources-btn" onclick="document.getElementById('urlInput').focus()">+ Add your own source</button>
-          </div>
-        </div>
-
-        <!-- Prediction section -->
-        <div id="predSection">
-          <div class="pred-section-label">Predictions</div>
-          <div id="predList"></div>
-        </div>
-
-        <!-- Custom Prediction Tester -->
-        <div class="custom-pred-section" id="customPredSection" style="margin-top:20px;padding-top:16px;border-top:2px solid var(--border)">
-          <div class="custom-pred-header">
-            <span>Your Own Prediction</span>
-            <span style="font-size:10px;font-weight:400;text-transform:none;letter-spacing:0;color:var(--grey)">Test any statement against any stock</span>
-          </div>
-          <div class="custom-pred-card">
-            <div class="custom-pred-desc">
-              Write your own prediction — something you believe will or won't happen. The AI will tell you how that outcome would affect the stock you choose if you're <strong>correct</strong> or <strong>wrong</strong>.
-            </div>
-            <textarea class="custom-pred-input" id="customPredText" rows="2"
-              placeholder="e.g. Trump does NOT bomb Iran on Tuesday despite his tweet...&#10;e.g. Apple delays iPhone 17 launch by 3 months..."></textarea>
-            <div class="custom-pred-row">
-              <input class="custom-pred-ticker" type="text" id="customPredTicker" placeholder="Ticker e.g. TSLA" maxlength="10"/>
-              <button class="custom-pred-btn" id="customPredBtn" onclick="runCustomPrediction()">Analyse My Prediction →</button>
-            </div>
-            <div class="custom-pred-status" id="customPredStatus">
-              <div class="effect-mini-spin"></div>
-              <span id="customPredStatusText">Analysing your prediction...</span>
-            </div>
-            <div class="custom-results-list" id="customResultsList"></div>
-          </div>
-        </div>
-
-        <!-- Empty state -->
-        <div class="empty-state" id="emptyState">
-          <div class="empty-icon">🔭</div>
-          <div class="empty-title">Start a research session</div>
-          <div class="empty-sub">Enter any topic, pick a domain and time horizon, then hit Research.<br><br>The AI will search the web, find patterns, and generate predictions to inform your investment decisions.</div>
-        </div>
-
+      <div class="progress-wrap" id="progressWrap">
+        <div class="progress-bar"><div class="progress-fill" id="progressFill" style="width:0%"></div></div>
+        <div class="progress-txt" id="progressTxt">Scanning...</div>
+      </div>
+      <div style="overflow-y:scroll;max-height:174px;border-top:1px solid var(--border)">
+        <table class="tbl">
+          <thead>
+            <tr>
+              <th style="position:sticky;top:0;background:var(--surface2);z-index:1">Ticker</th>
+              <th style="position:sticky;top:0;background:var(--surface2);z-index:1">Price</th>
+              <th style="position:sticky;top:0;background:var(--surface2);z-index:1">AI Score</th>
+              <th style="position:sticky;top:0;background:var(--surface2);z-index:1">Shares</th>
+              <th style="position:sticky;top:0;background:var(--surface2);z-index:1">Total Value</th>
+              <th style="position:sticky;top:0;background:var(--surface2);z-index:1"></th>
+            </tr>
+          </thead>
+          <tbody id="tableBody"></tbody>
+        </table>
       </div>
     </div>
 
-    <!-- ── RIGHT: SOURCES + NOTES ── -->
-    <div class="right-col">
-
-      <!-- Sources panel (top ~42%) -->
-      <div class="sources-panel">
-        <div class="panel-header">
-          <div class="panel-title">Sources</div>
-          <span class="panel-sub" id="sourcesCount">0 sources</span>
-        </div>
-        <div class="panel-body">
-          <div class="add-url-row">
-            <input class="url-input" type="url" id="urlInput" placeholder="Paste a URL to add as a source..."/>
-            <button class="add-url-btn" onclick="addManualSource()">+ Add</button>
-          </div>
-          <div id="sourcesList">
-            <div class="sources-empty">
-              <div style="font-size:22px;margin-bottom:8px;opacity:0.2">🔗</div>
-              Sources appear here when you run a research query.<br>You can also paste your own URLs above.
-            </div>
-          </div>
+    <!-- CHART CARD -->
+    <div class="card chart-card">
+      <div class="card-header">
+        <div>
+          <div class="card-title">Portfolio P&L</div>
+          <div class="card-sub" id="chartSubtitle">Buy stocks to start tracking</div>
         </div>
       </div>
-
-      <!-- Notes panel (bottom) -->
-      <div class="notes-panel">
-        <div class="panel-header">
-          <div class="panel-title">Research Notes</div>
-          <span class="panel-sub" id="saveIndicator">Not saved</span>
-        </div>
-        <div class="notes-toolbar" id="notesToolbar">
-          <button class="tb-btn" onmousedown="event.preventDefault();fmt('bold')" title="Bold"><b>B</b></button>
-          <button class="tb-btn" onmousedown="event.preventDefault();fmt('italic')" title="Italic"><i style="font-family:Georgia,serif">I</i></button>
-          <button class="tb-btn" onmousedown="event.preventDefault();fmt('underline')" title="Underline"><u>U</u></button>
-          <button class="tb-btn" onmousedown="event.preventDefault();fmt('strikeThrough')" title="Strikethrough"><s>S</s></button>
-          <div class="tb-divider"></div>
-          <select class="tb-select" onmousedown="saveSelection()" onchange="fmtFontSize(this.value);this.value=''" title="Font size">
-            <option value="">Size</option>
-            <option value="1">XS</option>
-            <option value="2">Sm</option>
-            <option value="3">Md</option>
-            <option value="4">Lg</option>
-            <option value="5">XL</option>
-          </select>
-          <select class="tb-select" onmousedown="saveSelection()" onchange="fmtBlock(this.value);this.value=''" title="Style">
-            <option value="">Style</option>
-            <option value="h2">H2</option>
-            <option value="h3">H3</option>
-            <option value="p">Body</option>
-          </select>
-          <div class="tb-divider"></div>
-          <div class="tb-color-wrap">
-            <button class="tb-color-btn" onmousedown="event.preventDefault()" onclick="toggleColorPicker('fontColorPicker')" title="Font color">A <div class="tb-color-swatch" id="fontColorSwatch" style="background:#111827"></div></button>
-            <div class="tb-color-picker" id="fontColorPicker">
-              <div class="tb-color-dot" style="background:#111827" onmousedown="event.preventDefault();applyFontColor('#111827')"></div>
-              <div class="tb-color-dot" style="background:#1565ff" onmousedown="event.preventDefault();applyFontColor('#1565ff')"></div>
-              <div class="tb-color-dot" style="background:#16a34a" onmousedown="event.preventDefault();applyFontColor('#16a34a')"></div>
-              <div class="tb-color-dot" style="background:#dc2626" onmousedown="event.preventDefault();applyFontColor('#dc2626')"></div>
-              <div class="tb-color-dot" style="background:#d97706" onmousedown="event.preventDefault();applyFontColor('#d97706')"></div>
-              <div class="tb-color-dot" style="background:#7c3aed" onmousedown="event.preventDefault();applyFontColor('#7c3aed')"></div>
-              <div class="tb-color-dot" style="background:#0891b2" onmousedown="event.preventDefault();applyFontColor('#0891b2')"></div>
-              <div class="tb-color-dot" style="background:#be185d" onmousedown="event.preventDefault();applyFontColor('#be185d')"></div>
-              <div class="tb-color-dot" style="background:#6b7280" onmousedown="event.preventDefault();applyFontColor('#6b7280')"></div>
-              <div class="tb-color-dot" style="background:#92400e" onmousedown="event.preventDefault();applyFontColor('#92400e')"></div>
-            </div>
-          </div>
-          <div class="tb-color-wrap">
-            <button class="tb-color-btn" onmousedown="event.preventDefault()" onclick="toggleColorPicker('hlColorPicker')" title="Highlight"><svg width="10" height="10" viewBox="0 0 16 16" fill="currentColor"><path d="M11 1l4 4-8 8H3V9l8-8z"/></svg><div class="tb-color-swatch" id="hlColorSwatch" style="background:#fde68a"></div></button>
-            <div class="tb-color-picker" id="hlColorPicker">
-              <div class="tb-color-dot" style="background:#fde68a" onmousedown="event.preventDefault();applyHighlight('#fde68a')"></div>
-              <div class="tb-color-dot" style="background:#bbf7d0" onmousedown="event.preventDefault();applyHighlight('#bbf7d0')"></div>
-              <div class="tb-color-dot" style="background:#fecaca" onmousedown="event.preventDefault();applyHighlight('#fecaca')"></div>
-              <div class="tb-color-dot" style="background:#bfdbfe" onmousedown="event.preventDefault();applyHighlight('#bfdbfe')"></div>
-              <div class="tb-color-dot" style="background:#e9d5ff" onmousedown="event.preventDefault();applyHighlight('#e9d5ff')"></div>
-              <div class="tb-color-dot" style="background:#fed7aa" onmousedown="event.preventDefault();applyHighlight('#fed7aa')"></div>
-              <div class="tb-color-dot" style="background:transparent;border:2px dashed #9ca3af" title="Remove" onmousedown="event.preventDefault();applyHighlight('transparent')"></div>
-            </div>
-          </div>
-          <div class="tb-divider"></div>
-          <button class="tb-btn" onmousedown="event.preventDefault();fmt('insertUnorderedList')" title="Bullet list"><svg width="12" height="10" viewBox="0 0 12 10" fill="currentColor"><circle cx="1" cy="1.5" r="1"/><circle cx="1" cy="5" r="1"/><circle cx="1" cy="8.5" r="1"/><rect x="3" y="1" width="9" height="1" rx=".5"/><rect x="3" y="4.5" width="9" height="1" rx=".5"/><rect x="3" y="8" width="9" height="1" rx=".5"/></svg></button>
-          <button class="tb-btn" onmousedown="event.preventDefault();fmt('insertOrderedList')" title="Numbered list"><svg width="12" height="10" viewBox="0 0 12 10" fill="currentColor"><text x="0" y="3" font-size="3.5">1.</text><text x="0" y="6.5" font-size="3.5">2.</text><text x="0" y="10" font-size="3.5">3.</text><rect x="3.5" y="1" width="8.5" height="1" rx=".5"/><rect x="3.5" y="4.5" width="8.5" height="1" rx=".5"/><rect x="3.5" y="8" width="8.5" height="1" rx=".5"/></svg></button>
-          <div class="tb-divider"></div>
-          <button class="tb-btn" onmousedown="event.preventDefault();insertLabel('Bull Case')" style="color:var(--green);border-color:rgba(22,163,74,0.3);background:var(--green-dim);font-size:10px">Bull</button>
-          <button class="tb-btn" onmousedown="event.preventDefault();insertLabel('Bear Case')" style="color:var(--red);border-color:rgba(220,38,38,0.3);background:var(--red-dim);font-size:10px">Bear</button>
-          <button class="tb-btn" onmousedown="event.preventDefault();insertLabel('Catalyst')" style="color:var(--blue);border-color:rgba(21,101,255,0.3);background:var(--blue-soft);font-size:10px">Catalyst</button>
-          <button class="tb-btn" onmousedown="event.preventDefault();insertLabel('Risk')" style="color:var(--yellow);border-color:rgba(217,119,6,0.3);background:var(--yellow-dim);font-size:10px">Risk</button>
-          <button class="tb-btn" onmousedown="event.preventDefault();insertLabel('Decision')" style="color:var(--green);border-color:rgba(22,163,74,0.2);font-size:10px">Decision</button>
-        </div>
-        <div class="notes-body">
-          <textarea class="notes-textarea" id="notesArea" placeholder="Organise your thoughts here...&#10;&#10;Use the quick labels above to structure your bull/bear case, key catalysts, risks and your final decision."></textarea>
-          <div class="notes-footer">
-            <span class="char-count" id="charCount">0 chars</span>
-            <div class="notes-btns">
-              <button class="clear-btn" onclick="clearNotes()">Clear</button>
-              <button class="save-notes-btn" onclick="saveNotes()">Save Notes</button>
-            </div>
-          </div>
-        </div>
+      <div class="chart-range-row">
+        <button class="chart-range-btn active" onclick="filterChart(this,'1D')">1D</button>
+        <button class="chart-range-btn" onclick="filterChart(this,'1W')">1W</button>
+        <button class="chart-range-btn" onclick="filterChart(this,'1M')">1M</button>
+        <button class="chart-range-btn" onclick="filterChart(this,'3M')">3M</button>
       </div>
+      <div class="chart-canvas-wrap">
+        <canvas id="portfolioChart" style="width:100%;height:200px"></canvas>
+        <div class="chart-empty" id="chartEmpty">Buy a stock to start tracking portfolio P&L</div>
+      </div>
+      <div class="chart-legend" id="chartLegend"></div>
+    </div>
 
-    </div><!-- end right-col -->
-  </div><!-- end research -->
-</div><!-- end app -->
+  </div><!-- /left-col -->
+
+  <!-- RIGHT PANEL -->
+  <div class="right-panel">
+    <div class="panel-head" id="panelHead">
+      <div style="font-size:11px;font-weight:600;color:var(--grey2);text-transform:uppercase;letter-spacing:0.1em">Stock Detail</div>
+    </div>
+    <div class="panel-body" id="panelBody">
+      <div class="panel-placeholder">
+        <div style="font-size:32px;margin-bottom:14px;opacity:0.15">📋</div>
+        <div style="font-size:13px;font-weight:500;color:var(--text2);margin-bottom:6px">No stock selected</div>
+        <div style="font-size:12px;line-height:1.6;color:var(--grey)">Click any row in the watchlist to view AI analysis, scan history, and add notes.</div>
+      </div>
+    </div>
+  </div>
+
+</div><!-- /main -->
+</div><!-- /layout -->
 
 <script>
+// ── CONSTANTS ────────────────────────────────────────────────
 const API = 'https://prediction-api-production-ad66.up.railway.app';
-let sessions = JSON.parse(localStorage.getItem('onyx_sessions') || '[]');
-let currentSessionId = null;
-let sources = [];
-let activeDomain = 'markets';
+const CHART_COLORS = ['#1565ff','#16a34a','#d97706','#dc2626','#7c3aed','#0891b2','#be185d','#65a30d'];
 
-// ── MARKET STATUS ──
-(function() {
-  var now = new Date(), h = now.getUTCHours(), d = now.getUTCDay();
-  var open = d > 0 && d < 6 && h >= 13 && h < 21;
-  document.getElementById('mktDot').className = 'dot ' + (open ? 'open' : 'closed');
-  document.getElementById('mktTxt').textContent = open ? 'Market Open' : 'Market Closed';
+// ── STATE ────────────────────────────────────────────────────
+let watchlist    = JSON.parse(localStorage.getItem('onyx_wl_v3')    || '[]');
+let portfolio    = JSON.parse(localStorage.getItem('onyx_portfolio') || '[]');
+let scanHistory  = JSON.parse(localStorage.getItem('onyx_hist_v3')  || '[]');
+let comments     = JSON.parse(localStorage.getItem('onyx_comments') || '{}');
+let prices       = {};
+let selectedTicker = null;
+let _timerSecs   = 120;
+
+// ── MARKET STATUS ────────────────────────────────────────────
+(function(){
+  var now=new Date(),h=now.getUTCHours(),d=now.getUTCDay();
+  var open=d>0&&d<6&&h>=13&&h<21;
+  document.getElementById('mktDot').className='dot '+(open?'open':'closed');
+  document.getElementById('mktTxt').textContent=open?'Market Open':'Market Closed';
 })();
 
-// ── KEYBOARD ──
-document.getElementById('topicInput').addEventListener('keydown', function(e) {
-  if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); runResearch(); }
-});
-document.getElementById('urlInput').addEventListener('keydown', function(e) {
-  if (e.key === 'Enter') addManualSource();
-});
-document.addEventListener('keydown', function(e) {
-  if ((e.ctrlKey || e.metaKey) && e.key === 's') { e.preventDefault(); saveNotes(); }
-});
-document.getElementById('notesArea').addEventListener('input', updateCharCount);
-document.getElementById('notesArea').addEventListener('keyup', saveSelection);
-document.getElementById('notesArea').addEventListener('mouseup', saveSelection);
-document.getElementById('notesArea').addEventListener('keydown', function(e) { if (e.key === 'b' && (e.ctrlKey||e.metaKey)) { e.preventDefault(); fmt('bold'); } if (e.key === 'i' && (e.ctrlKey||e.metaKey)) { e.preventDefault(); fmt('italic'); } if (e.key === 'u' && (e.ctrlKey||e.metaKey)) { e.preventDefault(); fmt('underline'); } });
-
-// ── DOMAIN ──
-function toggleDomain(el) {
-  document.querySelectorAll('.domain-pill').forEach(function(p) { p.classList.remove('active'); });
-  el.classList.add('active');
-  activeDomain = el.dataset.domain;
+// ── PERSIST ──────────────────────────────────────────────────
+function save(){
+  localStorage.setItem('onyx_wl_v3',   JSON.stringify(watchlist));
+  localStorage.setItem('onyx_hist_v3', JSON.stringify(scanHistory));
+  localStorage.setItem('onyx_comments',JSON.stringify(comments));
+}
+function savePortfolio(){
+  localStorage.setItem('onyx_portfolio',JSON.stringify(portfolio));
 }
 
-// ── SESSIONS ──
-function saveSessions() {
-  localStorage.setItem('onyx_sessions', JSON.stringify(sessions));
-}
-
-function populateSessionSelect() {
-  var sel = document.getElementById('sessionSelect');
-  sel.innerHTML = '<option value="">Load...</option>';
-  sessions.slice().reverse().forEach(function(s) {
-    var opt = document.createElement('option');
-    opt.value = s.id;
-    var name = s.name || s.topic.substring(0, 35);
-    opt.textContent = name + ' · ' + new Date(s.created).toLocaleDateString();
-    sel.appendChild(opt);
-  });
-}
-
-function loadSession(id) {
-  if (!id) return;
-  var s = sessions.find(function(s) { return s.id === id; });
-  if (!s) return;
-  currentSessionId = id;
-  sources = s.sources || [];
-  document.getElementById('sessionName').value = s.name || '';
-  setNotesContent(s.notes || '');
-  document.getElementById('topicInput').value = s.topic || '';
-  renderSources();
-  updateCharCount();
-  document.getElementById('saveIndicator').textContent = 'Loaded · ' + new Date(s.created).toLocaleDateString();
-  if (s.result) renderResults(s.result, s.topic, s.domain, s.horizon);
-  document.getElementById('sessionSelect').value = '';
-}
-
-function saveSession() {
-  var name  = document.getElementById('sessionName').value.trim();
-  var topic = document.getElementById('topicInput').value.trim() || 'Untitled';
-  var notes = document.getElementById('notesArea').value;
-  if (!name && !topic && !notes) { document.getElementById('sessionName').focus(); return; }
-
-  if (currentSessionId) {
-    var s = sessions.find(function(s) { return s.id === currentSessionId; });
-    if (s) { s.name = name; s.notes = notes; s.sources = sources; saveSessions(); showSaved(); return; }
+// ── TIMER ────────────────────────────────────────────────────
+setInterval(function(){
+  _timerSecs--;
+  var el=document.getElementById('priceTimer');
+  if(el){
+    var m=Math.floor(_timerSecs/60),s=_timerSecs%60;
+    el.textContent=m+':'+(s<10?'0':'')+s;
+    el.style.color=_timerSecs<=15?'var(--red)':'var(--blue)';
   }
+  if(_timerSecs<=0){
+    _timerSecs=120;
+    refreshPrices();
+    if(portfolio.length>0) autoUpdatePortfolioPrices();
+  }
+},1000);
 
-  var id = Date.now().toString();
-  currentSessionId = id;
-  sessions.push({ id:id, name:name, topic:topic, domain:activeDomain, horizon:document.getElementById('horizonSelect').value, notes:notes, sources:sources, result:null, created:Date.now() });
-  if (sessions.length > 30) sessions = sessions.slice(-30);
-  saveSessions();
-  populateSessionSelect();
-  showSaved();
+// ── KEYBOARD ─────────────────────────────────────────────────
+document.getElementById('tickerInput').addEventListener('keydown',function(e){
+  if(e.key==='Enter') addTicker();
+});
+
+// ── WATCHLIST ────────────────────────────────────────────────
+function addTicker(){
+  var ticker=document.getElementById('tickerInput').value.trim().toUpperCase();
+  var type=document.getElementById('assetType').value;
+  if(!ticker||watchlist.find(function(w){return w.ticker===ticker;})){
+    document.getElementById('tickerInput').value='';
+    return;
+  }
+  watchlist.push({ticker:ticker,type:type,signal:null,score:null,confidence:null,
+    scannedAt:null,prevSignal:null,catalysts:[],risks:[],signals:[],assetName:''});
+  save();
+  renderTable();
+  document.getElementById('tickerInput').value='';
+  refreshSinglePrice(ticker);
 }
 
-function showSaved() {
-  var t = new Date().toLocaleTimeString('en-US',{hour:'numeric',minute:'2-digit'});
-  document.getElementById('saveIndicator').textContent = 'Saved ' + t;
-  var btn = document.querySelector('.session-save-btn');
-  var orig = btn.textContent;
-  btn.textContent = '✓ Saved';
-  btn.style.background = 'var(--green)';
-  setTimeout(function() { btn.textContent = orig; btn.style.background = ''; }, 1800);
+function deleteTicker(ticker){
+  if(selectedTicker===ticker) closePanel();
+  watchlist=watchlist.filter(function(w){return w.ticker!==ticker;});
+  save();
+  renderTable();
 }
 
-// ── RESEARCH ──
-async function runResearch() {
-  var topic   = document.getElementById('topicInput').value.trim();
-  var horizon = document.getElementById('horizonSelect').value;
-  if (!topic) { document.getElementById('topicInput').focus(); return; }
-
-  var btn = document.getElementById('researchBtn');
-  btn.disabled = true;
-  document.getElementById('statusBar').classList.add('active');
-  document.getElementById('statusText').textContent = 'Searching the web for "' + topic + '"...';
-  document.getElementById('errorBox').classList.remove('active');
-  document.getElementById('overviewCard').classList.remove('active');
-  document.getElementById('predSection').style.display = 'none';
-  document.getElementById('predList').innerHTML = '';
-  document.getElementById('emptyState').style.display = 'none';
-
-  var msgs = ['Analysing patterns and signals...', 'Generating predictions...', 'Finalising research...'];
-  var delays = [5000, 10000, 16000];
-  delays.forEach(function(d, i) { setTimeout(function() { if (btn.disabled) document.getElementById('statusText').textContent = msgs[i]; }, d); });
-
-  try {
-    var res = await fetch(API + '/predict', {
-      method:'POST', headers:{'Content-Type':'application/json'},
-      body: JSON.stringify({ topic:topic, domain:activeDomain, time_horizon:horizon })
-    });
-    var data = await res.json();
-    if (!res.ok) throw new Error(data.detail || 'Research failed');
-    renderResults(data, topic, activeDomain, horizon);
-    populateSourcesFromResult(data);
-    // Auto-save result to current session
-    if (currentSessionId) {
-      var s = sessions.find(function(s) { return s.id === currentSessionId; });
-      if (s) { s.result = data; s.topic = topic; saveSessions(); }
+// ── PRICES ───────────────────────────────────────────────────
+async function refreshPrices(){
+  if(!watchlist.length) return;
+  try{
+    var tickers=watchlist.map(function(w){return w.ticker;}).join(',');
+    var res=await fetch(API+'/prices?tickers='+encodeURIComponent(tickers));
+    if(res.ok){
+      var data=await res.json();
+      Object.keys(data).forEach(function(t){
+        if(data[t]&&data[t].price){
+          if(!prices[t]) prices[t]={};
+          prices[t].price=data[t].price;
+          prices[t].change_pct=data[t].change_pct;
+        }
+      });
+      renderTable();
     }
-  } catch(e) {
-    var eb = document.getElementById('errorBox');
-    eb.textContent = 'Error: ' + e.message;
-    eb.classList.add('active');
-    document.getElementById('emptyState').style.display = 'block';
-  } finally {
-    document.getElementById('statusBar').classList.remove('active');
-    btn.disabled = false;
-  }
+  }catch(e){}
 }
 
-function renderResults(data, topic, domain, horizon) {
-  // Overview
-  document.getElementById('overviewTopic').textContent = topic;
-  var predCount = data.predictions ? data.predictions.length : 0;
-  document.getElementById('overviewMeta').innerHTML =
-    '<span class="overview-tag blue">' + (domain||'').toUpperCase() + '</span>' +
-    '<span class="overview-tag blue">' + (horizon||'') + '</span>' +
-    '<span class="overview-tag">' + predCount + ' Prediction' + (predCount!==1?'s':'') + '</span>' +
-    (data.sources_searched ? '<span class="overview-tag">' + data.sources_searched.length + ' Sources</span>' : '');
-  document.getElementById('overviewSummary').textContent = data.news_summary || 'No summary available.';
-  document.getElementById('overviewPredCount').textContent = predCount + ' prediction' + (predCount!==1?'s':'') + ' generated';
-  document.getElementById('overviewCard').classList.add('active');
-
-  // Predictions
-  predData = data.predictions || [];
-  var preds = predData;
-  if (preds.length) {
-    document.getElementById('predSection').style.display = 'block';
-    document.getElementById('customPredSection').style.display = 'block';
-    document.getElementById('predList').innerHTML = preds.map(function(p, i) {
-      var cc = (p.confidence||'low').toLowerCase();
-      var signals = (p.supporting_signals||[]).map(function(s) {
-        return '<div class="pred-sig-item"><div class="pred-sig-dot"></div><div>' + (s.description||'') + '</div></div>';
-      }).join('');
-      return '<div class="pred-card" id="pred-'+i+'">' +
-        '<div class="pred-top" onclick="togglePred('+i+')">' +
-          '<span class="conf-badge '+cc+'" title="AI Confidence Level — High: strong evidence · Medium: mixed signals · Low: limited data">'+p.confidence+'</span>' +
-          '<div class="pred-stmt">'+p.statement+'</div>' +
-          '<div class="pred-arrow">▶</div>' +
-        '</div>' +
-        '<div class="pred-body">' +
-          '<div class="pred-reasoning">'+p.reasoning+'</div>' +
-          (signals ? '<div class="pred-signals-grid">'+signals+'</div>' : '') +
-          '<div style="display:flex;align-items:center;gap:10px">' +
-            '<span class="pred-horizon">Horizon: '+p.time_horizon+'</span>' +
-            '<button class="pred-add-notes" onclick="addPredToNotes('+i+')">+ Add to notes</button>' +
-            '<button class="pred-add-notes" style="color:var(--text);border:1px solid var(--border2);padding:2px 9px;border-radius:4px;text-decoration:none" onclick="toggleStockEffect('+i+')">📈 Stock Effect</button>' +
-          '</div>' +
-          '<div class="stock-effect-wrap" id="se-wrap-'+i+'" style="display:none">' +
-            '<div class="stock-cards-list" id="se-cards-'+i+'"></div>' +
-            '<div class="stock-effect-input-row">' +
-              '<input class="stock-ticker-input" id="se-ticker-'+i+'" placeholder="Ticker e.g. TSLA" maxlength="10"/>' +
-              '<button class="analyse-btn" id="se-btn-'+i+'" onclick="runStockEffect('+i+')">Analyse →</button>' +
-              '<div class="effect-loading" id="se-loading-'+i+'">' +
-                '<div class="effect-mini-spin"></div><span>Analysing...</span>' +
-              '</div>' +
-            '</div>' +
-            '<div class="effect-result" id="se-result-'+i+'"></div>' +
-          '</div>' +
-        '</div>' +
-      '</div>';
-    }).join('');
-  }
+async function refreshSinglePrice(ticker){
+  try{
+    var res=await fetch(API+'/prices?tickers='+encodeURIComponent(ticker));
+    if(res.ok){
+      var data=await res.json();
+      if(data[ticker]&&data[ticker].price){
+        if(!prices[ticker]) prices[ticker]={};
+        prices[ticker].price=data[ticker].price;
+        prices[ticker].change_pct=data[ticker].change_pct;
+        renderTable();
+      }
+    }
+  }catch(e){}
 }
 
-function togglePred(i) {
-  document.getElementById('pred-'+i).classList.toggle('open');
+async function manualRefreshPrices(){
+  await refreshPrices();
+  if(portfolio.length>0) await autoUpdatePortfolioPrices();
 }
 
-function addPredToNotes(i) {
-  var card = document.getElementById('pred-'+i);
-  var stmt = card.querySelector('.pred-stmt').textContent;
-  var conf = card.querySelector('.conf-badge').textContent;
-  var editor = document.getElementById('notesArea');
-  editor.focus();
-  document.execCommand('insertHTML', false, '<br><strong>── Prediction ['+conf+'] ──</strong><br>'+stmt+'<br>');
-  updateCharCount();
-}
-
-// ── SOURCES ──
-function populateSourcesFromResult(data) {
-  var added = [];
-  (data.predictions||[]).forEach(function(p) {
-    (p.supporting_signals||[]).forEach(function(s) {
-      var title = s.source || '';
-      if (title && !sources.find(function(src){return src.title===title;})) {
-        added.push({title:title, url:s.url||null, tag:'ai', id:Date.now()+Math.random()});
+async function autoUpdatePortfolioPrices(){
+  if(!portfolio.length) return;
+  try{
+    var tickers=portfolio.map(function(p){return p.ticker;}).join(',');
+    var res=await fetch(API+'/prices?tickers='+encodeURIComponent(tickers));
+    if(!res.ok) return;
+    var data=await res.json();
+    var now=Date.now(),updated=false;
+    portfolio.forEach(function(p){
+      var d=data[p.ticker];
+      var price=d&&d.price?parseFloat(d.price):null;
+      if(price){
+        if(!prices[p.ticker]) prices[p.ticker]={};
+        prices[p.ticker].price=price;
+        p.points.push({t:now,p:price});
+        if(p.points.length>1440) p.points=p.points.slice(-1440);
+        updated=true;
       }
     });
-  });
-  (data.sources_searched||[]).forEach(function(q) {
-    if (!sources.find(function(src){return src.title===q;})) {
-      added.push({title:q, url:null, tag:'ai', id:Date.now()+Math.random()});
+    if(updated){
+      savePortfolio();
+      renderTable();
+      updateChartLegend();
+      drawChart();
+      var sub=document.getElementById('chartSubtitle');
+      if(sub){
+        var t=new Date().toLocaleTimeString('en-US',{hour:'numeric',minute:'2-digit'});
+        sub.textContent=portfolio.length+' stock'+(portfolio.length!==1?'s':'')+' tracked · '+t;
+      }
     }
-  });
-  sources = sources.concat(added);
-  renderSources();
+  }catch(e){}
+  _timerSecs=120;
 }
 
-function addManualSource() {
-  var inp = document.getElementById('urlInput');
-  var url = inp.value.trim();
-  if (!url) return;
-  if (!url.startsWith('http')) url = 'https://' + url;
-  var title = url.replace(/^https?:\/\//,'').split('/')[0];
-  sources.unshift({title:title, url:url, tag:'user', id:Date.now()});
-  inp.value = '';
-  renderSources();
-}
-
-function removeSource(id) {
-  sources = sources.filter(function(s){return s.id!==id;});
-  renderSources();
-}
-
-function copySourceToNotes(title, url) {
-  var editor = document.getElementById('notesArea');
-  editor.focus();
-  document.execCommand('insertHTML', false, '<br>📎 <strong>'+title+'</strong>'+(url?'<br><small style="color:var(--grey)">'+url+'</small>':'')+'<br>');
-  updateCharCount();
-}
-
-function renderSources() {
-  var list = document.getElementById('sourcesList');
-  var count = document.getElementById('sourcesCount');
-  count.textContent = sources.length + ' source' + (sources.length!==1?'s':'');
-  if (!sources.length) {
-    list.innerHTML = '<div class="sources-empty"><div style="font-size:22px;margin-bottom:8px;opacity:0.2">🔗</div>Sources appear here when you run a research query.<br>You can also paste your own URLs above.</div>';
-    return;
+// ── SCAN ─────────────────────────────────────────────────────
+async function scanAll(){
+  if(!watchlist.length) return;
+  var btn=document.getElementById('scanAllBtn');
+  btn.disabled=true;
+  document.getElementById('progressWrap').classList.add('active');
+  await refreshPrices();
+  for(var i=0;i<watchlist.length;i++){
+    document.getElementById('progressFill').style.width=Math.round((i/watchlist.length)*100)+'%';
+    document.getElementById('progressTxt').textContent='Analysing '+watchlist[i].ticker+' ('+(i+1)+'/'+watchlist.length+')';
+    await scanTicker(watchlist[i].ticker,false);
+    if(i<watchlist.length-1) await sleep(3000);
   }
-  list.innerHTML = sources.map(function(s) {
-    var domain = s.url ? s.url.replace(/^https?:\/\//,'').split('/')[0] : '';
-    var fav = domain ? '<img src="https://www.google.com/s2/favicons?domain='+domain+'&sz=16" width="16" height="16" style="border-radius:2px" onerror="this.style.display=\'none\'">' : '🔗';
-    var safeTitle = s.title.replace(/'/g,"\\'");
-    var safeUrl = (s.url||'').replace(/'/g,"\\'");
-    return '<div class="source-card">' +
-      '<div class="source-top">' +
-        '<div class="source-favicon">'+fav+'</div>' +
-        '<div class="source-info">' +
-          '<div class="source-title">'+s.title+'</div>' +
-          '<div class="source-url">'+(s.url||'AI search query')+'</div>' +
-        '</div>' +
-        '<span class="source-tag '+s.tag+'">'+s.tag.toUpperCase()+'</span>' +
-      '</div>' +
-      '<div class="source-actions">' +
-        (s.url ? '<button class="src-btn" onclick="window.open(\''+safeUrl+'\',\'_blank\')">↗ Open</button>' : '') +
-        '<button class="src-btn copy" onclick="copySourceToNotes(\''+safeTitle+'\',\''+safeUrl+'\')">📋 Notes</button>' +
-        '<button class="src-btn del" onclick="removeSource('+s.id+')">×</button>' +
-      '</div>' +
-    '</div>';
-  }).join('');
+  document.getElementById('progressFill').style.width='100%';
+  document.getElementById('progressTxt').textContent='Complete';
+  setTimeout(function(){document.getElementById('progressWrap').classList.remove('active');},1500);
+  btn.disabled=false;
+  renderTable();
+  if(selectedTicker) renderPanel(selectedTicker);
 }
 
+async function scanTicker(ticker,rerender){
+  if(rerender===undefined) rerender=true;
+  var w=watchlist.find(function(w){return w.ticker===ticker;});
+  if(!w) return;
+  var prev=w.signal;
+  w.scanning=true;
+  if(rerender) renderTable();
+  try{
+    var res=await fetch(API+'/invest',{
+      method:'POST',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({ticker:ticker,asset_type:w.type,custom_source:comments[ticker+'_url']||undefined})
+    });
+    var data=await res.json();
+    if(res.ok){
+      w.signal=data.signal; w.assetName=data.asset_name||''; w.summary=data.summary;
+      w.scannedAt=new Date().toISOString(); w.prevSignal=prev;
+      w.catalysts=data.catalysts||[]; w.risks=data.risks||[];
+      w.signals=data.supporting_signals||[]; w.confidence=data.confidence;
+      var sm={BUY:{High:8.5,Medium:7.0,Low:6.0},WATCH:{High:6.0,Medium:5.5,Low:4.5},HOLD:{High:5.0,Medium:4.5,Low:4.0},SELL:{High:2.0,Medium:3.0,Low:3.5}};
+      w.score=sm[data.signal]&&sm[data.signal][data.confidence]?sm[data.signal][data.confidence]:5.0;
+      scanHistory.unshift({ticker:ticker,signal:data.signal,score:w.score,summary:data.summary,prevSignal:prev,time:new Date().toISOString()});
+      if(scanHistory.length>100) scanHistory=scanHistory.slice(0,100);
+    }
+  }catch(e){}
+  w.scanning=false;
+  save();
+  if(rerender){renderTable();if(selectedTicker===ticker) renderPanel(ticker);}
+}
 
+// ── PORTFOLIO ────────────────────────────────────────────────
+function getOwnedShares(ticker){
+  var p=portfolio.find(function(p){return p.ticker===ticker;});
+  return p?p.shares:0;
+}
 
-// ── CUSTOM PREDICTION TESTER ──────────────────────────────────
-var customResults = [];
-
-document.addEventListener('keydown', function(e) {
-  if (e.key === 'Enter' && e.target.id === 'customPredTicker') {
-    runCustomPrediction();
+function sharesCell(ticker){
+  var sh=getOwnedShares(ticker);
+  if(sh>0){
+    var s=Number.isInteger(sh)?String(sh):sh.toFixed(4).replace(/\.?0+$/,'');
+    return '<span style="font-family:JetBrains Mono,monospace;font-size:12px;color:var(--blue);font-weight:600">'+s+' sh</span>';
   }
-});
-
-async function runCustomPrediction() {
-  var predText = document.getElementById('customPredText').value.trim();
-  var ticker   = document.getElementById('customPredTicker').value.trim().toUpperCase();
-
-  if (!predText) { document.getElementById('customPredText').focus(); return; }
-  if (!ticker)   { document.getElementById('customPredTicker').focus(); return; }
-
-  var btn    = document.getElementById('customPredBtn');
-  var status = document.getElementById('customPredStatus');
-  var statusText = document.getElementById('customPredStatusText');
-
-  btn.disabled = true;
-  status.classList.add('active');
-  statusText.textContent = 'Analysing "' + predText.substring(0, 40) + '..." for ' + ticker;
-
-  try {
-    var res = await fetch(API + '/stock-effect', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        prediction: predText,
-        ticker: ticker,
-        confidence: 'Your Prediction',
-        topic: document.getElementById('topicInput').value.trim() || predText
-      })
-    });
-    var data = await res.json();
-    if (data.error) throw new Error(data.error);
-
-    // Save to list
-    customResults.unshift({ ticker: ticker, prediction: predText, data: data, id: Date.now() });
-    renderCustomResults();
-    document.getElementById('customPredTicker').value = '';
-
-  } catch(e) {
-    var li = document.createElement('div');
-    li.style.cssText = 'font-size:12px;color:var(--red);padding:8px';
-    li.textContent = 'Error: ' + e.message;
-    document.getElementById('customResultsList').prepend(li);
-  } finally {
-    btn.disabled = false;
-    status.classList.remove('active');
-  }
+  return '<span style="font-size:11px;color:var(--grey)">—</span>';
 }
 
-function renderCustomResults() {
-  var list = document.getElementById('customResultsList');
-  if (!customResults.length) { list.innerHTML = ''; return; }
-
-  list.innerHTML = customResults.map(function(cr, idx) {
-    var d = cr.data;
-    var score = d.impact_score || 0;
-    var scoreColor = score > 0 ? 'var(--green)' : score < 0 ? 'var(--red)' : 'var(--grey)';
-    var scoreStr = (score > 0 ? '+' : '') + score;
-    var bullDir = d.bull_price_direction === 'Increase' ? '▲' : '▼';
-    var bearDir = d.bear_price_direction === 'Decrease' ? '▼' : '▲';
-    var bullColor = d.bull_price_direction === 'Increase' ? 'var(--green)' : 'var(--red)';
-    var bearColor = d.bear_price_direction === 'Decrease' ? 'var(--red)' : 'var(--green)';
-    var cardId = 'cpr-'+cr.id;
-
-    return '<div class="stock-card" id="'+cardId+'">' +
-      '<div class="stock-card-header" data-cardid="'+cardId+'">' +
-        '<div class="stock-card-arrow">▶</div>' +
-        '<div class="stock-card-ticker">'+cr.ticker+'</div>' +
-        '<span class="stock-card-dir '+(d.direction||'Neutral')+'">'+(d.direction||'Neutral')+'</span>' +
-        '<span class="stock-card-impact" style="flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis" title="'+cr.prediction+'">'+cr.prediction.substring(0,35)+(cr.prediction.length>35?'...':'')+'</span>' +
-        '<span style="font-size:10px;font-family:JetBrains Mono,monospace;color:'+scoreColor+';font-weight:700;flex-shrink:0">'+scoreStr+'</span>' +
-        '<button class="stock-card-del" data-crid="'+cr.id+'" title="Remove">×</button>' +
-      '</div>' +
-      '<div class="stock-card-body">' +
-        '<div class="stock-card-inner">' +
-          '<div style="font-size:11px;color:var(--grey2);margin-bottom:8px;font-style:italic">"'+cr.prediction+'"</div>' +
-          '<div class="effect-summary" style="margin-bottom:8px">'+(d.summary||'')+'</div>' +
-          '<div class="effect-scenarios">' +
-            '<div class="effect-scenario bull">' +
-              '<div class="effect-scenario-label">✓ If you are correct</div>' +
-              '<div style="display:flex;align-items:center;gap:5px;margin-bottom:4px">' +
-                '<span style="font-size:13px;font-weight:800;color:'+bullColor+'">'+bullDir+'</span>' +
-                '<span style="font-size:12px;font-weight:700;color:'+bullColor+'">'+(d.bull_price_magnitude||'')+'</span>' +
-              '</div>' +
-              '<div style="font-size:11px;color:var(--text2);line-height:1.5">'+(d.bull_scenario||'')+'</div>' +
-            '</div>' +
-            '<div class="effect-scenario bear">' +
-              '<div class="effect-scenario-label">✗ If you are wrong</div>' +
-              '<div style="display:flex;align-items:center;gap:5px;margin-bottom:4px">' +
-                '<span style="font-size:13px;font-weight:800;color:'+bearColor+'">'+bearDir+'</span>' +
-                '<span style="font-size:12px;font-weight:700;color:'+bearColor+'">'+(d.bear_price_magnitude||'')+'</span>' +
-              '</div>' +
-              '<div style="font-size:11px;color:var(--text2);line-height:1.5">'+(d.bear_scenario||'')+'</div>' +
-            '</div>' +
-          '</div>' +
-          '<div style="display:flex;justify-content:space-between;align-items:center;margin-top:8px">' +
-            '<span style="font-size:10px;color:var(--grey);font-family:JetBrains Mono,monospace">Horizon: '+(d.time_horizon||'—')+' · Impact: '+(d.impact||'—')+'</span>' +
-            '<button class="add-to-notes-btn" style="margin:0" data-cr-idx="'+idx+'">+ Add to notes</button>' +
-          '</div>' +
-        '</div>' +
-      '</div>' +
-    '</div>';
-  }).join('');
-
-  // Attach listeners
-  list.querySelectorAll('.stock-card-header').forEach(function(hdr) {
-    hdr.addEventListener('click', function() {
-      var id = hdr.dataset.cardid;
-      if (id) document.getElementById(id).classList.toggle('open');
-    });
-  });
-  list.querySelectorAll('.stock-card-del').forEach(function(btn) {
-    btn.addEventListener('click', function(e) {
-      e.stopPropagation();
-      var id = parseInt(btn.dataset.crid);
-      customResults = customResults.filter(function(r) { return r.id !== id; });
-      renderCustomResults();
-    });
-  });
-  list.querySelectorAll('.add-to-notes-btn').forEach(function(btn) {
-    var idx = parseInt(btn.dataset.crIdx);
-    var cr = customResults[idx];
-    if (cr) btn.onclick = function() { addEffectToNotes(cr.ticker, cr.data); };
-  });
+function totalValueCell(ticker){
+  var sh=getOwnedShares(ticker);
+  if(sh<=0) return '<span style="font-size:11px;color:var(--grey)">—</span>';
+  var entry=portfolio.find(function(p){return p.ticker===ticker;});
+  var pd=prices[ticker];
+  var price=pd?parseFloat(pd.price):(entry?entry.buyPrice:null);
+  if(!price) return '<span style="font-size:11px;color:var(--grey)">—</span>';
+  var total=sh*price;
+  var ts=total.toLocaleString('en-US',{style:'currency',currency:'USD',minimumFractionDigits:2});
+  if(!entry||!entry.buyPrice) return '<span style="font-family:JetBrains Mono,monospace;font-size:12px;font-weight:600">'+ts+'</span>';
+  var pnl=(price-entry.buyPrice)*sh;
+  var pc=pnl>=0?'var(--green)':'var(--red)';
+  var ps=(pnl>=0?'+':'')+pnl.toLocaleString('en-US',{style:'currency',currency:'USD',minimumFractionDigits:2});
+  return '<div style="line-height:1.4"><span style="font-family:JetBrains Mono,monospace;font-size:12px;font-weight:600">'+ts+'</span><br><span style="font-size:10px;color:'+pc+';font-weight:600">'+ps+'</span></div>';
 }
 
-// ── STOCK EFFECT ──────────────────────────────────────────────
-var predData = []; // store prediction data globally for stock effect
-
-function toggleStockEffect(i) {
-  var wrap = document.getElementById('se-wrap-'+i);
-  if (wrap.style.display === 'none') {
-    wrap.style.display = 'block';
-    setTimeout(function() { document.getElementById('se-ticker-'+i).focus(); }, 100);
+function buyFromPanel(ticker){
+  var inp=document.getElementById('buyInput-'+ticker);
+  var shares=inp?parseFloat(inp.value):NaN;
+  if(isNaN(shares)||shares<=0){if(inp){inp.focus();inp.style.borderColor='var(--red)';setTimeout(function(){inp.style.borderColor='';},1500);}return;}
+  var pd=prices[ticker];
+  var price=pd?parseFloat(pd.price):null;
+  if(!price){alert(ticker+': Price not loaded. Click ↻ to refresh.');return;}
+  var existing=portfolio.find(function(p){return p.ticker===ticker;});
+  if(existing){
+    existing.shares=(existing.shares||0)+shares;
+    existing.buyPrice=existing.buyPrice||price;
+    existing.points.push({t:Date.now(),p:price});
   } else {
-    wrap.style.display = 'none';
+    portfolio.push({ticker:ticker,color:CHART_COLORS[portfolio.length%CHART_COLORS.length],shares:shares,buyPrice:price,points:[{t:Date.now(),p:price}]});
   }
+  savePortfolio();
+  if(inp) inp.value='';
+  renderTable();updateChartLegend();drawChart();renderPanel(ticker);
 }
 
-// Press Enter in ticker input
-document.addEventListener('keydown', function(e) {
-  if (e.key === 'Enter' && e.target.classList.contains('stock-ticker-input')) {
-    var id = e.target.id.replace('se-ticker-', '');
-    runStockEffect(parseInt(id));
+function sellFromPanel(ticker){
+  var inp=document.getElementById('sellInput-'+ticker);
+  var shares=inp?parseFloat(inp.value):NaN;
+  if(isNaN(shares)||shares<=0){if(inp){inp.focus();inp.style.borderColor='var(--red)';setTimeout(function(){inp.style.borderColor='';},1500);}return;}
+  var existing=portfolio.find(function(p){return p.ticker===ticker;});
+  if(!existing||existing.shares<=0){alert(ticker+' not in portfolio.');return;}
+  if(shares>=existing.shares){
+    portfolio=portfolio.filter(function(p){return p.ticker!==ticker;});
+  } else {
+    existing.shares=Math.round((existing.shares-shares)*10000)/10000;
   }
-});
-
-async function runStockEffect(i) {
-  var ticker = document.getElementById('se-ticker-'+i).value.trim().toUpperCase();
-  if (!ticker) { document.getElementById('se-ticker-'+i).focus(); return; }
-
-  var pred = predData[i];
-  if (!pred) return;
-
-  var loading = document.getElementById('se-loading-'+i);
-  var result  = document.getElementById('se-result-'+i);
-  var btn = document.querySelector('#se-wrap-'+i+' .analyse-btn');
-
-  loading.classList.add('active');
-  result.classList.remove('active');
-  if (btn) btn.disabled = true;
-
-  try {
-    var res = await fetch(API + '/stock-effect', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        prediction: pred.statement,
-        ticker: ticker,
-        confidence: pred.confidence,
-        topic: document.getElementById('topicInput').value.trim()
-      })
-    });
-    var data = await res.json();
-    if (data.error) throw new Error(data.error);
-    renderStockEffect(i, ticker, data);
-  } catch(e) {
-    result.innerHTML = '<div style="font-size:12px;color:var(--red)">Error: ' + e.message + '</div>';
-    result.classList.add('active');
-  } finally {
-    loading.classList.remove('active');
-    if (btn) btn.disabled = false;
-  }
+  savePortfolio();
+  if(inp) inp.value='';
+  renderTable();updateChartLegend();drawChart();renderPanel(ticker);
 }
 
-// Store saved stock analyses per prediction
-var savedEffects = {};
-
-function renderStockEffect(i, ticker, d) {
-  // Save to list
-  if (!savedEffects[i]) savedEffects[i] = [];
-  // Remove duplicate if same ticker
-  savedEffects[i] = savedEffects[i].filter(function(e) { return e.ticker !== ticker; });
-  savedEffects[i].push({ ticker: ticker, data: d });
-
-  // Re-render saved cards list
-  renderSavedEffects(i);
-
-  // Clear result area and ticker input
-  document.getElementById('se-result-'+i).classList.remove('active');
-  document.getElementById('se-ticker-'+i).value = '';
-
-  var result = document.getElementById('se-result-'+i);
-  var score = d.impact_score || 0;
-  var pct = Math.abs(score) / 10 * 100;
-  var fillColor = score > 0 ? 'var(--green)' : score < 0 ? 'var(--red)' : 'var(--grey)';
-  var fillLeft  = score >= 0 ? '50%' : (50 - pct/2) + '%';
-  var fillWidth = (pct/2) + '%';
-
-  var impactColor = d.impact === 'High' ? 'var(--red)' : d.impact === 'Medium' ? 'var(--yellow)' : 'var(--grey2)';
-
-  var factors = (d.key_factors || []).map(function(f) {
-    return '<span class="effect-factor">'+f+'</span>';
-  }).join('');
-
-  result.innerHTML =
-    '<div class="effect-header">' +
-      '<div>' +
-        '<div class="effect-ticker">' + (d.ticker||ticker) + '</div>' +
-        '<div class="effect-company">' + (d.company_name||'') + '</div>' +
-      '</div>' +
-      '<span class="effect-direction ' + (d.direction||'Neutral') + '">' + (d.direction||'Neutral') + '</span>' +
-      '<span style="font-size:10px;font-weight:700;color:'+impactColor+'">'+d.impact+' Impact</span>' +
-      '<div class="effect-score-bar" title="Impact score: ' + score + '/10">' +
-        '<div class="effect-score-fill" style="background:'+fillColor+';left:'+fillLeft+';width:'+fillWidth+'"></div>' +
-        '<div style="position:absolute;left:50%;top:0;width:1px;height:6px;background:var(--border2)"></div>' +
-      '</div>' +
-      '<span style="font-size:11px;font-family:JetBrains Mono,monospace;color:'+fillColor+';font-weight:700">' + (score > 0 ? '+' : '') + score + '</span>' +
-    '</div>' +
-    '<div class="effect-summary">' + (d.summary||'') + '</div>' +
-    '<div class="effect-scenarios">' +
-      '<div class="effect-scenario bull">' +
-        '<div class="effect-scenario-label">✓ If correct</div>' +
-        '<div style="display:flex;align-items:center;gap:6px;margin-bottom:5px">' +
-          '<span style="font-size:13px;font-weight:800;color:var(--green)">' + (d.bull_price_direction==='Increase' ? '▲' : '▼') + '</span>' +
-          '<span style="font-size:12px;font-weight:700;color:var(--green)">' + (d.bull_price_magnitude||'') + '</span>' +
-        '</div>' +
-        '<div style="font-size:11px;color:var(--text2);line-height:1.5">' + (d.bull_scenario||'') + '</div>' +
-      '</div>' +
-      '<div class="effect-scenario bear">' +
-        '<div class="effect-scenario-label">✗ If wrong</div>' +
-        '<div style="display:flex;align-items:center;gap:6px;margin-bottom:5px">' +
-          '<span style="font-size:13px;font-weight:800;color:var(--red)">' + (d.bear_price_direction==='Decrease' ? '▼' : '▲') + '</span>' +
-          '<span style="font-size:12px;font-weight:700;color:var(--red)">' + (d.bear_price_magnitude||'') + '</span>' +
-        '</div>' +
-        '<div style="font-size:11px;color:var(--text2);line-height:1.5">' + (d.bear_scenario||'') + '</div>' +
-      '</div>' +
-    '</div>' +
-    (factors ? '<div class="effect-factors">' + factors + '</div>' : '') +
-    '<div style="display:flex;justify-content:space-between;align-items:center;margin-top:8px">' +
-      '<span style="font-size:10px;color:var(--grey);font-family:JetBrains Mono,monospace">Horizon: '+(d.time_horizon||'—')+' · Confidence: '+(d.confidence||'—')+'</span>' +
-      '<button class="add-to-notes-btn" style="margin:0" data-eff-idx="'+i+'" data-eff-ticker="'+ticker+'">+ Add to notes</button>' +
-    '</div>';
-
-  // Don't show inline - card was saved above
-  // Attach add-to-notes listener
-  var nb = result.querySelector('.add-to-notes-btn');
-  if (nb) {
-    nb.onclick = function() { addEffectToNotes(ticker, d); };
-  }
-}
-
-function renderSavedEffects(i) {
-  var listEl = document.getElementById('se-cards-'+i);
-  if (!listEl) return;
-  var effects = savedEffects[i] || [];
-
-  if (!effects.length) {
-    listEl.innerHTML = '';
+// ── TABLE ────────────────────────────────────────────────────
+function renderTable(){
+  var body=document.getElementById('tableBody');
+  document.getElementById('cardSubtitle').textContent=watchlist.length+' ticker'+(watchlist.length!==1?'s':'');
+  if(!watchlist.length){
+    body.innerHTML='<tr><td class="empty-cell" colspan="6"><div class="empty-icon">📊</div><div class="empty-text">Watchlist is empty</div><div class="empty-sub">Type a ticker above and click + Add</div></td></tr>';
     return;
   }
+  var order={SELL:0,BUY:1,WATCH:2,HOLD:3};
+  var sorted=watchlist.slice().sort(function(a,b){
+    if(a.signal&&b.signal) return (order[a.signal]||4)-(order[b.signal]||4);
+    if(a.signal) return -1; if(b.signal) return 1; return 0;
+  });
+  var html='';
+  sorted.forEach(function(w){
+    var pd=prices[w.ticker];
+    var priceStr=pd&&pd.price?'$'+parseFloat(pd.price).toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2}):'—';
+    var sigCls=w.signal?w.signal.toLowerCase():'pending';
+    var sc=!w.score?'nd':w.score>=7?'hi':w.score>=5?'mi':'lo';
+    var sbColor=!w.score?'#e5e4e2':w.score>=7?'#16a34a':w.score>=5?'#d97706':'#dc2626';
+    var sbWidth=w.score?(w.score*10)+'%':'0%';
+    var scoreTxt=w.scanning?'…':(w.score?w.score.toFixed(1):'—');
+    var isSel=selectedTicker===w.ticker;
+    var alert2=(w.signal&&w.prevSignal&&w.prevSignal!==w.signal)?'<span class="alert-pill">'+w.prevSignal+'→'+w.signal+'</span>':'';
+    html+=
+      '<tr class="main-row'+(isSel?' selected':'')+'" id="row-'+w.ticker+'" onclick="selectStock(\''+w.ticker+'\')">'+
+      '<td><div class="ticker-name">'+w.ticker+alert2+'</div>'+
+          '<div class="ticker-sub">'+(w.assetName||w.type).substring(0,20)+(w.scannedAt?' · '+timeAgo(w.scannedAt):'')+' </div></td>'+
+      '<td class="price-cell'+(w.scanning?' scanning':'')+'">'+( w.scanning?'…':priceStr)+'</td>'+
+      '<td><div class="score-wrap">'+
+          '<div class="score-n '+sc+'">'+scoreTxt+'</div>'+
+          '<div><div class="score-bar"><div class="score-fill" style="width:'+sbWidth+';background:'+sbColor+'"></div></div>'+
+          (w.signal?'<span class="sig '+sigCls+'" style="margin-top:4px;display:inline-block">'+w.signal+'</span>':'')+'</div></div></td>'+
+      '<td style="text-align:center">'+sharesCell(w.ticker)+'</td>'+
+      '<td style="text-align:center">'+totalValueCell(w.ticker)+'</td>'+
+      '<td style="text-align:right;padding-right:10px">'+
+          '<button class="del-btn" title="Remove" onclick="event.stopPropagation();deleteTicker(\''+w.ticker+'\')">×</button>'+
+      '</td>'+
+      '</tr>';
+  });
+  body.innerHTML=html;
+}
 
-  listEl.innerHTML = effects.map(function(e, ei) {
-    var d = e.data;
-    var ticker = e.ticker;
-    var score = d.impact_score || 0;
-    var fillColor = score > 0 ? 'var(--green)' : score < 0 ? 'var(--red)' : 'var(--grey)';
-    var scoreStr = (score > 0 ? '+' : '') + score;
+// ── PANEL ────────────────────────────────────────────────────
+function selectStock(ticker){
+  if(selectedTicker===ticker){
+    selectedTicker=null;
+    document.querySelectorAll('tr.main-row').forEach(function(r){r.classList.remove('selected');});
+    document.getElementById('panelHead').innerHTML='<div style="font-size:11px;font-weight:600;color:var(--grey2);text-transform:uppercase;letter-spacing:0.1em">Stock Detail</div>';
+    document.getElementById('panelBody').innerHTML='<div class="panel-placeholder"><div style="font-size:32px;margin-bottom:14px;opacity:0.15">📋</div><div style="font-size:13px;font-weight:500;color:var(--text2);margin-bottom:6px">No stock selected</div><div style="font-size:12px;line-height:1.6;color:var(--grey)">Click any row to view AI analysis and notes.</div></div>';
+    return;
+  }
+  selectedTicker=ticker;
+  document.querySelectorAll('tr.main-row').forEach(function(r){r.classList.remove('selected');});
+  var row=document.getElementById('row-'+ticker);
+  if(row) row.classList.add('selected');
+  renderPanel(ticker);
+}
 
-    var bullDir = d.bull_price_direction === 'Increase' ? '▲' : '▼';
-    var bearDir = d.bear_price_direction === 'Decrease' ? '▼' : '▲';
-    var bullColor = d.bull_price_direction === 'Increase' ? 'var(--green)' : 'var(--red)';
-    var bearColor = d.bear_price_direction === 'Decrease' ? 'var(--red)' : 'var(--green)';
+function closePanel(){
+  selectedTicker=null;
+  document.querySelectorAll('tr.main-row').forEach(function(r){r.classList.remove('selected');});
+}
 
-    var factors = (d.key_factors||[]).map(function(f) {
-      return '<span class="effect-factor">'+f+'</span>';
-    }).join('');
+function renderPanel(ticker){
+  var w=watchlist.find(function(w){return w.ticker===ticker;});
+  if(!w) return;
+  var sigCls=w.signal?w.signal.toLowerCase():'pending';
+  var sc=!w.score?'nd':w.score>=7?'hi':w.score>=5?'mi':'lo';
+  var confPct=w.confidence==='High'?85:w.confidence==='Medium'?60:w.confidence==='Low'?35:0;
+  var comment=comments[ticker]||'';
+  var srcUrl=comments[ticker+'_url']||'';
+  var hist=scanHistory.filter(function(h){return h.ticker===ticker;});
 
-    var cardId = 'sc-'+i+'-'+ei;
-    return '<div class="stock-card" id="'+cardId+'">' +
-      '<div class="stock-card-header" data-cardid="'+cardId+'">' +
-        '<div class="stock-card-arrow">▶</div>' +
-        '<div class="stock-card-ticker">' + ticker + '</div>' +
-        '<span class="stock-card-dir '+(d.direction||'Neutral')+'">' + (d.direction||'Neutral') + '</span>' +
-        '<span class="stock-card-impact">' + (d.impact||'') + ' · <span style="color:'+fillColor+';font-weight:700">'+scoreStr+'/10</span></span>' +
-        '<button class="stock-card-del" data-pred="'+i+'" data-ei="'+ei+'" title="Remove">×</button>' +
-      '</div>' +
-      '<div class="stock-card-body">' +
-        '<div class="stock-card-inner">' +
-          '<div class="effect-summary" style="margin-bottom:8px">' + (d.summary||'') + '</div>' +
-          '<div class="effect-scenarios">' +
-            '<div class="effect-scenario bull">' +
-              '<div class="effect-scenario-label">✓ If correct</div>' +
-              '<div style="display:flex;align-items:center;gap:5px;margin-bottom:4px">' +
-                '<span style="font-size:13px;font-weight:800;color:'+bullColor+'">' + bullDir + '</span>' +
-                '<span style="font-size:12px;font-weight:700;color:'+bullColor+'">' + (d.bull_price_magnitude||'') + '</span>' +
-              '</div>' +
-              '<div style="font-size:11px;color:var(--text2);line-height:1.5">' + (d.bull_scenario||'') + '</div>' +
-            '</div>' +
-            '<div class="effect-scenario bear">' +
-              '<div class="effect-scenario-label">✗ If wrong</div>' +
-              '<div style="display:flex;align-items:center;gap:5px;margin-bottom:4px">' +
-                '<span style="font-size:13px;font-weight:800;color:'+bearColor+'">' + bearDir + '</span>' +
-                '<span style="font-size:12px;font-weight:700;color:'+bearColor+'">' + (d.bear_price_magnitude||'') + '</span>' +
-              '</div>' +
-              '<div style="font-size:11px;color:var(--text2);line-height:1.5">' + (d.bear_scenario||'') + '</div>' +
-            '</div>' +
-          '</div>' +
-          (factors ? '<div class="effect-factors" style="margin-top:8px">'+factors+'</div>' : '') +
-          '<div style="display:flex;justify-content:space-between;align-items:center;margin-top:8px">' +
-            '<span style="font-size:10px;color:var(--grey);font-family:JetBrains Mono,monospace">Horizon: '+(d.time_horizon||'—')+' · Confidence: '+(d.confidence||'—')+'</span>' +
-            '<button class="add-to-notes-btn" style="margin:0" id="eff-notes-btn-'+i+'-'+ei+'">+ Add to notes</button>' +
-          '</div>' +
-        '</div>' +
-      '</div>' +
-    '</div>';
+  // Head
+  var head=document.getElementById('panelHead');
+  head.innerHTML='';
+  var row=document.createElement('div');
+  row.style.cssText='display:flex;align-items:center;justify-content:space-between;width:100%;gap:8px';
+  var left=document.createElement('div');
+  left.style.cssText='display:flex;align-items:center;gap:12px;min-width:0;flex:1';
+  var nameDiv=document.createElement('div');
+  var tickerEl=document.createElement('div'); tickerEl.className='panel-ticker'; tickerEl.textContent=ticker;
+  var nameEl=document.createElement('div'); nameEl.className='panel-name'; nameEl.textContent=w.assetName||w.type;
+  nameDiv.appendChild(tickerEl); nameDiv.appendChild(nameEl);
+  var scanBtn=document.createElement('button'); scanBtn.className='panel-scan-btn'; scanBtn.textContent='Scan'; scanBtn.disabled=!!w.scanning;
+  scanBtn.onclick=function(){scanTicker(ticker);};
+  left.appendChild(nameDiv); left.appendChild(scanBtn);
+  var right=document.createElement('div');
+  right.style.cssText='display:flex;align-items:flex-start;gap:6px;flex-shrink:0';
+  function mkQty(id,lbl){
+    var wrap=document.createElement('div');
+    var inp=document.createElement('input'); inp.className='shares-input'; inp.type='number'; inp.min='0.01'; inp.step='any'; inp.placeholder='qty'; inp.id=id;
+    var lb=document.createElement('div'); lb.className='shares-label'; lb.textContent=lbl;
+    wrap.appendChild(inp); wrap.appendChild(lb); return wrap;
+  }
+  var buyQty=mkQty('buyInput-'+ticker,'buy qty');
+  var buyBtn=document.createElement('button'); buyBtn.className='panel-trade-btn'; buyBtn.textContent='Buy';
+  buyBtn.onclick=function(){buyFromPanel(ticker);};
+  var sellQty=mkQty('sellInput-'+ticker,'sell qty');
+  var sellBtn=document.createElement('button'); sellBtn.className='panel-trade-btn'; sellBtn.textContent='Sell';
+  sellBtn.onclick=function(){sellFromPanel(ticker);};
+  right.appendChild(buyQty); right.appendChild(buyBtn); right.appendChild(sellQty); right.appendChild(sellBtn);
+  row.appendChild(left); row.appendChild(right); head.appendChild(row);
+
+  // Hist HTML
+  var histHTML=hist.length?hist.slice(0,30).map(function(h){
+    var col=h.signal==='BUY'?'var(--green)':h.signal==='SELL'?'var(--red)':h.signal==='WATCH'?'var(--yellow)':'var(--grey2)';
+    return '<div class="phist-entry"><div class="phist-top"><span class="phist-sig" style="color:'+col+'">'+h.signal+'</span><span class="phist-score">'+(h.score?h.score.toFixed(1):'—')+'/10</span><span class="phist-time">'+timeAgo(h.time)+'</span></div><div class="phist-sum">'+(h.summary||'')+'</div></div>';
+  }).join(''):'<div class="no-phist">No scan history yet</div>';
+
+  var scoreHTML=w.signal?
+    '<div class="panel-section">'+
+      '<div style="display:flex;align-items:center;gap:10px;margin-bottom:10px">'+
+        '<span class="sig '+sigCls+'" style="font-size:13px;padding:5px 14px">'+w.signal+'</span>'+
+        '<span style="font-family:JetBrains Mono,monospace;font-size:14px;font-weight:700;color:'+(w.score>=7?'#16a34a':w.score>=5?'#d97706':'#dc2626')+'">'+( w.score?w.score.toFixed(1)+'/10':'—')+'</span>'+
+      '</div>'+
+      '<div class="conf-track"><div class="conf-fill" style="width:'+confPct+'%"></div></div>'+
+      '<div class="conf-label">Confidence: '+(w.confidence||'—')+'</div>'+
+      (w.summary?'<div class="panel-summary">'+w.summary+'</div>':'')+
+      '<div style="margin-top:12px"><div class="panel-section-label">Custom Source</div>'+
+        '<input class="notes-url-input" type="url" id="srcUrl-'+ticker+'" value="'+srcUrl+'" placeholder="Paste URL for AI to use..."/>'+
+        '<div class="notes-url-hint">AI factors this into next scan</div>'+
+      '</div>'+
+    '</div>'+
+    ''
+    :'<div style="font-size:12px;color:var(--grey2);margin-bottom:16px;padding:12px;background:var(--surface2);border-radius:6px">No scan data yet — click <strong>Scan</strong>.</div>'
+
+  document.getElementById('panelBody').innerHTML=
+    '<div class="panel-section-label" style="margin-bottom:6px">Scan History</div>'+
+    '<div class="panel-hist-scroll">'+histHTML+'</div>'+
+    '<hr class="panel-divider" style="margin:10px 0"/>'+
+    '<div class="panel-section-label" style="margin-bottom:6px">Notes</div>'+
+    '<textarea class="notes-textarea" id="cmt-'+ticker+'" placeholder="Your notes, thesis, trade plan, price targets, risks to watch...">'+comment+'</textarea>'+
+    '<div style="display:flex;gap:8px;margin-top:6px;align-items:center">'+
+      '<input class="notes-url-input" style="flex:1" type="url" id="srcUrl-'+ticker+'" value="'+srcUrl+'" placeholder="Custom source URL for AI to use..."/>'+
+      '<button class="notes-save-btn" onclick="saveNotes(this.dataset.ticker)" data-ticker="'+ticker+'" style="flex-shrink:0">Save</button>'+
+    '</div>'+
+    '<hr class="panel-divider"/>'+
+    scoreHTML
+}
+
+function saveNotes(ticker){
+  var note=document.getElementById('cmt-'+ticker)?document.getElementById('cmt-'+ticker).value:'';
+  var url=document.getElementById('srcUrl-'+ticker)?document.getElementById('srcUrl-'+ticker).value:'';
+  comments[ticker]=note; comments[ticker+'_url']=url; save();
+  var btn=document.querySelector('#panelBody .notes-save-btn');
+  var orig=btn?btn.textContent:'Save';
+  if(btn){btn.textContent='Saved ✓';btn.style.background='var(--green)';}
+  setTimeout(function(){if(btn){btn.textContent=orig;btn.style.background='';}},1500);
+}
+
+// ── CHART ────────────────────────────────────────────────────
+function updateChartLegend(){
+  var legend=document.getElementById('chartLegend');
+  var empty=document.getElementById('chartEmpty');
+  if(!legend) return;
+  if(!portfolio.length){legend.innerHTML='';if(empty)empty.style.display='block';return;}
+  if(empty) empty.style.display='none';
+  legend.innerHTML=portfolio.map(function(p){
+    var pts=p.points,first=pts[0]&&pts[0].p,last=pts[pts.length-1]&&pts[pts.length-1].p;
+    var pnl=first&&last?((last-first)*(p.shares||1)):null;
+    var pc=pnl===null?'':pnl>=0?'color:var(--green)':'color:var(--red)';
+    var ps=pnl!==null?' <span style="'+pc+';font-weight:600">'+(pnl>=0?'+':'')+'$'+Math.abs(pnl).toFixed(2)+'</span>':'';
+    return '<div class="chart-legend-item"><div class="chart-legend-dot" style="background:'+p.color+'"></div><span>'+p.ticker+ps+'</span></div>';
   }).join('');
+}
 
-  // Attach notes listeners and card interactions via delegation
-  effects.forEach(function(e, ei) {
-    var nb = document.getElementById('eff-notes-btn-'+i+'-'+ei);
-    if (nb) nb.onclick = function() { addEffectToNotes(e.ticker, e.data); };
+function drawChart(){
+  var canvas=document.getElementById('portfolioChart');
+  if(!canvas) return;
+  var wrap=canvas.parentElement;
+  var W=wrap.clientWidth||600,H=200;
+  canvas.width=W*window.devicePixelRatio; canvas.height=H*window.devicePixelRatio;
+  canvas.style.width=W+'px'; canvas.style.height=H+'px';
+  var ctx=canvas.getContext('2d');
+  ctx.scale(window.devicePixelRatio,window.devicePixelRatio);
+  ctx.clearRect(0,0,W,H);
+  var pad={top:16,right:20,bottom:32,left:52};
+  var plotW=W-pad.left-pad.right,plotH=H-pad.top-pad.bottom;
+  ctx.strokeStyle='#e5e4e2'; ctx.lineWidth=1;
+  for(var i=0;i<=4;i++){var y=pad.top+(i/4)*plotH;ctx.beginPath();ctx.moveTo(pad.left,y);ctx.lineTo(W-pad.right,y);ctx.stroke();}
+  var vis=portfolio.filter(function(p){return p.points&&p.points.length>=2;});
+  if(!vis.length) return;
+  var allPnl=[];
+  vis.forEach(function(p){var base=p.points[0].p,sh=p.shares||1;p.points.forEach(function(pt){allPnl.push((pt.p-base)*sh);});});
+  var minV=Math.min.apply(null,allPnl.concat([-0.5])),maxV=Math.max.apply(null,allPnl.concat([0.5])),range=maxV-minV||1;
+  var allT=[];vis.forEach(function(p){p.points.forEach(function(pt){allT.push(pt.t);});});
+  var tMin=Math.min.apply(null,allT),tMax=Math.max.apply(null,allT),tRange=tMax-tMin||1;
+  function toX(t){return pad.left+((t-tMin)/tRange)*plotW;}
+  function toY(v){return pad.top+((maxV-v)/range)*plotH;}
+  ctx.fillStyle='#9ca3af'; ctx.font='10px Inter,sans-serif'; ctx.textAlign='right';
+  for(var i=0;i<=4;i++){
+    var v=maxV-(i/4)*range;
+    var lbl=Math.abs(v)>=1000?(v>=0?'+':'')+'$'+(v/1000).toFixed(1)+'k':(v>=0?'+':'')+'$'+v.toFixed(0);
+    ctx.fillText(lbl,pad.left-4,pad.top+(i/4)*plotH+3);
+  }
+  var zeroY=toY(0);
+  if(zeroY>=pad.top&&zeroY<=pad.top+plotH){
+    ctx.setLineDash([4,4]);ctx.strokeStyle='#d1d0cd';ctx.lineWidth=1;
+    ctx.beginPath();ctx.moveTo(pad.left,zeroY);ctx.lineTo(W-pad.right,zeroY);ctx.stroke();ctx.setLineDash([]);
+  }
+  vis.forEach(function(p){
+    var base=p.points[0].p,sh=p.shares||1;
+    var pts=p.points.map(function(pt){return{x:toX(pt.t),y:toY((pt.p-base)*sh)};});
+    var grad=ctx.createLinearGradient(0,pad.top,0,pad.top+plotH);
+    grad.addColorStop(0,p.color+'28'); grad.addColorStop(1,p.color+'00');
+    ctx.beginPath();ctx.moveTo(pts[0].x,pts[0].y);pts.forEach(function(pt){ctx.lineTo(pt.x,pt.y);});
+    ctx.lineTo(pts[pts.length-1].x,toY(0));ctx.lineTo(pts[0].x,toY(0));ctx.closePath();ctx.fillStyle=grad;ctx.fill();
+    ctx.beginPath();ctx.moveTo(pts[0].x,pts[0].y);pts.forEach(function(pt){ctx.lineTo(pt.x,pt.y);});
+    ctx.strokeStyle=p.color;ctx.lineWidth=2;ctx.lineJoin='round';ctx.stroke();
+    var last=pts[pts.length-1];
+    ctx.beginPath();ctx.arc(last.x,last.y,4,0,Math.PI*2);ctx.fillStyle=p.color;ctx.fill();
+    ctx.strokeStyle='#fff';ctx.lineWidth=1.5;ctx.stroke();
   });
-
-  // Attach header click (toggle) and delete click
-  listEl.querySelectorAll('.stock-card-header').forEach(function(hdr) {
-    hdr.addEventListener('click', function() {
-      var id = hdr.dataset.cardid;
-      if (id) document.getElementById(id).classList.toggle('open');
-    });
-  });
-  listEl.querySelectorAll('.stock-card-del').forEach(function(btn) {
-    btn.addEventListener('click', function(e) {
-      e.stopPropagation();
-      deleteStockEffect(parseInt(btn.dataset.pred), parseInt(btn.dataset.ei));
-    });
-  });
 }
 
-function toggleStockCard(id) {
-  document.getElementById(id).classList.toggle('open');
+function filterChart(btn,range){
+  document.querySelectorAll('.chart-range-btn').forEach(function(b){b.classList.remove('active');});
+  btn.classList.add('active');
+  var ms={'1D':86400000,'1W':604800000,'1M':2592000000,'3M':7776000000};
+  var cutoff=Date.now()-ms[range];
+  var orig=portfolio;
+  portfolio=portfolio.map(function(p){return Object.assign({},p,{points:p.points.filter(function(pt){return pt.t>=cutoff;})});});
+  updateChartLegend();drawChart();
+  portfolio=orig;
 }
 
-function deleteStockEffect(i, ei) {
-  if (savedEffects[i]) {
-    savedEffects[i].splice(ei, 1);
-    renderSavedEffects(i);
-  }
+// ── UTILS ────────────────────────────────────────────────────
+function timeAgo(iso){
+  var s=Math.floor((Date.now()-new Date(iso))/1000);
+  if(s<60) return s+'s ago'; if(s<3600) return Math.floor(s/60)+'m ago';
+  if(s<86400) return Math.floor(s/3600)+'h ago'; return Math.floor(s/86400)+'d ago';
 }
+function sleep(ms){return new Promise(function(r){setTimeout(r,ms);});}
 
-
-function addEffectToNotes(ticker, d) {
-  var editor = document.getElementById('notesArea');
-  editor.focus();
-  var html = '<br><strong>── Stock Effect: ' + ticker + ' [' + d.direction + ' · ' + d.impact + '] ──</strong><br>' +
-    d.summary + '<br>' +
-    '<em>If correct:</em> ' + d.bull_scenario + '<br>' +
-    '<em>If wrong:</em> ' + d.bear_scenario + '<br>';
-  document.execCommand('insertHTML', false, html);
-  updateCharCount();
-}
-
-// ── FORMATTING ──
-var _savedSelection = null;
-
-function saveSelection() {
-  var sel = window.getSelection();
-  if (sel.rangeCount > 0) _savedSelection = sel.getRangeAt(0).cloneRange();
-}
-
-function restoreSelection() {
-  var editor = document.getElementById('notesArea');
-  editor.focus();
-  if (_savedSelection) {
-    var sel = window.getSelection();
-    sel.removeAllRanges();
-    sel.addRange(_savedSelection);
-  }
-}
-
-function fmt(cmd) {
-  restoreSelection();
-  document.execCommand(cmd, false, null);
-  document.getElementById('notesArea').focus();
-}
-
-function fmtBlock(tag) {
-  if (!tag) return;
-  restoreSelection();
-  document.execCommand('formatBlock', false, tag);
-  document.getElementById('notesArea').focus();
-}
-
-function fmtFontSize(size) {
-  if (!size) return;
-  restoreSelection();
-  document.execCommand('fontSize', false, size);
-  document.getElementById('notesArea').focus();
-}
-
-function fmtColor(color) {
-  restoreSelection();
-  document.execCommand('foreColor', false, color);
-  document.getElementById('notesArea').focus();
-}
-
-function fmtHighlight(color) {
-  restoreSelection();
-  document.execCommand('hiliteColor', false, color);
-  document.getElementById('notesArea').focus();
-}
-
-function toggleColorPicker(id) {
-  var picker = document.getElementById(id);
-  document.querySelectorAll('.tb-color-picker').forEach(function(p) {
-    if (p.id !== id) p.classList.remove('open');
-  });
-  picker.classList.toggle('open');
-}
-
-function applyFontColor(color) {
-  restoreSelection();
-  document.execCommand('foreColor', false, color);
-  document.getElementById('fontColorSwatch').style.background = color;
-  document.getElementById('fontColorPicker').classList.remove('open');
-  document.getElementById('notesArea').focus();
-}
-
-function applyHighlight(color) {
-  restoreSelection();
-  document.execCommand('hiliteColor', false, color === 'transparent' ? 'rgba(0,0,0,0)' : color);
-  document.getElementById('hlColorSwatch').style.background = color === 'transparent' ? '#f1f5f9' : color;
-  document.getElementById('hlColorPicker').classList.remove('open');
-  document.getElementById('notesArea').focus();
-}
-
-// Close color pickers on outside click
-document.addEventListener('click', function(e) {
-  if (!e.target.closest('.tb-color-wrap')) {
-    document.querySelectorAll('.tb-color-picker').forEach(function(p) { p.classList.remove('open'); });
-  }
-});
-
-function fmtAlign(align) {
-  restoreSelection();
-  document.execCommand('justify' + align, false, null);
-  document.getElementById('notesArea').focus();
-}
-
-function fmtIndent(dir) {
-  restoreSelection();
-  document.execCommand(dir === 'in' ? 'indent' : 'outdent', false, null);
-  document.getElementById('notesArea').focus();
-}
-
-function fmtLink() {
-  restoreSelection();
-  var url = prompt('Enter URL:');
-  if (url) {
-    if (!url.startsWith('http')) url = 'https://' + url;
-    document.execCommand('createLink', false, url);
-  }
-  document.getElementById('notesArea').focus();
-}
-
-function fmtHr() {
-  restoreSelection();
-  document.execCommand('insertHorizontalRule', false, null);
-  document.getElementById('notesArea').focus();
-}
-
-// ── NOTES ──
-function insertLabel(label) {
-  restoreSelection();
-  var editor = document.getElementById('notesArea');
-  editor.focus();
-  var colorMap = {
-    'Bull Case': '#16a34a',
-    'Bear Case': '#dc2626',
-    'Catalyst': '#1565ff',
-    'Risk': '#d97706',
-    'Decision': '#16a34a',
-    'Question': '#6b7280'
-  };
-  var color = colorMap[label] || 'var(--text)';
-  document.execCommand('insertHTML', false,
-    '<br><strong style="color:' + color + ';font-size:13px">── ' + label + ' ──</strong><br>&#8203;'
-  );
-  updateCharCount();
-}
-
-function getNotesContent() {
-  var editor = document.getElementById('notesArea');
-  return editor ? editor.innerHTML : '';
-}
-
-function setNotesContent(html) {
-  var editor = document.getElementById('notesArea');
-  if (editor) editor.innerHTML = html || '';
-  updateCharCount();
-}
-
-function updateCharCount() {
-  var editor = document.getElementById('notesArea');
-  var text = editor ? editor.innerText || editor.textContent || '' : '';
-  document.getElementById('charCount').textContent = text.length.toLocaleString() + ' chars';
-}
-
-function saveNotes() {
-  var notes = getNotesContent();
-  var name  = document.getElementById('sessionName').value.trim();
-  var topic = document.getElementById('topicInput').value.trim() || 'Untitled';
-  if (currentSessionId) {
-    var s = sessions.find(function(s){return s.id===currentSessionId;});
-    if (s) { s.notes=notes; s.name=name||s.name; s.sources=sources; saveSessions(); }
-  } else if ((document.getElementById('notesArea').innerText||'').trim()) {
-    var id = Date.now().toString();
-    currentSessionId = id;
-    sessions.push({id:id, name:name, topic:topic, domain:activeDomain, horizon:document.getElementById('horizonSelect').value, notes:notes, sources:sources, result:null, created:Date.now()});
-    if (sessions.length>30) sessions=sessions.slice(-30);
-    saveSessions(); populateSessionSelect();
-  }
-  var t = new Date().toLocaleTimeString('en-US',{hour:'numeric',minute:'2-digit'});
-  document.getElementById('saveIndicator').textContent = 'Saved ' + t;
-  var btn = document.querySelector('.save-notes-btn');
-  btn.textContent = 'Saved ✓'; btn.style.background = 'var(--green)';
-  setTimeout(function(){btn.textContent='Save';btn.style.background='';}, 1500);
-}
-
-function clearNotes() {
-  if ((document.getElementById('notesArea').innerText||'').trim() && !confirm('Clear all notes?')) return;
-  document.getElementById('notesArea').innerHTML = '';
-  updateCharCount();
-}
-
-// ── INIT ──
-populateSessionSelect();
-renderSources();
-updateCharCount();
-
-
-
+// ── INIT ─────────────────────────────────────────────────────
+renderTable();
+updateChartLegend();
+drawChart();
+if(watchlist.length>0) refreshPrices();
+if(portfolio.length>0) setTimeout(autoUpdatePortfolioPrices,500);
+new ResizeObserver(function(){drawChart();}).observe(document.querySelector('.chart-card')||document.body);
 
 // ── SIDEBAR PANELS ──────────────────────────────────────────── } catch(e) {} }, 300);
+
+  // Kalshi Bets
+  try {
+    var sidBets = JSON.parse(localStorage.getItem('onyx_mkt_bets') || '[]');
+    var btCount = document.getElementById('spBtCount');
+    var btBody  = document.getElementById('spBtBody');
+    if(btCount) btCount.textContent = sidBets.length + ' bet' + (sidBets.length !== 1 ? 's' : '');
+    if(btBody){
+      if(!sidBets.length){
+        btBody.innerHTML = '<div class="sp-empty">No bets imported yet</div>';
+      } else {
+        btBody.innerHTML = sidBets.slice(0, 8).map(function(b){
+          var q = b.q || '';
+          var short = q.length > 32 ? q.substring(0, 32) + '...' : q;
+          var oddsStr = '<span style="color:var(--blue)">' + b.yes + '</span>/<span style="color:var(--yellow)">' + b.no + '</span>';
+          var sideStr = b.placed ? ' · <span style="color:' + (b.placedSide === 'YES' ? 'var(--blue)' : 'var(--yellow)') + ';font-weight:700">' + b.placedSide + '</span>' : '';
+          return '<div class="sp-log-row" onclick="goToMarkets()">' +
+            '<div class="sp-log-name">' + short + '</div>' +
+            '<div class="sp-log-date">' + oddsStr + sideStr + '</div>' +
+          '</div>';
+        }).join('');
+      }
+    }
+  } catch(e) {}
 
 
 function renderSidebarPanels(){
