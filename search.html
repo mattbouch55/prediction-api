@@ -348,12 +348,7 @@
         <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor"><path d="M11.742 10.344a6.5 6.5 0 1 0-1.397 1.398h-.001l3.85 3.85a1 1 0 0 0 1.415-1.414l-3.85-3.85zm-5.242 1.656a5.5 5.5 0 1 1 0-11 5.5 5.5 0 0 1 0 11z"/></svg>
         Research
       </a>
-      <div class="nav-section" style="margin-top:16px">Coming Soon</div>
-      <div class="nav-disabled">
-        <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor"><path d="M8 1a2 2 0 0 1 2 2v4H6V3a2 2 0 0 1 2-2zm3 6V3a3 3 0 0 0-6 0v4a2 2 0 0 0-2 2v5a2 2 0 0 0 2 2h6a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2z"/></svg>
-        Trading
-        <span class="nav-chip">Soon</span>
-      </div>
+
     </nav>
       <div class="sidebar-panels" id="sidebarPanels">
         <div class="sp-card open" id="spWatchlist">
@@ -1459,14 +1454,23 @@ function renderSidebarPanels() {
       if (!wl.length) {
         wlBody.innerHTML = '<div class="sp-empty">No stocks added yet</div>';
       } else {
-        wlBody.innerHTML = wl.slice(0, 12).map(function(w) {
-          var sigCls = w.signal ? w.signal.toLowerCase() : '';
-          var sigBadge = w.signal
-            ? '<span class="sp-sig ' + sigCls + '">' + w.signal + '</span>' : '';
+        var portfolio = [];
+          try { portfolio = JSON.parse(localStorage.getItem('onyx_portfolio') || '[]'); } catch(e) {}
+          wlBody.innerHTML = wl.slice(0, 15).map(function(w) {
+          var port = portfolio.find(function(p) { return p.ticker === w.ticker; });
+          var totalVal = '';
+          if (port && port.shares && port.buyPrice) {
+            var lastPt = port.points && port.points.length ? port.points[port.points.length-1].p : port.buyPrice;
+            var total = port.shares * lastPt;
+            var pnl = (lastPt - port.buyPrice) * port.shares;
+            var color = pnl >= 0 ? 'var(--green)' : 'var(--red)';
+            var sign = pnl >= 0 ? '+' : '';
+            totalVal = '<span style="font-family:JetBrains Mono,monospace;font-size:10px;color:' + color + ';font-weight:600">'
+              + '$' + total.toFixed(2) + '</span>';
+          }
           return '<div class="sp-stock-row" data-ticker="' + w.ticker + '">' +
             '<span class="sp-ticker">' + w.ticker + '</span>' +
-            '<span class="sp-price">' + (w.score ? w.score.toFixed(1) : '—') + '</span>' +
-            sigBadge +
+            (totalVal || '<span class="sp-price">—</span>') +
           '</div>';
         }).join('');
         wlBody.querySelectorAll('.sp-stock-row').forEach(function(row) {
