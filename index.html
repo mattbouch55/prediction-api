@@ -81,6 +81,8 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:'Inter'
 .empty-icon{font-size:28px;margin-bottom:10px;opacity:0.2}
 .empty-text{font-size:14px;font-weight:500;color:var(--text2);margin-bottom:4px}
 .empty-sub{font-size:12px;color:var(--grey);line-height:1.5}
+.tbl-scroll::-webkit-scrollbar{width:4px}
+.tbl-scroll::-webkit-scrollbar-thumb{background:var(--border2);border-radius:2px}
 
 /* ADD TICKER */
 .add-row{display:flex;gap:8px;align-items:center;padding:10px 16px}
@@ -242,19 +244,21 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:'Inter'
         <div class="progress-bar"><div class="progress-fill" id="progressFill" style="width:0%"></div></div>
         <div class="progress-txt" id="progressTxt">Scanning...</div>
       </div>
-      <table class="tbl">
-        <thead>
-          <tr>
-            <th>Ticker</th>
-            <th>Price</th>
-            <th>AI Score</th>
-            <th>Shares</th>
-            <th>Total Value</th>
-            <th></th>
-          </tr>
-        </thead>
-        <tbody id="tableBody"></tbody>
-      </table>
+      <div style="overflow-y:auto;max-height:220px">
+        <table class="tbl" style="position:relative">
+          <thead style="position:sticky;top:0;z-index:1">
+            <tr>
+              <th>Ticker</th>
+              <th>Price</th>
+              <th>AI Score</th>
+              <th>Shares</th>
+              <th>Total Value</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody id="tableBody"></tbody>
+        </table>
+      </div>
     </div>
 
     <!-- CHART CARD -->
