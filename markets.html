@@ -16,7 +16,7 @@
   --green:#16a34a;--green-dim:rgba(22,163,74,0.08);
   --red:#dc2626;--red-dim:rgba(220,38,38,0.08);
   --yellow:#d97706;--yellow-dim:rgba(217,119,6,0.08);
-  --shadow:0 2px 8px rgba(0,0,0,0.08),0 1px 3px rgba(12, 4, 4, 0.05);
+  --shadow:0 2px 8px rgba(0,0,0,0.08),0 1px 3px rgba(0,0,0,0.05);
   --sidebar-w:300px;
 }
 html,body{height:100%;background:var(--bg);color:var(--text);font-family:'Inter',sans-serif;font-size:13px;overflow:hidden}
@@ -416,29 +416,81 @@ document.addEventListener('keydown',function(e){
 async function fetchKalshiMarket(){
   var url = document.getElementById('importUrl').value.trim();
   if(!url){ document.getElementById('importUrl').focus(); return; }
+
   var btn = document.getElementById('fetchBtn');
   var status = document.getElementById('fetchStatus');
   btn.disabled = true;
   btn.textContent = '...';
-  status.textContent = 'Fetching live data from Kalshi...';
+  status.textContent = 'Fetching from Kalshi...';
   status.style.color = 'var(--blue)';
+
   try {
-    var res = await fetch(API + '/kalshi-market?url=' + encodeURIComponent(url));
+    // Extract ticker from URL
+    // Kalshi URL: https://kalshi.com/markets/{series}/{slug}/{TICKER}
+    var parts = url.replace(/\/$/, '').split('/');
+    var ticker = parts[parts.length - 1].toUpperCase();
+
+    // Call Kalshi API directly from browser (no CORS restriction since they allow browser requests)
+    var kalshiUrl = 'https://api.elections.kalshi.com/trade-api/v2/markets/' + ticker;
+    var res = await fetch(kalshiUrl, {
+      headers: {
+        'Accept': 'application/json',
+        'Content-Type': 'application/json'
+      }
+    });
+
+    if(!res.ok) {
+      // If direct API fails, try the tickers query param format
+      var res2 = await fetch('https://api.elections.kalshi.com/trade-api/v2/markets?tickers=' + ticker, {
+        headers: { 'Accept': 'application/json' }
+      });
+      if(!res2.ok) throw new Error('Kalshi API returned ' + res.status + '. Make sure you are logged into Kalshi in this browser.');
+      var data2 = await res2.json();
+      var markets = data2.markets || [];
+      if(!markets.length) throw new Error('Market not found for ticker: ' + ticker);
+      fillFromKalshi(markets[0], url);
+      return;
+    }
+
     var data = await res.json();
-    if(data.error){ throw new Error(data.error); }
-    document.getElementById('importQ').value     = data.title || '';
-    document.getElementById('importYes').value   = data.yes   || '';
-    document.getElementById('importNo').value    = data.no    || '';
-    document.getElementById('importClose').value = data.close || '';
-    document.getElementById('importVol').value   = data.volume ? '$'+Number(data.volume).toLocaleString() : '';
-    // Set category
-    var catMap = {'finance':'finance','politics':'politics','crypto':'crypto','macro':'macro','tech':'tech','sports':'sports'};
-    var cat = (data.category||'').toLowerCase();
-    for(var k in catMap){ if(cat.includes(k)){ document.getElementById('importCat').value=k; break; } }
-    status.textContent = '✓ Loaded: '+data.ticker+' · YES '+data.yes+'¢ · NO '+data.no+'¢';
-    status.style.color = 'var(--green)';
+    var m = data.market || data;
+    fillFromKalshi(m, url);
+
   } catch(e) {
     status.textContent = '⚠ ' + e.message;
+    status.style.color = 'var(--red)';
+    btn.disabled = false;
+    btn.textContent = 'Fetch ↗';
+  }
+}
+
+function fillFromKalshi(m, originalUrl) {
+  var status = document.getElementById('fetchStatus');
+  var btn = document.getElementById('fetchBtn');
+  try {
+    var yesPrice = m.yes_bid || m.last_price || m.yes_ask || 50;
+    var noPrice  = m.no_bid  || (100 - yesPrice);
+    var closeStr = '';
+    if(m.close_time) {
+      try {
+        var dt = new Date(m.close_time);
+        closeStr = dt.toLocaleDateString('en-US', {month:'short', day:'numeric', year:'numeric'});
+      } catch(e) { closeStr = m.close_time; }
+    }
+    var vol = m.volume || m.volume_24h || 0;
+    var volStr = vol > 0 ? '$' + (vol >= 1000000 ? (vol/1000000).toFixed(1)+'M' : vol >= 1000 ? (vol/1000).toFixed(1)+'K' : vol) : '';
+
+    document.getElementById('importQ').value     = m.title || m.subtitle || '';
+    document.getElementById('importYes').value   = Math.round(yesPrice);
+    document.getElementById('importNo').value    = Math.round(noPrice);
+    document.getElementById('importClose').value = closeStr;
+    document.getElementById('importVol').value   = volStr;
+
+    var ticker = m.ticker || '';
+    status.textContent = '✓ Loaded: ' + ticker + ' · YES ' + Math.round(yesPrice) + '¢ · NO ' + Math.round(noPrice) + '¢';
+    status.style.color = 'var(--green)';
+  } catch(e) {
+    status.textContent = '⚠ Could not parse market data: ' + e.message;
     status.style.color = 'var(--red)';
   } finally {
     btn.disabled = false;
