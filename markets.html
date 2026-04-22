@@ -464,7 +464,8 @@ let betNotes  = JSON.parse(localStorage.getItem('onyx_mkt_notes')|| '{}');
 renderBetList();
 renderPositions();
 renderPnl();
-renderSidebarPanels();
+try { renderSidebarPanels(); } catch(e) {}
+setTimeout(function(){ try { renderSidebarPanels(); } catch(e) {} }, 300);
 
 // ── IMPORT ────────────────────────────────────────────────────
 document.addEventListener('keydown',function(e){
