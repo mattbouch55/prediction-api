@@ -284,20 +284,6 @@
 
     
 
-    /* ── Stock row notes ── */
-    .notes-toggle-btn { background: none; border: none; color: var(--grey); cursor: pointer; font-size: 13px; padding: 3px 5px; border-radius: 4px; transition: all 0.12s; line-height: 1; }
-    .notes-toggle-btn:hover { color: var(--blue); background: var(--blue-soft); }
-    .notes-toggle-btn.has-note { color: var(--blue); }
-    .stock-notes-row { display: none; }
-    .stock-notes-row.open { display: table-row; }
-    .stock-notes-cell { padding: 0 12px 10px 12px !important; border-bottom: 1px solid var(--border); background: var(--surface2); }
-    .stock-notes-inner { display: flex; gap: 8px; align-items: flex-start; padding-top: 8px; }
-    .stock-notes-textarea { flex: 1; background: var(--surface); border: 1px solid var(--border2); border-radius: 6px; font-family: 'Inter', sans-serif; font-size: 12px; color: var(--text); padding: 8px 10px; resize: none; outline: none; line-height: 1.6; min-height: 60px; transition: border-color 0.15s; }
-    .stock-notes-textarea:focus { border-color: var(--blue); box-shadow: 0 0 0 2px var(--blue-glow); }
-    .stock-notes-textarea::placeholder { color: var(--grey); }
-    .stock-notes-save { background: var(--blue); border: none; color: white; font-family: 'Inter', sans-serif; font-size: 11px; font-weight: 600; padding: 6px 12px; border-radius: 5px; cursor: pointer; transition: background 0.12s; white-space: nowrap; flex-shrink: 0; }
-    .stock-notes-save:hover { background: #1a6fff; }
-    .stock-notes-label { font-size: 10px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.08em; color: var(--grey); padding-top: 10px; flex-shrink: 0; }
   </style>
 </head>
 <body>
@@ -467,7 +453,6 @@ let scanHistory = JSON.parse(localStorage.getItem('onyx_hist_v3')  || '[]');
 let comments    = JSON.parse(localStorage.getItem('onyx_comments') || '{}');
 let prices      = {};
 let selectedTicker = null;
-let stockNotes  = JSON.parse(localStorage.getItem('onyx_stock_notes') || '{}');
 
 const API = 'https://prediction-api-production-ad66.up.railway.app';
 
@@ -497,7 +482,6 @@ function save() {
   localStorage.setItem('onyx_wl_v3',       JSON.stringify(watchlist));
   localStorage.setItem('onyx_hist_v3',     JSON.stringify(scanHistory));
   localStorage.setItem('onyx_comments',    JSON.stringify(comments));
-  localStorage.setItem('onyx_stock_notes', JSON.stringify(stockNotes));
 }
 function savePortfolio() {
   localStorage.setItem('onyx_portfolio', JSON.stringify(portfolio));
@@ -533,42 +517,6 @@ function addTicker() {
   document.getElementById('tickerInput').value = '';
   refreshSinglePrice(ticker);
 }
-
-function toggleStockNotes(ticker) {
-  var row = document.getElementById('notes-row-'+ticker);
-  if (!row) return;
-  row.classList.toggle('open');
-  if (row.classList.contains('open')) {
-    var ta = document.getElementById('notes-ta-'+ticker);
-    if (ta) { ta.value = stockNotes[ticker] || ''; setTimeout(function(){ta.focus();},50); }
-  }
-}
-
-function saveStockNote(ticker) {
-  var ta = document.getElementById('notes-ta-'+ticker);
-  if (!ta) return;
-  var note = ta.value.trim();
-  if (note) {
-    stockNotes[ticker] = note;
-  } else {
-    delete stockNotes[ticker];
-  }
-  localStorage.setItem('onyx_stock_notes', JSON.stringify(stockNotes));
-  // Update toggle button style
-  var btn = document.querySelector('[onclick*="toggleStockNotes(\''+ticker+'\')"]');
-  if (btn) {
-    btn.classList.toggle('has-note', !!note);
-  }
-  // Flash save button
-  var saveBtn = document.querySelector('#notes-row-'+ticker+' .stock-notes-save');
-  if (saveBtn) {
-    var orig = saveBtn.textContent;
-    saveBtn.textContent = 'Saved ✓';
-    saveBtn.style.background = 'var(--green)';
-    setTimeout(function(){ saveBtn.textContent = orig; saveBtn.style.background = ''; }, 1500);
-  }
-}
-
 function removeTicker(ticker) {
   if (selectedTicker === ticker) closePanel();
   watchlist = watchlist.filter(function(w) { return w.ticker !== ticker; });
@@ -918,19 +866,7 @@ function renderTable() {
       '<td><div class="score-wrap"><div class="score-n '+sc+'">'+scoreTxt+'</div><div><div class="score-bar"><div class="score-fill" style="width:'+sbWidth+';background:'+sbColor+'"></div></div>'+(w.signal?'<span class="sig '+sigCls+'" style="margin-top:4px;display:inline-block">'+w.signal+'</span>':'')+'</div></div></td>'+
       '<td style="text-align:center">'+sharesCell(w.ticker)+'</td>'+
       '<td style="text-align:center">'+totalValueCell(w.ticker)+'</td>'+
-      '<td style="text-align:right;padding-right:4px;white-space:nowrap">' +
-        '<button class="notes-toggle-btn'+(stockNotes[w.ticker]?' has-note':'')+'" onclick="event.stopPropagation();toggleStockNotes(\''+w.ticker+'\')" title="Notes">✎</button>' +
-        '<button class="del-btn" data-ticker="'+w.ticker+'" title="Remove">&times;</button>' +
-        '</td>'+
-      '</tr>'+
-      '<tr class="stock-notes-row" id="notes-row-'+w.ticker+'">'+
-        '<td class="stock-notes-cell" colspan="6">'+
-          '<div class="stock-notes-inner">'+
-            '<span class="stock-notes-label">Notes</span>'+
-            '<textarea class="stock-notes-textarea" id="notes-ta-'+w.ticker+'" placeholder="Write your notes about '+w.ticker+'... key facts, thesis, price targets, risks to watch...">'+( stockNotes[w.ticker]||'')+'</textarea>'+
-            '<button class="stock-notes-save" onclick="saveStockNote(\''+w.ticker+'\')">Save</button>'+
-          '</div>'+
-        '</td>'+
+      '<td style="text-align:right;padding-right:12px"><button class="del-btn" data-ticker="'+w.ticker+'" title="Remove">&times;</button></td>'+
       '</tr>';
   });
   body.innerHTML=rows;
