@@ -729,6 +729,7 @@ function renderBetList(){
 function selectBet(id){
   activeBet = bets.find(function(b){return b.id===id;});
   if(!activeBet) return;
+  localStorage.setItem('onyx_active_bet', activeBet.id);
   renderBetList();
   renderResearchWorkspace();
 }
@@ -1439,6 +1440,21 @@ document.addEventListener('DOMContentLoaded', function(){
     initResize();
   }
 })();
+
+
+// Restore active bet from previous page
+function restoreActiveBet(){
+  var savedId = localStorage.getItem('onyx_active_bet');
+  if(savedId){
+    var found = bets.find(function(b){return b.id===savedId;});
+    if(found){
+      activeBet = found;
+      try{ renderBetList(); }catch(e){}
+      try{ renderResearchWorkspace(); }catch(e){}
+    }
+  }
+}
+try{ restoreActiveBet(); }catch(e){}
 
 </script>
 </body>
