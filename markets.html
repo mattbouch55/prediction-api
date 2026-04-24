@@ -617,7 +617,7 @@ function renderBetList(){
     var html = '<div class="inv-item'+(isActive?' active':'')+'" onclick="selectBet(\''+b.id+'\')">'+
       '<div class="inv-top">'+
         '<span class="inv-status open" style="background:var(--surface2);color:var(--grey2);border:1px solid var(--border)">'+b.cat+'</span>'+
-        (verdict?'<span class="inv-status" style="background:'+(verdict==='YES'?'var(--blue-soft)':verdict==='NO'?'var(--yellow-dim)':'var(--surface2)')+';color:'+vColor+'">AI: '+verdict+'</span>':'')+
+        
         '<button class="inv-del" onclick="event.stopPropagation();deleteBet(\''+b.id+'\')">×</button>'+
       '</div>'+
       '<div class="inv-q">'+b.q+'</div>'+
