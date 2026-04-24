@@ -14,7 +14,7 @@ from agent import PredictionAgent, InvestmentAgent
 from database import Database
 from ai_bar import inject as inject_ai_bar
 
-# ── App ────────────────────────────────────────────────────────
+# ── App ──────────────────────────────────────────────────── v1777053763────
 app = FastAPI(title="Onyx AI")
 app.add_middleware(CORSMiddleware, allow_origins=["*"], allow_methods=["*"], allow_headers=["*"])
 
