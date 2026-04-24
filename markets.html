@@ -605,9 +605,6 @@ function renderBetList(){
   }
   list.innerHTML = bets.map(function(b){
     var isActive = activeBet && activeBet.id===b.id;
-    var ai = aiResults[b.id];
-    var verdict = ai ? ai.verdict : null;
-    var vColor = verdict==='YES'?'var(--blue)':verdict==='NO'?'var(--yellow)':'var(--grey)';
     var placed = b.placed;
     var daysLeft = '';
     if(b.close){
