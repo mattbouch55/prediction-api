@@ -739,8 +739,8 @@ function renderResearchWorkspace(){
         '<textarea id="rwDesc" class="rp-textarea" placeholder="Paste resolution criteria from Kalshi..." style="min-height:140px">'+desc+'</textarea>' +
       '</div>' +
       '<div class="rp-section">' +
-        '<div class="rp-label">Sources & Evidence<button onclick="rpSaveSources()" class="rp-mini-btn">Save</button></div>' +
-        '<textarea id="rwSources" class="rp-textarea" placeholder="Paste article links, quotes, evidence, and key findings here..." style="min-height:140px">'+sources+'</textarea>' +
+        '<div class="rp-label">Variations</div>' +
+        '<div id="rpVariations" style="background:var(--bg);border:1px solid var(--border2);border-radius:6px;padding:8px 10px;min-height:140px;font-size:11px"></div>' +
       '</div>' +
     '</div>' +
 
@@ -754,6 +754,8 @@ function renderResearchWorkspace(){
       '<div class="rp-label">Research Notes<button onclick="saveNotes()" class="rp-mini-btn">Save</button></div>' +
       '<textarea id="rwNotes" class="rp-textarea" style="min-height:120px;margin-top:4px">'+notes+'</textarea>' +
     '</div>';
+
+  try{ rpRenderVariations(); }catch(e){}
 
   var descEl = document.getElementById('rwDesc');
   if(descEl) descEl.addEventListener('change', function(){
@@ -778,6 +780,64 @@ function rpAdjustOdds(which, delta){
   var idx = bets.findIndex(function(x){return x.id===activeBet.id;});
   if(idx>=0){ bets[idx] = activeBet; localStorage.setItem('onyx_mkt_bets', JSON.stringify(bets)); }
   renderResearchWorkspace();
+}
+
+
+
+// ── VARIATIONS on research page ──
+function rpRenderVariations(){
+  var b = activeBet;
+  if(!b) return;
+  var box = document.getElementById('rpVariations');
+  if(!box) return;
+  var vars = b.variations || [];
+  var rowsHtml = vars.length === 0
+    ? '<div style="font-size:10.5px;color:var(--grey);font-style:italic;padding:4px 0">No variations yet. Add one below.</div>'
+    : vars.map(function(v, i){
+        return '<div style="display:flex;align-items:center;gap:6px;padding:4px 0;border-bottom:1px solid var(--border)">'+
+          '<span style="flex:1;font-size:11px;color:var(--text);min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+v.q+'</span>'+
+          (v.yes!=null?'<span style="font-family:JetBrains Mono,monospace;font-size:10px;color:var(--blue);font-weight:700">'+v.yes+'\u00a2</span>':'<span style="font-size:10px;color:var(--grey)">—</span>')+
+          '<span style="color:var(--grey);font-size:10px">/</span>'+
+          (v.no!=null?'<span style="font-family:JetBrains Mono,monospace;font-size:10px;color:var(--yellow);font-weight:700">'+v.no+'\u00a2</span>':'<span style="font-size:10px;color:var(--grey)">—</span>')+
+          '<button onclick="rpDeleteVariation('+i+')" style="background:none;border:none;color:var(--grey);cursor:pointer;font-size:13px;padding:0 3px;opacity:0.5">\u00d7</button>'+
+        '</div>';
+      }).join('');
+  box.innerHTML =
+    rowsHtml +
+    '<div style="display:flex;gap:4px;align-items:center;margin-top:8px;padding-top:8px;border-top:1px solid var(--border)">'+
+      '<input id="rpVarQ" type="text" placeholder="Variation question" style="flex:1;background:var(--surface);border:1px solid var(--border2);border-radius:4px;padding:4px 8px;font-family:Inter,sans-serif;font-size:10.5px;outline:none;color:var(--text)"/>'+
+      '<input id="rpVarYes" type="number" placeholder="YES" style="width:46px;background:var(--surface);border:1px solid var(--border2);border-radius:4px;padding:4px 6px;font-family:JetBrains Mono,monospace;font-size:10.5px;outline:none;color:var(--text);text-align:center"/>'+
+      '<input id="rpVarNo" type="number" placeholder="NO" style="width:46px;background:var(--surface);border:1px solid var(--border2);border-radius:4px;padding:4px 6px;font-family:JetBrains Mono,monospace;font-size:10.5px;outline:none;color:var(--text);text-align:center"/>'+
+      '<button onclick="rpAddVariation()" style="background:var(--text);color:#fff;border:none;font-family:Inter,sans-serif;font-size:10.5px;font-weight:600;padding:4px 10px;border-radius:4px;cursor:pointer;white-space:nowrap">+ Add</button>'+
+    '</div>';
+}
+
+function rpAddVariation(){
+  if(!activeBet) return;
+  var qI = document.getElementById('rpVarQ');
+  var yI = document.getElementById('rpVarYes');
+  var nI = document.getElementById('rpVarNo');
+  var q = (qI.value||'').trim();
+  if(!q){ alert('Enter a question'); return; }
+  var y = parseInt(yI.value, 10); if(isNaN(y)) y = null;
+  var n = parseInt(nI.value, 10); if(isNaN(n)) n = null;
+  if(y!==null && (y<1||y>99)){ alert('YES must be 1-99 or blank'); return; }
+  if(n!==null && (n<1||n>99)){ alert('NO must be 1-99 or blank'); return; }
+  activeBet.variations = activeBet.variations || [];
+  activeBet.variations.push({ q: q, yes: y, no: n });
+  var bets = JSON.parse(localStorage.getItem('onyx_mkt_bets')||'[]');
+  var idx = bets.findIndex(function(x){return x.id===activeBet.id;});
+  if(idx>=0){ bets[idx] = activeBet; localStorage.setItem('onyx_mkt_bets', JSON.stringify(bets)); }
+  rpRenderVariations();
+}
+
+function rpDeleteVariation(i){
+  if(!activeBet || !activeBet.variations) return;
+  activeBet.variations.splice(i, 1);
+  var bets = JSON.parse(localStorage.getItem('onyx_mkt_bets')||'[]');
+  var idx = bets.findIndex(function(x){return x.id===activeBet.id;});
+  if(idx>=0){ bets[idx] = activeBet; localStorage.setItem('onyx_mkt_bets', JSON.stringify(bets)); }
+  rpRenderVariations();
 }
 
 function rpSaveSources(){
