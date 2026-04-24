@@ -691,82 +691,82 @@ function renderResearchEmpty(){
 
 function renderResearchWorkspace(){
   var b = activeBet;
-  // Build rich inline header
+  if(!b) return;
+
+  // Header badges
   var hdrRight = document.getElementById('researchHdrRight');
   if(hdrRight){
     hdrRight.innerHTML =
-      '<span style="font-size:10px;font-weight:700;text-transform:uppercase;padding:2px 8px;border-radius:3px;background:var(--surface2);color:var(--grey2);border:1px solid var(--border);letter-spacing:0.05em">'+b.cat+'</span>' +
-      (b.close?'<span style="font-size:10px;color:var(--grey);font-family:JetBrains Mono,monospace">Closes '+b.close+'</span>':'') +
-      (b.url?'<a href="'+b.url+'" target="_blank" style="font-size:10px;color:var(--blue);font-weight:600;text-decoration:none;border:1px solid rgba(21,101,255,0.3);padding:2px 9px;border-radius:4px;background:var(--blue-soft);white-space:nowrap" title="Open this market on Kalshi">Bet on Kalshi ↗</a>':'');
+      '<span class="rp-odds-mini">' +
+        '<span class="yes">YES '+b.yes+'\u00a2</span>' +
+        '<span class="sep">/</span>' +
+        '<span class="no">NO '+b.no+'\u00a2</span>' +
+      '</span>' +
+      '<span style="font-size:10px;font-weight:700;text-transform:uppercase;padding:2px 8px;border-radius:3px;background:var(--surface2);color:var(--grey2);border:1px solid var(--border);letter-spacing:0.05em;margin-left:10px">'+(b.cat||'')+'</span>' +
+      (b.close?'<span style="font-size:10px;color:var(--grey);font-family:JetBrains Mono,monospace;margin-left:8px">Closes '+b.close+'</span>':'') +
+      (b.url?'<a href="'+b.url+'" target="_blank" style="font-size:10px;color:var(--blue);font-weight:600;text-decoration:none;border:1px solid rgba(21,101,255,0.3);padding:2px 9px;border-radius:4px;background:var(--blue-soft);white-space:nowrap;margin-left:8px" title="Open on Kalshi">Bet on Kalshi \u2197</a>':'');
   }
+
   var saved = aiResults[b.id];
   var notes = betNotes[b.id] || '';
+  var desc  = b.description || '';
+  var sources = b.sources || '';
 
   document.getElementById('researchBody').innerHTML =
-
-    // Tiny bet status strip at top
-    '<div style="display:flex;align-items:center;gap:6px;padding:5px 12px;border-bottom:1px solid var(--border);background:var(--surface2);flex-shrink:0">' +
-      '<span style="font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:0.07em;color:var(--grey);white-space:nowrap">Bet Status</span>' +
-      (!b.placed ?
-        '<div style="display:flex;align-items:center;gap:4px;flex:1">' +
-          '<button id="rwSideYes" onclick="rwSelectSide(\'YES\')" style="padding:2px 9px;border-radius:4px;border:1px solid rgba(21,101,255,0.3);background:var(--surface);color:var(--grey2);font-family:Inter,sans-serif;font-size:10px;font-weight:700;cursor:pointer;transition:all 0.12s">YES</button>' +
-          '<button id="rwSideNo" onclick="rwSelectSide(\'NO\')" style="padding:2px 9px;border-radius:4px;border:1px solid rgba(217,119,6,0.3);background:var(--surface);color:var(--grey2);font-family:Inter,sans-serif;font-size:10px;font-weight:700;cursor:pointer;transition:all 0.12s">NO</button>' +
-          '<input id="rwAmount" type="number" min="1" placeholder="$ amount" style="width:80px;background:var(--bg);border:1px solid var(--border2);border-radius:4px;font-family:Inter,sans-serif;font-size:10px;padding:2px 6px;outline:none;color:var(--text)"/>' +
-          '<button onclick="rwMarkPlaced()" style="background:var(--text);color:#fff;border:none;font-family:Inter,sans-serif;font-size:10px;font-weight:600;padding:2px 8px;border-radius:4px;cursor:pointer;white-space:nowrap">Save</button>' +
-        '</div>'
-      :
-        '<div style="display:flex;align-items:center;gap:8px;flex:1">' +
-          '<span style="font-size:11px;font-weight:600;color:var(--text2)">✓ Placed </span>' +
-          '<span style="font-size:11px;font-weight:700;color:'+(b.placedSide==='YES'?'var(--blue)':'var(--yellow)')+'">'+( b.placedSide||'')+'</span>' +
-          '<span style="font-size:11px;font-weight:700;color:var(--green)"> · $'+(b.placedAmount||'')+'</span>' +
-          '<button onclick="rwUnmarkPlaced()" style="background:none;border:1px solid var(--border);color:var(--grey2);cursor:pointer;font-size:9px;padding:2px 7px;border-radius:3px;font-family:Inter,sans-serif;margin-left:auto">Reset</button>' +
-        '</div>') +
-    '</div>' +
-
+    // Compact bet question header
     '<div class="bet-detail-header">' +
       '<div class="bet-detail-q">'+b.q+'</div>' +
+      '<div style="height:3px;background:var(--yellow);border-radius:2px;overflow:hidden;margin-top:6px">' +
+        '<div style="width:'+b.yes+'%;height:100%;background:var(--blue)"></div>' +
+      '</div>' +
+    '</div>' +
 
-      '<div style="display:flex;align-items:center">' +
-        '<div style="display:flex;align-items:center;gap:4px">' +
-          '<span class="yes-pill" style="min-width:52px;text-align:center" id="rwYesPill">YES '+b.yes+'¢</span>' +
-          '<div style="display:flex;flex-direction:column;gap:1px">' +
-            '<button onclick="adjustPrice(1,0)" style="background:none;border:none;cursor:pointer;color:var(--blue);font-size:10px;line-height:1;padding:1px 3px" title="YES +1">▲</button>' +
-            '<button onclick="adjustPrice(-1,0)" style="background:none;border:none;cursor:pointer;color:var(--grey);font-size:10px;line-height:1;padding:1px 3px" title="YES -1">▼</button>' +
-          '</div>' +
+    // Split layout
+    '<div class="rp-split">' +
+      // LEFT
+      '<div class="rp-split-col left">' +
+        '<div class="rp-section">' +
+          '<div class="rp-label">Bet Description</div>' +
+          '<textarea id="rwDesc" class="rp-textarea" placeholder="Paste resolution criteria from Kalshi..." style="min-height:50px;max-height:80px">'+desc+'</textarea>' +
         '</div>' +
-        '<div style="display:flex;align-items:center;gap:4px;margin-left:auto">' +
-          '<div style="display:flex;flex-direction:column;gap:1px">' +
-            '<button onclick="adjustPrice(0,1)" style="background:none;border:none;cursor:pointer;color:var(--yellow);font-size:10px;line-height:1;padding:1px 3px" title="NO +1">▲</button>' +
-            '<button onclick="adjustPrice(0,-1)" style="background:none;border:none;cursor:pointer;color:var(--grey);font-size:10px;line-height:1;padding:1px 3px" title="NO -1">▼</button>' +
-          '</div>' +
-          '<span class="no-pill" style="min-width:52px;text-align:center" id="rwNoPill">NO '+b.no+'¢</span>' +
+        '<div class="rp-section">' +
+          '<button id="runAnalysisBtn" onclick="runAnalysis()" class="rp-analyse-btn">\u2726 Analyse with Onyx</button>' +
+          '<div id="aiStatusBar" class="status-bar" style="margin-top:6px"></div>' +
+          '<div id="aiResultArea" style="margin-top:8px">' + (saved ? renderAIResult(saved) : '') + '</div>' +
+        '</div>' +
+        '<div class="rp-section">' +
+          '<div class="rp-label">Research Notes<button onclick="saveNotes()" class="rp-mini-btn">Save</button></div>' +
+          '<textarea id="rwNotes" class="rp-textarea" style="min-height:100px">'+notes+'</textarea>' +
         '</div>' +
       '</div>' +
-      '<div class="prob-bar" style="margin-top:8px"><div class="prob-fill" id="rwProbFill" style="width:'+b.yes+'%"></div></div>' +
-      '<div class="prob-label"><span id="rwYesLbl">YES '+b.yes+'%</span><span id="rwNoLbl">NO '+b.no+'%</span></div>' +
-      '<div style="margin-top:8px">' +
-        '<div style="font-size:9px;font-weight:600;text-transform:uppercase;letter-spacing:0.07em;color:var(--grey);margin-bottom:3px">Bet Description</div>' +
-        '<textarea id="rwDesc" style="width:100%;background:var(--surface2);border:1px solid var(--border);border-radius:5px;font-family:Inter,sans-serif;font-size:11px;color:var(--text2);padding:6px 9px;resize:none;outline:none;line-height:1.6;min-height:52px;" placeholder="Paste resolution criteria from Kalshi..." oninput="saveRwDesc()">'+(b.desc||'')+'</textarea>' +
+
+      // RIGHT: Sources & Evidence
+      '<div class="rp-split-col right">' +
+        '<div class="rp-section" style="flex:1;display:flex;flex-direction:column">' +
+          '<div class="rp-label">Sources & Evidence<button onclick="rpSaveSources()" class="rp-mini-btn">Save</button></div>' +
+          '<textarea id="rwSources" class="rp-textarea" placeholder="Paste article links, quotes, evidence, and key findings here..." style="flex:1;min-height:400px">'+sources+'</textarea>' +
+        '</div>' +
       '</div>' +
-    '</div>' +
-    '<div class="ai-section">' +
-      '<div style="display:flex;align-items:center;gap:8px">' +
-        '<button class="ai-btn" id="aiAnalyseBtn" onclick="runAnalysis()">✦ Analyse with Onyx</button>' +
-        '<div class="status-bar" id="aiStatus"><div class="spin"></div><span id="aiStatusText">Searching...</span></div>' +
-      '</div>' +
-      '<div id="aiResultArea">' +
-        (saved ? renderAIResult(saved) : '<div style="font-size:11px;color:var(--grey);font-style:italic">Click Analyse to get Onyx AI recommendation on this market.</div>') +
-      '</div>' +
-    '</div>' +
-    '<div style="border-top:1px solid var(--border);margin:0 14px"></div>' +
-    '<div style="padding:10px 14px;display:flex;flex-direction:column;gap:6px">' +
-      '<div style="display:flex;align-items:center;justify-content:space-between">' +
-        '<div style="font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:0.06em;color:var(--grey)">Research Notes</div>' +
-        '<button class="section-btn" onclick="saveNotes()">Save</button>' +
-      '</div>' +
-      '<textarea class="notes-area" id="betNotes" placeholder="Write your research notes, thesis, reasons to bet YES or NO...">'+notes+'</textarea>' +
-    '</div>' +
-    '';
+    '</div>';
+
+  // Save description on change
+  var descEl = document.getElementById('rwDesc');
+  if(descEl) descEl.addEventListener('change', function(){
+    b.description = descEl.value;
+    var bets = JSON.parse(localStorage.getItem('onyx_mkt_bets')||'[]');
+    var idx = bets.findIndex(function(x){return x.id===b.id;});
+    if(idx>=0){ bets[idx].description = descEl.value; localStorage.setItem('onyx_mkt_bets', JSON.stringify(bets)); }
+  });
+}
+
+function rpSaveSources(){
+  if(!activeBet) return;
+  var srcEl = document.getElementById('rwSources');
+  if(!srcEl) return;
+  activeBet.sources = srcEl.value;
+  var bets = JSON.parse(localStorage.getItem('onyx_mkt_bets')||'[]');
+  var idx = bets.findIndex(function(x){return x.id===activeBet.id;});
+  if(idx>=0){ bets[idx].sources = srcEl.value; localStorage.setItem('onyx_mkt_bets', JSON.stringify(bets)); }
 }
 
 
@@ -1233,101 +1233,6 @@ function goToMarkets(){window.location.href='/markets';}
 try{renderSidebarPanels();}catch(e){}
 setTimeout(function(){try{renderSidebarPanels();}catch(e){}},300);
 setInterval(function(){try{renderSidebarPanels();}catch(e){}},30000);
-
-
-
-
-// ==== RESEARCH PAGE — split workspace layout ====
-(function(){
-  var origRender = window.renderResearchWorkspace;
-  window.renderResearchWorkspace = function(){
-    var b = window.activeBet;
-    if(!b) { if(origRender) return origRender(); return; }
-
-    // Header badges on the right of the card header
-    var hdrRight = document.getElementById('researchHdrRight');
-    if(hdrRight){
-      hdrRight.innerHTML =
-        '<span class="rp-odds-mini">' +
-          '<span class="yes">YES '+b.yes+'\u00a2</span>' +
-          '<span class="sep">/</span>' +
-          '<span class="no">NO '+b.no+'\u00a2</span>' +
-        '</span>' +
-        '<span style="font-size:10px;font-weight:700;text-transform:uppercase;padding:2px 8px;border-radius:3px;background:var(--surface2);color:var(--grey2);border:1px solid var(--border);letter-spacing:0.05em;margin-left:10px">'+(b.cat||'')+'</span>' +
-        (b.close?'<span style="font-size:10px;color:var(--grey);font-family:JetBrains Mono,monospace;margin-left:8px">Closes '+b.close+'</span>':'') +
-        (b.url?'<a href="'+b.url+'" target="_blank" style="font-size:10px;color:var(--blue);font-weight:600;text-decoration:none;border:1px solid rgba(21,101,255,0.3);padding:2px 9px;border-radius:4px;background:var(--blue-soft);white-space:nowrap;margin-left:8px" title="Open on Kalshi">Bet on Kalshi \u2197</a>':'');
-    }
-
-    var aiResults = window.aiResults || {};
-    var betNotes  = window.betNotes  || {};
-    var saved = aiResults[b.id];
-    var notes = betNotes[b.id] || '';
-    var desc  = b.description || '';
-    var sources = b.sources || '';
-
-    var html =
-      // Compact bet question header
-      '<div class="bet-detail-header">' +
-        '<div class="bet-detail-q">'+b.q+'</div>' +
-        '<div style="height:3px;background:var(--yellow);border-radius:2px;overflow:hidden;margin-top:6px">' +
-          '<div style="width:'+b.yes+'%;height:100%;background:var(--blue)"></div>' +
-        '</div>' +
-      '</div>' +
-
-      // Split layout
-      '<div class="rp-split">' +
-        // LEFT: all existing features condensed
-        '<div class="rp-split-col left">' +
-          // Description
-          '<div class="rp-section">' +
-            '<div class="rp-label">Bet Description</div>' +
-            '<textarea id="rwDesc" class="rp-textarea" placeholder="Paste resolution criteria from Kalshi..." style="min-height:50px;max-height:80px">'+desc+'</textarea>' +
-          '</div>' +
-          // Analyse button + result
-          '<div class="rp-section">' +
-            '<button id="runAnalysisBtn" onclick="runAnalysis()" class="rp-analyse-btn">\u2726 Analyse with Onyx</button>' +
-            '<div id="aiStatusBar" class="status-bar" style="margin-top:6px"></div>' +
-            '<div id="aiResultArea" style="margin-top:8px">' + (saved ? renderAIResult(saved) : '') + '</div>' +
-          '</div>' +
-          // Research notes
-          '<div class="rp-section">' +
-            '<div class="rp-label">Research Notes<button onclick="saveNotes()" class="rp-mini-btn">Save</button></div>' +
-            '<textarea id="rwNotes" class="rp-textarea" style="min-height:100px">'+notes+'</textarea>' +
-          '</div>' +
-        '</div>' +
-
-        // RIGHT: new Sources & Evidence section
-        '<div class="rp-split-col right">' +
-          '<div class="rp-section" style="flex:1;display:flex;flex-direction:column">' +
-            '<div class="rp-label">Sources & Evidence<button onclick="rpSaveSources()" class="rp-mini-btn">Save</button></div>' +
-            '<textarea id="rwSources" class="rp-textarea" placeholder="Paste article links, quotes, evidence, and key findings here..." style="flex:1;min-height:400px">'+sources+'</textarea>' +
-          '</div>' +
-        '</div>' +
-      '</div>';
-
-    document.getElementById('researchBody').innerHTML = html;
-
-    // Save description on change
-    var descEl = document.getElementById('rwDesc');
-    if(descEl) descEl.addEventListener('change', function(){
-      b.description = descEl.value;
-      var bets = JSON.parse(localStorage.getItem('onyx_mkt_bets')||'[]');
-      var idx = bets.findIndex(function(x){return x.id===b.id;});
-      if(idx>=0){ bets[idx].description = descEl.value; localStorage.setItem('onyx_mkt_bets', JSON.stringify(bets)); }
-    });
-  };
-
-  // Save sources to the bet object
-  window.rpSaveSources = function(){
-    if(!window.activeBet) return;
-    var srcEl = document.getElementById('rwSources');
-    if(!srcEl) return;
-    window.activeBet.sources = srcEl.value;
-    var bets = JSON.parse(localStorage.getItem('onyx_mkt_bets')||'[]');
-    var idx = bets.findIndex(function(x){return x.id===window.activeBet.id;});
-    if(idx>=0){ bets[idx].sources = srcEl.value; localStorage.setItem('onyx_mkt_bets', JSON.stringify(bets)); }
-  };
-})();
 
 </script>
 </body>
