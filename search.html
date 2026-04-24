@@ -693,12 +693,7 @@ function renderResearchWorkspace(){
   var hdrRight = document.getElementById('researchHdrRight');
   if(hdrRight){
     hdrRight.innerHTML =
-      '<span class="rp-odds-mini">' +
-        '<span class="yes">YES '+(b.yes!=null?b.yes+'\u00a2':'—')+'</span>' +
-        '<span class="sep">/</span>' +
-        '<span class="no">NO '+(b.no!=null?b.no+'\u00a2':'—')+'</span>' +
-      '</span>' +
-      '<span style="font-size:10px;font-weight:700;text-transform:uppercase;padding:2px 8px;border-radius:3px;background:var(--surface2);color:var(--grey2);border:1px solid var(--border);letter-spacing:0.05em;margin-left:10px">'+(b.cat||'')+'</span>' +
+      '<span style="font-size:10px;font-weight:700;text-transform:uppercase;padding:2px 8px;border-radius:3px;background:var(--surface2);color:var(--grey2);border:1px solid var(--border);letter-spacing:0.05em">'+(b.cat||'')+'</span>' +
       (b.close?'<span style="font-size:10px;color:var(--grey);font-family:JetBrains Mono,monospace;margin-left:8px">Closes '+b.close+'</span>':'') +
       (b.url?'<a href="'+b.url+'" target="_blank" style="font-size:10px;color:var(--blue);font-weight:600;text-decoration:none;border:1px solid rgba(21,101,255,0.3);padding:2px 9px;border-radius:4px;background:var(--blue-soft);white-space:nowrap;margin-left:8px" title="Open on Kalshi">Bet on Kalshi \u2197</a>':'');
   }
@@ -707,17 +702,43 @@ function renderResearchWorkspace(){
   var notes = betNotes[b.id] || '';
   var desc  = b.description || '';
   var sources = b.sources || '';
+  var yes = (b.yes!=null) ? b.yes : '';
+  var no  = (b.no !=null) ? b.no  : '';
+  var fillW = (b.yes!=null) ? b.yes : 0;
 
   document.getElementById('researchBody').innerHTML =
-    // Bet question header with prob bar
-    '<div class="bet-detail-header">' +
-      '<div class="bet-detail-q">'+b.q+'</div>' +
-      '<div style="height:3px;background:var(--yellow);border-radius:2px;overflow:hidden;margin-top:6px">' +
-        '<div style="width:'+(b.yes!=null?b.yes:0)+'%;height:100%;background:var(--blue)"></div>' +
+    // ── COMPACT HEADER: question + inline YES | bar+arrows | NO ──
+    '<div class="bet-detail-header" style="padding:10px 14px">' +
+      '<div class="bet-detail-q" style="margin-bottom:8px">'+b.q+'</div>' +
+      '<div style="display:flex;align-items:center;gap:8px">' +
+
+        // YES pill with arrows
+        '<div style="display:flex;align-items:center;gap:4px">' +
+          '<span class="yes-pill" style="font-size:11px;padding:3px 9px;min-width:54px;text-align:center">YES '+(yes!==''?yes+'\u00a2':'—')+'</span>' +
+          '<div style="display:flex;flex-direction:column;line-height:0.7">' +
+            '<button onclick="rpAdjustOdds(\'yes\', 1)" style="background:none;border:none;color:var(--grey);cursor:pointer;font-size:10px;padding:0;line-height:1">\u25b2</button>' +
+            '<button onclick="rpAdjustOdds(\'yes\',-1)" style="background:none;border:none;color:var(--grey);cursor:pointer;font-size:10px;padding:0;line-height:1">\u25bc</button>' +
+          '</div>' +
+        '</div>' +
+
+        // Probability bar (small, in middle)
+        '<div style="flex:1;height:5px;background:var(--yellow);border-radius:3px;overflow:hidden;min-width:60px">' +
+          '<div style="width:'+fillW+'%;height:100%;background:var(--blue);transition:width 0.2s"></div>' +
+        '</div>' +
+
+        // NO pill with arrows
+        '<div style="display:flex;align-items:center;gap:4px">' +
+          '<div style="display:flex;flex-direction:column;line-height:0.7">' +
+            '<button onclick="rpAdjustOdds(\'no\', 1)" style="background:none;border:none;color:var(--grey);cursor:pointer;font-size:10px;padding:0;line-height:1">\u25b2</button>' +
+            '<button onclick="rpAdjustOdds(\'no\',-1)" style="background:none;border:none;color:var(--grey);cursor:pointer;font-size:10px;padding:0;line-height:1">\u25bc</button>' +
+          '</div>' +
+          '<span class="no-pill" style="font-size:11px;padding:3px 9px;min-width:54px;text-align:center">NO '+(no!==''?no+'\u00a2':'—')+'</span>' +
+        '</div>' +
+
       '</div>' +
     '</div>' +
 
-    // TOP: Two-column reference section (Description | Sources)
+    // TOP: Two-column reference section
     '<div class="rp-two-col">' +
       '<div class="rp-section">' +
         '<div class="rp-label">Bet Description</div>' +
@@ -747,6 +768,25 @@ function renderResearchWorkspace(){
     var idx = bets.findIndex(function(x){return x.id===b.id;});
     if(idx>=0){ bets[idx].description = descEl.value; localStorage.setItem('onyx_mkt_bets', JSON.stringify(bets)); }
   });
+}
+
+function rpAdjustOdds(which, delta){
+  if(!activeBet) return;
+  var cur = activeBet[which];
+  // If null, start from 50
+  if(cur==null) cur = 50;
+  var v = cur + delta;
+  if(v < 1) v = 1;
+  if(v > 99) v = 99;
+  activeBet[which] = v;
+  // Auto-update the opposite side so they sum to 100 (only if other side was set)
+  var other = which==='yes' ? 'no' : 'yes';
+  activeBet[other] = 100 - v;
+  // persist
+  var bets = JSON.parse(localStorage.getItem('onyx_mkt_bets')||'[]');
+  var idx = bets.findIndex(function(x){return x.id===activeBet.id;});
+  if(idx>=0){ bets[idx] = activeBet; localStorage.setItem('onyx_mkt_bets', JSON.stringify(bets)); }
+  renderResearchWorkspace();
 }
 
 function rpSaveSources(){
