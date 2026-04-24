@@ -333,6 +333,12 @@
     .sp-log-row:hover{background:var(--surface)}
     .sp-log-name{font-size:11px;font-weight:500;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-bottom:1px}
     .sp-log-date{font-size:10px;color:var(--grey)}
+  
+    /* Hide watchlist - coming soon */
+    #spWl { display: none !important; }
+    /* Disable dashboard nav link */
+    a.nav-item[href="/"] { opacity: 0.35; pointer-events: none; cursor: default; }
+    
   </style>
 </head>
 <body>

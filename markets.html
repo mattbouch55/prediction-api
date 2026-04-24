@@ -224,7 +224,13 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:'Inter'
     }
     .panel-toggle:hover { background: var(--blue-soft); color: var(--blue); border-color: rgba(21,101,255,0.3); }
     .main-markets { position: relative; }
-</style>
+
+    /* Hide watchlist - coming soon */
+    #spWl { display: none !important; }
+    /* Disable dashboard nav link */
+    a.nav-item[href="/"] { opacity: 0.35; pointer-events: none; cursor: default; }
+    
+  </style>
 </head>
 <body>
 <div class="layout">
