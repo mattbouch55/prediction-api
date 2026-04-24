@@ -723,7 +723,7 @@ function renderResearchWorkspace(){
 
   var saved = aiResults[b.id];
   var notes = betNotes[b.id] || '';
-  var desc  = b.description || '';
+  var desc  = b.desc || '';
   var sources = b.sources || '';
 
   document.getElementById('researchBody').innerHTML =
@@ -759,10 +759,10 @@ function renderResearchWorkspace(){
 
   var descEl = document.getElementById('rwDesc');
   if(descEl) descEl.addEventListener('change', function(){
-    b.description = descEl.value;
+    b.desc = descEl.value;
     var bets = JSON.parse(localStorage.getItem('onyx_mkt_bets')||'[]');
     var idx = bets.findIndex(function(x){return x.id===b.id;});
-    if(idx>=0){ bets[idx].description = descEl.value; localStorage.setItem('onyx_mkt_bets', JSON.stringify(bets)); }
+    if(idx>=0){ bets[idx].desc = descEl.value; localStorage.setItem('onyx_mkt_bets', JSON.stringify(bets)); }
   });
 }
 
