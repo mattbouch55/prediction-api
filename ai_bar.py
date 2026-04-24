@@ -268,15 +268,5 @@ AI_BAR_JS = r"""
 """
 
 def inject(html: str) -> str:
-    # Inject CSS — handle any whitespace before </style>
-    for style_end in ["  </style>", "</style>"]:
-        if style_end in html:
-            html = html.replace(style_end, AI_BAR_CSS + style_end, 1)
-            break
-    # Inject HTML before main wrapper
-    for wrapper in ['<div class="app">', '<div class="layout">']:
-        if wrapper in html:
-            html = html.replace(wrapper, AI_BAR_HTML + "\n" + wrapper, 1)
-            break
-    html = html.replace("</body>", AI_BAR_JS + "\n</body>", 1)
+    # Onyx AI top bar removed - moved to sidebar
     return html
