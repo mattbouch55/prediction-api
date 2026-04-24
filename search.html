@@ -694,9 +694,9 @@ function renderResearchWorkspace(){
   if(hdrRight){
     hdrRight.innerHTML =
       '<span class="rp-odds-mini">' +
-        '<span class="yes">YES '+b.yes+'\u00a2</span>' +
+        '<span class="yes">YES '+(b.yes!=null?b.yes+'\u00a2':'—')+'</span>' +
         '<span class="sep">/</span>' +
-        '<span class="no">NO '+b.no+'\u00a2</span>' +
+        '<span class="no">NO '+(b.no!=null?b.no+'\u00a2':'—')+'</span>' +
       '</span>' +
       '<span style="font-size:10px;font-weight:700;text-transform:uppercase;padding:2px 8px;border-radius:3px;background:var(--surface2);color:var(--grey2);border:1px solid var(--border);letter-spacing:0.05em;margin-left:10px">'+(b.cat||'')+'</span>' +
       (b.close?'<span style="font-size:10px;color:var(--grey);font-family:JetBrains Mono,monospace;margin-left:8px">Closes '+b.close+'</span>':'') +
@@ -713,7 +713,7 @@ function renderResearchWorkspace(){
     '<div class="bet-detail-header">' +
       '<div class="bet-detail-q">'+b.q+'</div>' +
       '<div style="height:3px;background:var(--yellow);border-radius:2px;overflow:hidden;margin-top:6px">' +
-        '<div style="width:'+b.yes+'%;height:100%;background:var(--blue)"></div>' +
+        '<div style="width:'+(b.yes!=null?b.yes:0)+'%;height:100%;background:var(--blue)"></div>' +
       '</div>' +
     '</div>' +
 
