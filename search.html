@@ -230,12 +230,9 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:'Inter'
     a.nav-item[href="/"] { display: none !important; }
 
   
-    /* Research page - collapse import panel by default */
-    .col-import { width: 0 !important; padding: 0 !important; overflow: hidden; }
-    .col-import.collapsed { width: 0 !important; }
-    .col-import.expanded { width: 220px !important; padding: initial !important; }
-    /* Start toggle in closed state */
-    #importToggle { left: 0; }
+    /* Research page - hide import panel entirely */
+    .col-import { display: none !important; }
+    #importToggle { display: none !important; }
 
   </style>
 </head>
