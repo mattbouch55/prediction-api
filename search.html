@@ -241,16 +241,13 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:'Inter'
     /* Hide odds adjustment arrows */
     #researchBody div[style*="flex-direction:column"][style*="gap:4px"] { display: none !important; }
     /* Make researchBody flex container so split fills height */
-    #researchBody { display: flex !important; flex-direction: column !important; overflow: hidden !important; }
     /* Inline mini odds (header) */
     .rp-odds-mini { display: inline-flex; align-items: center; gap: 3px; font-family: 'JetBrains Mono', monospace; font-size: 11px; font-weight: 700; }
     .rp-odds-mini .yes { color: var(--blue); }
     .rp-odds-mini .no  { color: var(--yellow); }
     .rp-odds-mini .sep { color: var(--grey); font-weight: 400; }
     /* Split layout */
-    .rp-split { display: grid; grid-template-columns: 1fr 1fr; gap: 0; flex: 1; min-height: 300px; overflow: hidden; }
-    .rp-split-col { display: flex; flex-direction: column; overflow-y: auto; padding: 10px 14px; min-width: 0; }
-    .rp-split-col.left { border-right: 1px solid var(--border); }
+    .rp-two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; padding: 12px 14px; border-bottom: 1px solid var(--border); }
     .rp-section { margin-bottom: 12px; }
     .rp-label { font-size: 9px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em; color: var(--grey); margin-bottom: 4px; display: flex; justify-content: space-between; align-items: center; }
     .rp-textarea { width: 100%; background: var(--bg); border: 1px solid var(--border2); border-radius: 6px; padding: 8px 10px; font-family: Inter, sans-serif; font-size: 11px; line-height: 1.5; color: var(--text); outline: none; resize: vertical; box-sizing: border-box; }
@@ -693,7 +690,6 @@ function renderResearchWorkspace(){
   var b = activeBet;
   if(!b) return;
 
-  // Header badges
   var hdrRight = document.getElementById('researchHdrRight');
   if(hdrRight){
     hdrRight.innerHTML =
@@ -713,7 +709,7 @@ function renderResearchWorkspace(){
   var sources = b.sources || '';
 
   document.getElementById('researchBody').innerHTML =
-    // Compact bet question header
+    // Bet question header with prob bar
     '<div class="bet-detail-header">' +
       '<div class="bet-detail-q">'+b.q+'</div>' +
       '<div style="height:3px;background:var(--yellow);border-radius:2px;overflow:hidden;margin-top:6px">' +
@@ -721,35 +717,29 @@ function renderResearchWorkspace(){
       '</div>' +
     '</div>' +
 
-    // Split layout
-    '<div class="rp-split">' +
-      // LEFT
-      '<div class="rp-split-col left">' +
-        '<div class="rp-section">' +
-          '<div class="rp-label">Bet Description</div>' +
-          '<textarea id="rwDesc" class="rp-textarea" placeholder="Paste resolution criteria from Kalshi..." style="min-height:50px;max-height:80px">'+desc+'</textarea>' +
-        '</div>' +
-        '<div class="rp-section">' +
-          '<button id="runAnalysisBtn" onclick="runAnalysis()" class="rp-analyse-btn">\u2726 Analyse with Onyx</button>' +
-          '<div id="aiStatusBar" class="status-bar" style="margin-top:6px"></div>' +
-          '<div id="aiResultArea" style="margin-top:8px">' + (saved ? renderAIResult(saved) : '') + '</div>' +
-        '</div>' +
-        '<div class="rp-section">' +
-          '<div class="rp-label">Research Notes<button onclick="saveNotes()" class="rp-mini-btn">Save</button></div>' +
-          '<textarea id="rwNotes" class="rp-textarea" style="min-height:100px">'+notes+'</textarea>' +
-        '</div>' +
+    // TOP: Two-column reference section (Description | Sources)
+    '<div class="rp-two-col">' +
+      '<div class="rp-section">' +
+        '<div class="rp-label">Bet Description</div>' +
+        '<textarea id="rwDesc" class="rp-textarea" placeholder="Paste resolution criteria from Kalshi..." style="min-height:140px">'+desc+'</textarea>' +
       '</div>' +
+      '<div class="rp-section">' +
+        '<div class="rp-label">Sources & Evidence<button onclick="rpSaveSources()" class="rp-mini-btn">Save</button></div>' +
+        '<textarea id="rwSources" class="rp-textarea" placeholder="Paste article links, quotes, evidence, and key findings here..." style="min-height:140px">'+sources+'</textarea>' +
+      '</div>' +
+    '</div>' +
 
-      // RIGHT: Sources & Evidence
-      '<div class="rp-split-col right">' +
-        '<div class="rp-section" style="flex:1;display:flex;flex-direction:column">' +
-          '<div class="rp-label">Sources & Evidence<button onclick="rpSaveSources()" class="rp-mini-btn">Save</button></div>' +
-          '<textarea id="rwSources" class="rp-textarea" placeholder="Paste article links, quotes, evidence, and key findings here..." style="flex:1;min-height:400px">'+sources+'</textarea>' +
-        '</div>' +
-      '</div>' +
+    // BOTTOM: Active research section (Analyse + Notes) full width
+    '<div style="padding:12px 14px;border-top:1px solid var(--border)">' +
+      '<button id="runAnalysisBtn" onclick="runAnalysis()" class="rp-analyse-btn">\u2726 Analyse with Onyx</button>' +
+      '<div id="aiStatusBar" class="status-bar" style="margin-top:8px"></div>' +
+      '<div id="aiResultArea" style="margin-top:10px">' + (saved ? renderAIResult(saved) : '') + '</div>' +
+    '</div>' +
+    '<div style="padding:12px 14px;border-top:1px solid var(--border)">' +
+      '<div class="rp-label">Research Notes<button onclick="saveNotes()" class="rp-mini-btn">Save</button></div>' +
+      '<textarea id="rwNotes" class="rp-textarea" style="min-height:120px;margin-top:4px">'+notes+'</textarea>' +
     '</div>';
 
-  // Save description on change
   var descEl = document.getElementById('rwDesc');
   if(descEl) descEl.addEventListener('change', function(){
     b.description = descEl.value;
