@@ -556,8 +556,8 @@ function updateProbBar(yes, no) {
 
 function importBet(){
   var q      = document.getElementById('importQ').value.trim();
-  var yes    = parseInt(document.getElementById('importYes').value);
-  var no     = parseInt(document.getElementById('importNo').value);
+  var yesV = document.getElementById('importYes').value.trim(); var yes = yesV ? parseInt(yesV,10) : null; if(yes!==null && isNaN(yes)) yes = null;
+  var noV  = document.getElementById('importNo').value.trim();  var no  = noV  ? parseInt(noV,10)  : null; if(no!==null && isNaN(no)) no = null;
   var close  = document.getElementById('importClose').value.trim();
   var cat    = document.getElementById('importCat').value;
   var url    = document.getElementById('importUrl').value.trim();
@@ -565,7 +565,7 @@ function importBet(){
   var desc   = document.getElementById('importDesc').value.trim();
   var amount = parseFloat(document.getElementById('importAmount').value);
   if(!q){ document.getElementById('importQ').focus(); return; }
-  if(!yes||!no){ alert('Please enter YES and NO prices'); return; }
+  // YES/NO prices are optional
   var bet = {
     id: Date.now().toString(), q, yes, no, close, cat, url, desc: desc||'', created: Date.now(),
     placed: !!(side && amount),
@@ -1228,8 +1228,11 @@ function addVariation(){
   var q = (qI.value||'').trim();
   var y = parseInt(yI.value,10);
   var n = parseInt(nI.value,10);
-  if(!q || isNaN(y) || isNaN(n)){ alert('Enter a question, YES and NO prices'); return; }
-  if(y < 1 || y > 99 || n < 1 || n > 99){ alert('Prices must be between 1-99'); return; }
+  if(!q){ alert('Enter a question'); return; }
+  if(isNaN(y)) y = null;
+  if(isNaN(n)) n = null;
+  if(y!==null && (y<1||y>99)){ alert('YES must be 1-99 or blank'); return; }
+  if(n!==null && (n<1||n>99)){ alert('NO must be 1-99 or blank'); return; }
   activeBet.variations = activeBet.variations || [];
   activeBet.variations.push({ q: q, yes: y, no: n });
   persistBets();
