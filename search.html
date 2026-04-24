@@ -296,6 +296,15 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:'Inter'
     .ai-sb-send:hover { background: #0e4cc7; }
     .ai-sb-send:disabled { opacity: 0.5; cursor: not-allowed; }
 
+  
+    /* ── SIDEBAR RESIZE HANDLE ── */
+    :root { --sidebar-w: 300px; }
+    .sidebar { position: relative; width: var(--sidebar-w); }
+    .sb-resize { position: absolute; top: 0; right: -3px; width: 6px; height: 100%; cursor: col-resize; z-index: 200; background: transparent; transition: background 0.12s; }
+    .sb-resize:hover, .sb-resize.dragging { background: var(--blue); opacity: 0.5; }
+    body.sb-resizing { cursor: col-resize !important; user-select: none !important; }
+    body.sb-resizing * { cursor: col-resize !important; user-select: none !important; }
+
   </style>
 </head>
 <body>
@@ -1441,6 +1450,54 @@ document.addEventListener('DOMContentLoaded', function(){
     });
   }
 });
+
+
+// ── SIDEBAR RESIZE ──
+(function(){
+  // Restore saved width
+  var savedW = parseInt(localStorage.getItem('onyx_sidebar_w') || '300', 10);
+  if(savedW >= 220 && savedW <= 600){
+    document.documentElement.style.setProperty('--sidebar-w', savedW + 'px');
+  }
+
+  function initResize(){
+    var sidebar = document.querySelector('.sidebar');
+    if(!sidebar || sidebar.querySelector('.sb-resize')) return;
+    var handle = document.createElement('div');
+    handle.className = 'sb-resize';
+    sidebar.appendChild(handle);
+
+    var dragging = false;
+    handle.addEventListener('mousedown', function(e){
+      dragging = true;
+      handle.classList.add('dragging');
+      document.body.classList.add('sb-resizing');
+      e.preventDefault();
+    });
+    document.addEventListener('mousemove', function(e){
+      if(!dragging) return;
+      var w = e.clientX;
+      if(w < 220) w = 220;
+      if(w > 600) w = 600;
+      document.documentElement.style.setProperty('--sidebar-w', w + 'px');
+    });
+    document.addEventListener('mouseup', function(){
+      if(!dragging) return;
+      dragging = false;
+      handle.classList.remove('dragging');
+      document.body.classList.remove('sb-resizing');
+      var cur = getComputedStyle(document.documentElement).getPropertyValue('--sidebar-w').trim();
+      var px = parseInt(cur, 10);
+      if(px) localStorage.setItem('onyx_sidebar_w', String(px));
+    });
+  }
+
+  if(document.readyState === 'loading'){
+    document.addEventListener('DOMContentLoaded', initResize);
+  } else {
+    initResize();
+  }
+})();
 
 </script>
 </body>
