@@ -1464,28 +1464,6 @@ function renderSidebarPanels(){
       else el.classList.add('open');
     });
   }catch(e){}
-    var wlC=document.getElementById('spWlCount');
-    if(wlC) wlC.textContent=wl.length+' stock'+(wl.length!==1?'s':'');
-    var wb=document.getElementById('spWlBody');
-    if(wb){
-      if(!wl.length){ wb.innerHTML='<div class="sp-empty">No stocks added yet</div>'; }
-      else {
-        wb.innerHTML=wl.slice(0,15).map(function(w){
-          var p=portfolio.find(function(x){return x.ticker===w.ticker;});
-          var val='<span class="sp-price">—</span>';
-          if(p&&p.shares&&p.buyPrice){
-            var lp=p.points&&p.points.length?p.points[p.points.length-1].p:p.buyPrice;
-            var pnl=(lp-p.buyPrice)*p.shares;
-            val='<span style="font-family:JetBrains Mono,monospace;font-size:11px;font-weight:600;color:'+(pnl>=0?'var(--green)':'var(--red)')+'">$'+(p.shares*lp).toFixed(2)+'</span>';
-          }
-          return '<div class="sp-stock-row" data-ticker="'+w.ticker+'"><span class="sp-ticker">'+w.ticker+'</span>'+val+'</div>';
-        }).join('');
-        wb.querySelectorAll('.sp-stock-row').forEach(function(row){
-          row.addEventListener('click',function(){spGoStock(row.dataset.ticker);});
-        });
-      }
-    }
-  }catch(e){}
   // ── Research Log ──
   try{
     var sess=JSON.parse(localStorage.getItem('onyx_sessions')||'[]');
