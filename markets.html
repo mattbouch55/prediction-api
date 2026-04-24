@@ -106,7 +106,7 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:'Inter'
 .bet-del{background:none;border:none;color:var(--grey);cursor:pointer;font-size:14px;padding:0 2px;flex-shrink:0}
 .bet-del:hover{color:var(--red)}
 
-/* RESEARCH WORKSPACE */
+/* BET DESCRIPTION */
 .research-empty{padding:40px 20px;text-align:center}
 .bet-detail-header{padding:12px 14px;border-bottom:1px solid var(--border)}
 .bet-detail-q{font-size:14px;font-weight:600;color:var(--text);line-height:1.4;margin-bottom:8px}
@@ -392,11 +392,11 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:'Inter'
 
   </div>
 
-  <!-- COL 2: RESEARCH WORKSPACE -->
+  <!-- COL 2: BET DESCRIPTION -->
   <div class="col-research">
     <div class="card" id="researchCard" style="flex:1;display:flex;flex-direction:column;min-height:0">
       <div class="ch">
-        <span class="ct">Research Workspace</span>
+        <span class="ct">Bet Description</span>
         <div id="researchHdrRight" style="display:flex;align-items:center;gap:8px;margin-left:auto">
           <span class="cs" id="researchSub">Select a market to research</span>
         </div>
@@ -721,15 +721,7 @@ function renderResearchWorkspace(){
         '<textarea id="rwDesc" style="width:100%;background:var(--surface2);border:1px solid var(--border);border-radius:5px;font-family:Inter,sans-serif;font-size:11px;color:var(--text2);padding:6px 9px;resize:none;outline:none;line-height:1.6;min-height:52px;" placeholder="Paste resolution criteria from Kalshi..." oninput="saveRwDesc()">'+(b.desc||'')+'</textarea>' +
       '</div>' +
     '</div>' +
-    '<div class="ai-section">' +
-      '<div style="display:flex;align-items:center;gap:8px">' +
-        '<button class="ai-btn" id="aiAnalyseBtn" onclick="runAnalysis()">✦ Analyse with Onyx</button>' +
-        '<div class="status-bar" id="aiStatus"><div class="spin"></div><span id="aiStatusText">Searching...</span></div>' +
-      '</div>' +
-      '<div id="aiResultArea">' +
-        (saved ? renderAIResult(saved) : '<div style="font-size:11px;color:var(--grey);font-style:italic">Click Analyse to get Onyx AI recommendation on this market.</div>') +
-      '</div>' +
-    '</div>' +
+    '<div class="ai-section" id="variationsSection"><!-- variations inserted here --></div>' +
     '<div style="border-top:1px solid var(--border);margin:0 14px"></div>' +
     '<div style="padding:10px 14px;display:flex;flex-direction:column;gap:6px">' +
       '<div style="display:flex;align-items:center;justify-content:space-between">' +
@@ -1191,6 +1183,78 @@ function goToMarkets(){window.location.href='/markets';}
 try{renderSidebarPanels();}catch(e){}
 setTimeout(function(){try{renderSidebarPanels();}catch(e){}},300);
 setInterval(function(){try{renderSidebarPanels();}catch(e){}},30000);
+
+
+
+// ── BET VARIATIONS ──
+function renderVariations(){
+  var b = activeBet;
+  if(!b) return;
+  var section = document.getElementById('variationsSection');
+  if(!section) return;
+  var vars = b.variations || [];
+  var rowsHtml = vars.length === 0
+    ? '<div style="font-size:11px;color:var(--grey);font-style:italic;padding:6px 0">No variations yet. Add one below.</div>'
+    : vars.map(function(v, i){
+        return '<div class="rv-row" style="display:flex;align-items:center;gap:6px;padding:5px 0;border-bottom:1px solid var(--border)">'+
+          '<span style="flex:1;font-size:11px;color:var(--text);min-width:0;overflow:hidden;text-overflow:ellipsis">'+v.q+'</span>'+
+          '<span style="font-family:JetBrains Mono,monospace;font-size:10px;color:var(--blue);font-weight:700">'+v.yes+'\u00a2</span>'+
+          '<span style="color:var(--grey);font-size:10px">/</span>'+
+          '<span style="font-family:JetBrains Mono,monospace;font-size:10px;color:var(--yellow);font-weight:700">'+v.no+'\u00a2</span>'+
+          '<button onclick="deleteVariation('+i+')" style="background:none;border:none;color:var(--grey);cursor:pointer;font-size:14px;padding:0 4px;opacity:0.5">\u00d7</button>'+
+        '</div>';
+      }).join('');
+
+  section.innerHTML =
+    '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">'+
+      '<div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:0.08em;color:var(--grey)">Variations</div>'+
+      '<span style="font-size:10px;color:var(--grey)">'+vars.length+' total</span>'+
+    '</div>'+
+    '<div style="background:var(--surface);border:1px solid var(--border);border-radius:6px;padding:6px 10px;margin-bottom:8px">'+rowsHtml+'</div>'+
+    // Add new variation form
+    '<div style="display:flex;gap:4px;align-items:center">'+
+      '<input id="varQ" type="text" placeholder="Variation question" style="flex:1;background:var(--surface);border:1px solid var(--border2);border-radius:5px;padding:5px 9px;font-family:Inter,sans-serif;font-size:11px;outline:none;color:var(--text)"/>'+
+      '<input id="varYes" type="number" min="1" max="99" placeholder="YES" style="width:52px;background:var(--surface);border:1px solid var(--border2);border-radius:5px;padding:5px 7px;font-family:JetBrains Mono,monospace;font-size:11px;outline:none;color:var(--text);text-align:center"/>'+
+      '<input id="varNo" type="number" min="1" max="99" placeholder="NO" style="width:52px;background:var(--surface);border:1px solid var(--border2);border-radius:5px;padding:5px 7px;font-family:JetBrains Mono,monospace;font-size:11px;outline:none;color:var(--text);text-align:center"/>'+
+      '<button onclick="addVariation()" style="background:var(--text);color:#fff;border:none;font-family:Inter,sans-serif;font-size:11px;font-weight:600;padding:5px 12px;border-radius:5px;cursor:pointer;white-space:nowrap">+ Add</button>'+
+    '</div>';
+}
+
+function addVariation(){
+  if(!activeBet) return;
+  var qI = document.getElementById('varQ');
+  var yI = document.getElementById('varYes');
+  var nI = document.getElementById('varNo');
+  var q = (qI.value||'').trim();
+  var y = parseInt(yI.value,10);
+  var n = parseInt(nI.value,10);
+  if(!q || isNaN(y) || isNaN(n)){ alert('Enter a question, YES and NO prices'); return; }
+  if(y < 1 || y > 99 || n < 1 || n > 99){ alert('Prices must be between 1-99'); return; }
+  activeBet.variations = activeBet.variations || [];
+  activeBet.variations.push({ q: q, yes: y, no: n });
+  persistBets();
+  renderVariations();
+}
+
+function deleteVariation(idx){
+  if(!activeBet || !activeBet.variations) return;
+  activeBet.variations.splice(idx, 1);
+  persistBets();
+  renderVariations();
+}
+
+function persistBets(){
+  var bets = JSON.parse(localStorage.getItem('onyx_mkt_bets')||'[]');
+  var idx = bets.findIndex(function(x){return x.id===activeBet.id;});
+  if(idx>=0){ bets[idx] = activeBet; localStorage.setItem('onyx_mkt_bets', JSON.stringify(bets)); }
+}
+
+// Hook into existing render - call renderVariations after renderResearchWorkspace
+var _origRenderWS = window.renderResearchWorkspace;
+window.renderResearchWorkspace = function(){
+  if(_origRenderWS) _origRenderWS.apply(this, arguments);
+  try{ renderVariations(); }catch(e){}
+};
 
 </script>
 </body>
