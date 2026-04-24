@@ -265,6 +265,17 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:'Inter'
       resize: vertical !important;
     }
 
+  
+    /* ==== RESEARCH PAGE — no editing controls, clean display ==== */
+    /* Hide the bet status editing strip (YES/NO buttons, $ input, Save) */
+    #researchBody > div:first-child[style*="background:var(--surface2)"] { display: none !important; }
+    /* Hide odds adjustment arrows */
+    #researchBody div[style*="flex-direction:column"][style*="gap:4px"] { display: none !important; }
+    /* Compact YES/NO pills like the inventory mini format */
+    #researchBody .yes-pill, #researchBody .no-pill { font-size: 10px !important; padding: 2px 8px !important; }
+    /* Thinner probability bar */
+    #researchBody div[style*="height:6px"] { height: 4px !important; }
+
   </style>
 </head>
 <body>
