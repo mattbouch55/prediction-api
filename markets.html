@@ -241,26 +241,30 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:'Inter'
     </div>
   </div>
   <nav class="sidebar-nav">
-    <div class="nav-section" style="margin-bottom:4px">Coming Soon</div>
-    <div class="nav-item" style="opacity:0.4;cursor:default;pointer-events:none;margin-bottom:8px">
-      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>
-      Dashboard
-    </div>
     <div class="nav-sec">Main</div>
-    <a class="nav-item active" href="/markets">
-      <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor"><path d="M0 11l3-5 4 3 3-7 3 4 3-2v7H0z"/></svg>
-      Markets
+    <a class="nav-item" href="/">
+      <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor"><path d="M2 2h5v5H2V2zm0 7h5v5H2V9zm7-7h5v5H9V2zm0 7h5v5H9V9z"/></svg>
+      Dashboard
     </a>
     <a class="nav-item" href="/search">
       <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor"><path d="M11.742 10.344a6.5 6.5 0 1 0-1.397 1.398h-.001l3.85 3.85a1 1 0 0 0 1.415-1.414l-3.85-3.85zm-5.242 1.656a5.5 5.5 0 1 1 0-11 5.5 5.5 0 0 1 0 11z"/></svg>
       Research
+    </a>
+    <a class="nav-item active" href="/markets">
+      <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor"><path d="M0 11l3-5 4 3 3-7 3 4 3-2v7H0z"/></svg>
+      Markets
     </a>
   </nav>
   <div style="padding:10px 10px 4px;flex-shrink:0">
     <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:0.1em;color:var(--grey);padding:6px 2px 4px">Portfolio</div>
   </div>
   <div class="sidebar-panels" id="sidebarPanels">
-    </div>
+    <div class="sp-card open" id="spWatchlist">
+      <div class="sp-header" onclick="toggleSP('spWatchlist')">
+        <span class="sp-title">Watchlist</span>
+        <div style="display:flex;align-items:center;gap:6px"><span class="sp-count" id="spWlCount">0 stocks</span><span class="sp-arrow">▶</span></div>
+      </div>
+      <div class="sp-body" id="spWlBody"><div class="sp-empty">No stocks added yet</div></div>
     </div>
     <div class="sp-card open" id="spResearch">
       <div class="sp-header" onclick="toggleSP('spResearch')">
@@ -1086,6 +1090,32 @@ function renderSidebarPanels(){
       if(spState[id]===false) el.classList.remove('open');
       else el.classList.add('open');
     });
+  }catch(e){}
+  try{
+    var wl=JSON.parse(localStorage.getItem('onyx_wl_v3')||'[]');
+    var portfolio=[];
+    try{portfolio=JSON.parse(localStorage.getItem('onyx_portfolio')||'[]');}catch(e){}
+    var wlC=document.getElementById('spWlCount');
+    if(wlC) wlC.textContent=wl.length+' stock'+(wl.length!==1?'s':'');
+    var wb=document.getElementById('spWlBody');
+    if(wb){
+      if(!wl.length){ wb.innerHTML='<div class="sp-empty">No stocks added yet</div>'; }
+      else {
+        wb.innerHTML=wl.slice(0,15).map(function(w){
+          var p=portfolio.find(function(x){return x.ticker===w.ticker;});
+          var val='<span class="sp-price">—</span>';
+          if(p&&p.shares&&p.buyPrice){
+            var lp=p.points&&p.points.length?p.points[p.points.length-1].p:p.buyPrice;
+            var pnl=(lp-p.buyPrice)*p.shares;
+            val='<span style="font-family:JetBrains Mono,monospace;font-size:11px;font-weight:600;color:'+(pnl>=0?'var(--green)':'var(--red)')+'">$'+(p.shares*lp).toFixed(2)+'</span>';
+          }
+          return '<div class="sp-stock-row" data-ticker="'+w.ticker+'"><span class="sp-ticker">'+w.ticker+'</span>'+val+'</div>';
+        }).join('');
+        wb.querySelectorAll('.sp-stock-row').forEach(function(row){
+          row.addEventListener('click',function(){spGoStock(row.dataset.ticker);});
+        });
+      }
+    }
   }catch(e){}
   try{
     var sess=JSON.parse(localStorage.getItem('onyx_sessions')||'[]');

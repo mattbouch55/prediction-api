@@ -14,7 +14,7 @@ from agent import PredictionAgent, InvestmentAgent
 from database import Database
 from ai_bar import inject as inject_ai_bar
 
-# ── App ──────────────────────────────────────────────────── v1777053763────
+# ── App ────────────────────────────────────────────────────────
 app = FastAPI(title="Onyx AI")
 app.add_middleware(CORSMiddleware, allow_origins=["*"], allow_methods=["*"], allow_headers=["*"])
 
@@ -30,8 +30,7 @@ HEADERS       = {"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleW
 # ── Pages ──────────────────────────────────────────────────────
 @app.get("/", response_class=HTMLResponse)
 def dashboard():
-    from fastapi.responses import RedirectResponse
-    return RedirectResponse(url="/markets")
+    return inject_ai_bar(open("index.html").read())
 
 @app.get("/search", response_class=HTMLResponse)
 def research():
