@@ -229,9 +229,37 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:'Inter'
     #spWatchlist { display: none !important; }
     a.nav-item[href="/"] { display: none !important; }
 
+  
+    /* ── TOP NAV BAR ── */
+    .topnav { position: fixed; top: 0; left: var(--sidebar-w); right: 0; height: 38px; background: var(--surface); border-bottom: 1px solid var(--border); display: flex; align-items: center; gap: 4px; padding: 0 16px; z-index: 90; }
+    .topnav-link { display: inline-flex; align-items: center; gap: 6px; padding: 6px 14px; border-radius: 6px; font-size: 12px; font-weight: 600; color: var(--grey2); text-decoration: none; transition: all 0.12s; }
+    .topnav-link:hover { background: var(--surface2); color: var(--text); }
+    .topnav-link.active { background: var(--blue-soft); color: var(--blue); }
+    /* Push the AI bar and main content down to make room for top nav */
+    .ai-topbar { top: 38px !important; }
+    .layout > .col-research,
+    .research,
+    .col-research { padding-top: 169px !important; }
+    /* Hide MAIN section nav links in sidebar (now in top bar) */
+    .sidebar-nav .nav-sec:not(:first-child),
+    .sidebar-nav .nav-section:not(:first-child) { display: none; }
+    .sidebar-nav a.nav-item[href="/markets"],
+    .sidebar-nav a.nav-item[href="/search"] { display: none; }
+
   </style>
 </head>
 <body>
+<div class="topnav">
+  <a class="topnav-link active" href="/markets">
+    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+    Markets
+  </a>
+  <a class="topnav-link" href="/search">
+    <svg width="13" height="13" viewBox="0 0 16 16" fill="currentColor"><path d="M11.742 10.344a6.5 6.5 0 1 0-1.397 1.398h-.001c.03.04.062.078.098.115l3.85 3.85a1 1 0 0 0 1.415-1.414l-3.85-3.85a1.007 1.007 0 0 0-.115-.1zM12 6.5a5.5 5.5 0 1 1-11 0 5.5 5.5 0 0 1 11 0z"/></svg>
+    Research
+  </a>
+</div>
+
 <div class="layout">
 
 <!-- SIDEBAR -->
