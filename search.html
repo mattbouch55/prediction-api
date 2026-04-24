@@ -1464,11 +1464,6 @@ function renderSidebarPanels(){
       else el.classList.add('open');
     });
   }catch(e){}
-  // ── Watchlist ──
-  try{
-    var wl=JSON.parse(localStorage.getItem('onyx_wl_v3')||'[]');
-    var portfolio=[];
-    try{portfolio=JSON.parse(localStorage.getItem('onyx_portfolio')||'[]');}catch(e){}
     var wlC=document.getElementById('spWlCount');
     if(wlC) wlC.textContent=wl.length+' stock'+(wl.length!==1?'s':'');
     var wb=document.getElementById('spWlBody');
