@@ -212,6 +212,31 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:'Inter'
     .sidebar-nav a.nav-item[href="/markets"],
     .sidebar-nav a.nav-item[href="/search"] { display: none; }
 
+  
+    /* ── ONYX AI SIDEBAR ── */
+    .sidebar { padding: 0 !important; }
+    .sidebar-logo, .sidebar-nav, .sidebar-panels, .sidebar-footer { display: none !important; }
+    .ai-sidebar { display: flex; flex-direction: column; height: 100vh; padding: 14px 14px 12px; gap: 10px; box-sizing: border-box; }
+    .ai-sb-brand { display: flex; align-items: center; gap: 8px; padding-bottom: 10px; border-bottom: 1px solid var(--border); }
+    .ai-sb-logo { width: 28px; height: 28px; background: var(--blue); border-radius: 6px; display: flex; align-items: center; justify-content: center; color: #fff; font-weight: 800; font-size: 13px; font-family: 'JetBrains Mono', monospace; }
+    .ai-sb-name { font-size: 14px; font-weight: 700; color: var(--text); letter-spacing: -0.01em; }
+    .ai-sb-sub { font-size: 9px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.1em; color: var(--grey); }
+    .ai-sb-status { display: flex; align-items: center; gap: 6px; font-size: 10px; color: var(--grey); }
+    .ai-sb-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--blue); animation: aipulse 2s ease-in-out infinite; }
+    @keyframes aipulse { 0%,100%{opacity:0.3;transform:scale(1)} 50%{opacity:1;transform:scale(1.3)} }
+    .ai-sb-thread { flex: 1; overflow-y: auto; display: flex; flex-direction: column; gap: 10px; padding: 4px 2px; min-height: 0; scrollbar-width: thin; scrollbar-color: var(--border2) transparent; }
+    .ai-sb-msg { font-size: 11px; line-height: 1.5; padding: 8px 10px; border-radius: 7px; }
+    .ai-sb-msg.user { background: var(--blue-soft); color: var(--blue); align-self: flex-end; max-width: 90%; font-weight: 500; }
+    .ai-sb-msg.bot { background: var(--surface2); color: var(--text); border: 1px solid var(--border); }
+    .ai-sb-msg.bot.thinking { color: var(--grey); font-style: italic; }
+    .ai-sb-empty { font-size: 11px; color: var(--grey); font-style: italic; text-align: center; padding: 20px 10px; }
+    .ai-sb-input-row { display: flex; gap: 6px; align-items: flex-end; padding-top: 8px; border-top: 1px solid var(--border); }
+    .ai-sb-input { flex: 1; background: var(--surface2); border: 1px solid var(--border2); border-radius: 7px; padding: 8px 10px; font-family: Inter, sans-serif; font-size: 11px; line-height: 1.4; color: var(--text); outline: none; resize: none; min-height: 36px; max-height: 120px; transition: border-color 0.15s; }
+    .ai-sb-input:focus { border-color: var(--blue); box-shadow: 0 0 0 2px var(--blue-glow); }
+    .ai-sb-send { background: var(--blue); border: none; color: #fff; cursor: pointer; padding: 0; width: 36px; height: 36px; border-radius: 7px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; transition: background 0.12s; }
+    .ai-sb-send:hover { background: #0e4cc7; }
+    .ai-sb-send:disabled { opacity: 0.5; cursor: not-allowed; }
+
   </style>
 </head>
 <body>
@@ -230,6 +255,26 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:'Inter'
 
 <!-- SIDEBAR -->
 <aside class="sidebar">
+    <div class="ai-sidebar">
+      <div class="ai-sb-brand">
+        <div class="ai-sb-logo">O</div>
+        <div style="flex:1;min-width:0">
+          <div class="ai-sb-name">Onyx AI</div>
+          <div class="ai-sb-sub">Agent</div>
+        </div>
+        <div class="ai-sb-status"><span class="ai-sb-dot"></span>Ready</div>
+      </div>
+      <div class="ai-sb-thread" id="aiSbThread">
+        <div class="ai-sb-empty" id="aiSbEmpty">Ask Onyx anything about your bets, markets, or research.</div>
+      </div>
+      <div class="ai-sb-input-row">
+        <textarea class="ai-sb-input" id="aiSbInput" placeholder="Ask Onyx..." rows="1" onkeydown="aiSbKeydown(event)"></textarea>
+        <button class="ai-sb-send" id="aiSbSend" onclick="aiSbAsk()" title="Send">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
+        </button>
+      </div>
+    </div>
+
   <div class="sidebar-logo">
     <div class="logo-row">
       <div class="logo-icon">O</div>
@@ -1025,6 +1070,60 @@ function goToMarkets(){window.location.href='/markets';}
 try{renderSidebarPanels();}catch(e){}
 setTimeout(function(){try{renderSidebarPanels();}catch(e){}},300);
 setInterval(function(){try{renderSidebarPanels();}catch(e){}},30000);
+
+// ── ONYX AI SIDEBAR ──
+function aiSbKeydown(e){
+  if(e.key === 'Enter' && !e.shiftKey){ e.preventDefault(); aiSbAsk(); }
+}
+function aiSbAddMsg(text, who){
+  var t = document.getElementById('aiSbThread');
+  var empty = document.getElementById('aiSbEmpty');
+  if(empty) empty.remove();
+  var m = document.createElement('div');
+  m.className = 'ai-sb-msg ' + who;
+  m.textContent = text;
+  t.appendChild(m);
+  t.scrollTop = t.scrollHeight;
+  return m;
+}
+async function aiSbAsk(){
+  var inp = document.getElementById('aiSbInput');
+  var btn = document.getElementById('aiSbSend');
+  var q = (inp.value || '').trim();
+  if(!q) return;
+  inp.value = '';
+  inp.style.height = 'auto';
+  btn.disabled = true;
+  aiSbAddMsg(q, 'user');
+  var thinking = aiSbAddMsg('Thinking...', 'bot thinking');
+  try {
+    var r = await fetch('/ask', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ q: q })
+    });
+    var data = await r.json();
+    thinking.remove();
+    aiSbAddMsg(data.answer || data.response || data.text || JSON.stringify(data), 'bot');
+  } catch(err) {
+    thinking.remove();
+    aiSbAddMsg('Error: ' + err.message, 'bot');
+  } finally {
+    btn.disabled = false;
+    inp.focus();
+  }
+}
+// Auto-resize textarea
+document.addEventListener('DOMContentLoaded', function(){
+  var inp = document.getElementById('aiSbInput');
+  if(inp){
+    inp.addEventListener('input', function(){
+      inp.style.height = 'auto';
+      inp.style.height = Math.min(inp.scrollHeight, 120) + 'px';
+    });
+  }
+});
+
 </script>
 </body>
 </html>
