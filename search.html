@@ -240,14 +240,16 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:'Inter'
     #researchBody > div:first-child[style*="background:var(--surface2)"][style*="padding:5px 12px"] { display: none !important; }
     /* Hide odds adjustment arrows */
     #researchBody div[style*="flex-direction:column"][style*="gap:4px"] { display: none !important; }
+    /* Make researchBody flex container so split fills height */
+    #researchBody { display: flex !important; flex-direction: column !important; overflow: hidden !important; }
     /* Inline mini odds (header) */
     .rp-odds-mini { display: inline-flex; align-items: center; gap: 3px; font-family: 'JetBrains Mono', monospace; font-size: 11px; font-weight: 700; }
     .rp-odds-mini .yes { color: var(--blue); }
     .rp-odds-mini .no  { color: var(--yellow); }
     .rp-odds-mini .sep { color: var(--grey); font-weight: 400; }
     /* Split layout */
-    .rp-split { display: grid; grid-template-columns: 1fr 1fr; gap: 0; flex: 1; min-height: 0; overflow: hidden; }
-    .rp-split-col { display: flex; flex-direction: column; overflow-y: auto; padding: 10px 14px; }
+    .rp-split { display: grid; grid-template-columns: 1fr 1fr; gap: 0; flex: 1; min-height: 300px; overflow: hidden; }
+    .rp-split-col { display: flex; flex-direction: column; overflow-y: auto; padding: 10px 14px; min-width: 0; }
     .rp-split-col.left { border-right: 1px solid var(--border); }
     .rp-section { margin-bottom: 12px; }
     .rp-label { font-size: 9px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em; color: var(--grey); margin-bottom: 4px; display: flex; justify-content: space-between; align-items: center; }
