@@ -960,7 +960,7 @@ function rpRenderVariations(){
           ? '<span style="display:inline-flex;align-items:center;gap:3px;margin-left:4px"><span style="color:'+sideColor+';font-weight:700;font-size:9.5px">'+v.placedSide+'</span><span style="color:var(--green);font-weight:700;font-size:9.5px">$'+v.placedAmount+'</span></span>'
           : '';
         return '<div onclick="rpSelectVariation('+i+')" style="display:flex;align-items:center;gap:6px;padding:5px 7px;border-bottom:1px solid var(--border);background:'+bg+';border-left:'+bd+';border-right:'+bd+';cursor:pointer;border-radius:3px">'+
-          '<span style="flex:1;font-size:11px;color:var(--text);min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+v.q+'</span>'+
+          '<span contenteditable="true" onclick="event.stopPropagation()" onblur="rpEditVarQ('+i+', this.textContent)" onkeydown="if(event.key===\'Enter\'){event.preventDefault();this.blur();}" style="flex:1;font-size:11px;color:var(--text);min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;outline:none;cursor:text;padding:1px 3px;border-radius:3px" onmouseover="this.style.background=\'var(--surface2)\'" onmouseout="this.style.background=\'transparent\'">'+v.q+'</span>'+
           (v.yes!=null?'<span style="font-family:JetBrains Mono,monospace;font-size:10px;color:var(--blue);font-weight:700">'+v.yes+'\u00a2</span>':'<span style="font-size:10px;color:var(--grey)">—</span>')+
           '<span style="color:var(--grey);font-size:10px">/</span>'+
           (v.no!=null?'<span style="font-family:JetBrains Mono,monospace;font-size:10px;color:var(--yellow);font-weight:700">'+v.no+'\u00a2</span>':'<span style="font-size:10px;color:var(--grey)">—</span>')+
@@ -986,6 +986,22 @@ function rpRenderVariations(){
       '<button onclick="rpAddVariation()" style="background:var(--text);color:#fff;border:none;font-family:Inter,sans-serif;font-size:10.5px;font-weight:600;padding:4px 10px;border-radius:4px;cursor:pointer;white-space:nowrap">+ Add</button>'+
     '</div>'+
     rowsHtml;
+}
+
+
+function rpEditVarQ(i, newText){
+  if(!activeBet || !activeBet.variations || !activeBet.variations[i]) return;
+  var trimmed = (newText || '').trim();
+  if(!trimmed){
+    alert('Question cannot be empty');
+    rpRenderVariations();
+    return;
+  }
+  if(activeBet.variations[i].q === trimmed) return;
+  activeBet.variations[i].q = trimmed;
+  var bets = JSON.parse(localStorage.getItem('onyx_mkt_bets')||'[]');
+  var idx = bets.findIndex(function(x){return x.id===activeBet.id;});
+  if(idx>=0){ bets[idx] = activeBet; localStorage.setItem('onyx_mkt_bets', JSON.stringify(bets)); }
 }
 
 function rpAddVariation(){

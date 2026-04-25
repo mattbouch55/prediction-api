@@ -1285,7 +1285,7 @@ function renderVariations(){
           ? '<span style="color:'+sideColor+';font-weight:700;font-size:10px">'+v.placedSide+'</span><span style="color:var(--green);font-weight:700;font-size:10px">$'+v.placedAmount+'</span>'
           : '';
         return '<div class="rv-row" style="display:flex;align-items:center;gap:6px;padding:5px 0;border-bottom:1px solid var(--border)">'+
-          '<span style="flex:1;font-size:11px;color:var(--text);min-width:0;overflow:hidden;text-overflow:ellipsis">'+v.q+'</span>'+
+          '<span contenteditable="true" onblur="editVarQ('+i+', this.textContent)" onkeydown="if(event.key===\'Enter\'){event.preventDefault();this.blur();}" style="flex:1;font-size:11px;color:var(--text);min-width:0;overflow:hidden;text-overflow:ellipsis;outline:none;cursor:text;padding:1px 3px;border-radius:3px" onmouseover="this.style.background=\'var(--surface2)\'" onmouseout="this.style.background=\'transparent\'">'+v.q+'</span>'+
           (v.yes!=null?'<span style="font-family:JetBrains Mono,monospace;font-size:10px;color:var(--blue);font-weight:700">'+v.yes+'\u00a2</span>':'<span style="font-size:10px;color:var(--grey)">—</span>')+
           '<span style="color:var(--grey);font-size:10px">/</span>'+
           (v.no!=null?'<span style="font-family:JetBrains Mono,monospace;font-size:10px;color:var(--yellow);font-weight:700">'+v.no+'\u00a2</span>':'<span style="font-size:10px;color:var(--grey)">—</span>')+
@@ -1358,6 +1358,20 @@ function clearVarPlace(i){
   v.placedAmount = null;
   persistBets();
   renderVariations();
+}
+
+
+function editVarQ(i, newText){
+  if(!activeBet || !activeBet.variations || !activeBet.variations[i]) return;
+  var trimmed = (newText || '').trim();
+  if(!trimmed){
+    alert('Question cannot be empty');
+    renderVariations();
+    return;
+  }
+  if(activeBet.variations[i].q === trimmed) return;
+  activeBet.variations[i].q = trimmed;
+  persistBets();
 }
 
 function addVariation(){
