@@ -179,7 +179,7 @@ function render() {
       : '<div class="prediction-cell empty">Not analysed</div>';
 
     var oddsCell = (b.yes != null || b.no != null)
-      ? '<span style="font-family:JetBrains Mono,monospace;font-size:11px;white-space:nowrap"><span style="color:var(--blue);font-weight:700">YES ' + (b.yes != null ? b.yes : '—') + '</span><span style="color:var(--grey);margin:0 4px">/</span><span style="color:var(--yellow);font-weight:700">NO ' + (b.no != null ? b.no : '—') + '</span></span>'
+      ? '<span style="font-family:JetBrains Mono,monospace;font-size:11px;white-space:nowrap"><span style="color:var(--blue);font-weight:700">' + (b.yes != null ? b.yes : '—') + '</span><span style="color:var(--grey)"> / </span><span style="color:var(--yellow);font-weight:700">' + (b.no != null ? b.no : '—') + '</span></span>'
       : '<span style="color:var(--grey);font-style:italic;font-size:10px">no price</span>';
 
     var placedCell = placed
@@ -208,7 +208,7 @@ function render() {
     '<table>' +
       '<thead><tr>' +
         '<th>Market Question</th>' +
-        '<th>Odds</th>' +
+        '<th><span style="color:var(--blue)">YES</span> / <span style="color:var(--yellow)">NO</span></th>' +
         '<th>Placed Bet</th>' +
         '<th>Closes</th>' +
         '<th>AI Prediction</th>' +
