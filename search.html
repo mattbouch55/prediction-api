@@ -1500,6 +1500,13 @@ function renderAIResult(d){
         var label = u.replace(/^https?:\/\//,'').replace(/^www\./,'').split('/')[0];
         return '<a href="'+u+'" target="_blank" style="display:inline-block;font-size:10px;color:var(--blue);text-decoration:none;background:var(--blue-soft);padding:2px 7px;border-radius:3px;margin-right:4px;margin-bottom:3px">'+label+' \u2197</a>';
       }).join('') + '</div>';
+  } else if(d.sources_warning){
+    sourcesHtml = '<div style="margin-top:10px;padding:8px 10px;background:var(--yellow-dim);border-left:3px solid var(--yellow);border-radius:4px;font-size:10.5px;color:var(--text2);line-height:1.5"><strong>\u26a0 No sources cited.</strong> '+d.sources_warning.replace('Onyx didn\'t cite any web sources. ','')+'</div>';
+  }
+
+  var metaHtml = '';
+  if(d.meta && typeof d.meta.duration_s === 'number'){
+    metaHtml = '<div style="margin-top:8px;font-size:9px;color:var(--grey);font-family:JetBrains Mono,monospace">analysed in '+d.meta.duration_s+'s'+(d.meta.past_outcomes_used?' \u00b7 used '+d.meta.past_outcomes_used+' past outcomes':'')+(d.meta.retries?' \u00b7 '+d.meta.retries+' retry':'')+'</div>';
   }
 
   return '<div class="ai-result" style="background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:12px 14px">' +
@@ -1512,6 +1519,7 @@ function renderAIResult(d){
     factorsHtml +
     uncertHtml +
     sourcesHtml +
+    metaHtml +
   '</div>';
 }
 
@@ -1592,6 +1600,7 @@ async function runAnalysis(){
       if(!aiData) return;
       pastOutcomes.push({
         q: qText,
+        cat: pb.cat || '',
         verdict: aiData.verdict || aiData.recommendation,
         confidence: aiData.confidence,
         outcome: outcome
