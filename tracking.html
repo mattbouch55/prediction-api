@@ -149,10 +149,12 @@ function render() {
   var bets = loadBets();
   var ai = loadAI();
   var outcomes = loadOutcomes();
+  var expanded = JSON.parse(localStorage.getItem('onyx_track_expanded') || '{}');
 
   // Stats
   var statsEl = document.getElementById('trackingStats');
   var total = bets.length;
+  var totalVars = bets.reduce(function(s, b){ return s + (b.variations ? b.variations.length : 0); }, 0);
   var withAI = bets.filter(function(b){ return ai[b.id]; }).length;
   var correct = Object.values(outcomes).filter(function(v){ return v === 'correct'; }).length;
   var wrong = Object.values(outcomes).filter(function(v){ return v === 'wrong'; }).length;
@@ -161,24 +163,28 @@ function render() {
   var accuracy = graded > 0 ? Math.round((correct / graded) * 100) : null;
 
   statsEl.innerHTML =
-    '<div class="stat"><span class="stat-num">' + total + '</span> total</div>' +
+    '<div class="stat"><span class="stat-num">' + total + '</span> markets</div>' +
+    (totalVars ? '<div class="stat"><span class="stat-num">' + totalVars + '</span> variations</div>' : '') +
     '<div class="stat"><span class="stat-num">' + withAI + '</span> analysed</div>' +
     '<div class="stat"><span class="stat-num green">' + correct + '</span> correct</div>' +
     '<div class="stat"><span class="stat-num red">' + wrong + '</span> wrong</div>' +
     '<div class="stat"><span class="stat-num grey">' + pending + '</span> pending</div>' +
     (accuracy !== null ? '<div class="stat"><span class="stat-num">' + accuracy + '%</span> accuracy</div>' : '');
 
-  // Table
   var wrap = document.getElementById('trackingTableWrap');
   if (!bets.length) {
     wrap.innerHTML = '<div class="empty-state"><div class="icon">📊</div>No bets yet. Import some on the Markets page to start tracking.</div>';
     return;
   }
 
-  var rows = bets.map(function(b) {
+  // Build rows - parent row, then variation rows if expanded
+  var allRows = [];
+  bets.forEach(function(b) {
     var aiData = ai[b.id];
     var outcome = outcomes[b.id] || null;
     var placed = b.placed;
+    var hasVars = b.variations && b.variations.length > 0;
+    var isExpanded = !!expanded[b.id];
 
     var aiCell = aiData
       ? '<div class="prediction-cell"><span class="verdict" style="color:' + (aiData.verdict === 'YES' ? 'var(--blue)' : aiData.verdict === 'NO' ? 'var(--yellow)' : 'var(--grey)') + '">' + aiData.verdict + '</span><div class="conf">' + (aiData.confidence || '') + ' confidence</div></div>'
@@ -194,21 +200,50 @@ function render() {
 
     var closesCell = b.close || '—';
 
-    return '<tr onclick="openBet(\'' + b.id + '\')" style="cursor:pointer">' +
-      '<td class="col-q"><span class="qtxt">' + b.q + '</span><span class="cat">' + (b.cat || '') + '</span></td>' +
-      '<td>' + oddsCell + '</td>' +
-      '<td>' + placedCell + '</td>' +
-      '<td>' + closesCell + '</td>' +
-      '<td>' + aiCell + '</td>' +
-      '<td>' +
-        '<div class="outcome-buttons">' +
-          '<button class="outcome-btn ' + (outcome === 'correct' ? 'active correct' : '') + '" onclick="event.stopPropagation();setOutcome(\'' + b.id + '\', \'correct\')">✓ Correct</button>' +
-          '<button class="outcome-btn ' + (outcome === 'wrong' ? 'active wrong' : '') + '" onclick="event.stopPropagation();setOutcome(\'' + b.id + '\', \'wrong\')">✗ Wrong</button>' +
-          '<button class="outcome-btn ' + (outcome === 'pending' ? 'active pending' : '') + '" onclick="event.stopPropagation();setOutcome(\'' + b.id + '\', \'pending\')">⋯ Pending</button>' +
-        '</div>' +
-      '</td>' +
-    '</tr>';
-  }).join('');
+    // Disclosure caret if has variations
+    var caret = hasVars
+      ? '<span onclick="event.stopPropagation();toggleExpand(\'' + b.id + '\')" style="cursor:pointer;font-size:9px;color:var(--grey2);margin-right:6px;display:inline-block;width:10px;transition:transform 0.15s;transform:' + (isExpanded ? 'rotate(90deg)' : 'rotate(0deg)') + '">\u25b6</span>'
+      : '<span style="display:inline-block;width:16px"></span>';
+
+    var qHtml = caret +
+      '<span style="display:inline-block;vertical-align:middle">' +
+        '<span class="qtxt">' + b.q + '</span>' +
+        '<span class="cat">' + (b.cat || '') + (hasVars ? ' &middot; ' + b.variations.length + ' variations' : '') + '</span>' +
+      '</span>';
+
+    allRows.push(
+      '<tr onclick="openBet(\'' + b.id + '\')" style="cursor:pointer">' +
+        '<td class="col-q">' + qHtml + '</td>' +
+        '<td>' + oddsCell + '</td>' +
+        '<td>' + placedCell + '</td>' +
+        '<td>' + closesCell + '</td>' +
+        '<td>' + aiCell + '</td>' +
+        '<td>' + outcomeButtons(b.id, outcome) + '</td>' +
+      '</tr>'
+    );
+
+    // Add variation rows if expanded
+    if (hasVars && isExpanded) {
+      b.variations.forEach(function(v, vi) {
+        var vKey = b.id + ':v' + vi;
+        var vOutcome = outcomes[vKey] || null;
+        var vOddsCell = (v.yes != null || v.no != null)
+          ? '<span style="font-family:JetBrains Mono,monospace;font-size:11px;white-space:nowrap"><span style="color:var(--blue);font-weight:700">' + (v.yes != null ? v.yes : '—') + '</span><span style="color:var(--grey)"> / </span><span style="color:var(--yellow);font-weight:700">' + (v.no != null ? v.no : '—') + '</span></span>'
+          : '<span style="color:var(--grey);font-style:italic;font-size:10px">no price</span>';
+
+        allRows.push(
+          '<tr onclick="openBet(\'' + b.id + '\')" style="cursor:pointer;background:var(--surface2)">' +
+            '<td class="col-q" style="padding-left:38px"><span style="color:var(--grey);font-size:11px;margin-right:6px">└</span><span style="font-size:12px;color:var(--text2)">' + v.q + '</span></td>' +
+            '<td>' + vOddsCell + '</td>' +
+            '<td><span style="color:var(--grey);font-size:10px">—</span></td>' +
+            '<td><span style="color:var(--grey);font-size:10px">—</span></td>' +
+            '<td><span style="color:var(--grey);font-size:10px;font-style:italic">variation</span></td>' +
+            '<td>' + outcomeButtons(vKey, vOutcome) + '</td>' +
+          '</tr>'
+        );
+      });
+    }
+  });
 
   wrap.innerHTML =
     '<table>' +
@@ -220,8 +255,27 @@ function render() {
         '<th>AI Prediction</th>' +
         '<th>Outcome</th>' +
       '</tr></thead>' +
-      '<tbody>' + rows + '</tbody>' +
+      '<tbody>' + allRows.join('') + '</tbody>' +
     '</table>';
+}
+
+function outcomeButtons(key, outcome) {
+  return '<div class="outcome-buttons">' +
+    '<button class="outcome-btn ' + (outcome === 'correct' ? 'active correct' : '') + '" onclick="event.stopPropagation();setOutcome(\'' + key + '\', \'correct\')">\u2713 Correct</button>' +
+    '<button class="outcome-btn ' + (outcome === 'wrong' ? 'active wrong' : '') + '" onclick="event.stopPropagation();setOutcome(\'' + key + '\', \'wrong\')">\u2717 Wrong</button>' +
+    '<button class="outcome-btn ' + (outcome === 'pending' ? 'active pending' : '') + '" onclick="event.stopPropagation();setOutcome(\'' + key + '\', \'pending\')">\u22ef Pending</button>' +
+  '</div>';
+}
+
+function toggleExpand(betId) {
+  var expanded = JSON.parse(localStorage.getItem('onyx_track_expanded') || '{}');
+  if (expanded[betId]) {
+    delete expanded[betId];
+  } else {
+    expanded[betId] = true;
+  }
+  localStorage.setItem('onyx_track_expanded', JSON.stringify(expanded));
+  render();
 }
 
 render();
