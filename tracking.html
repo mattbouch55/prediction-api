@@ -1,0 +1,224 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<title>Onyx AI - Tracking</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg:#fafafa; --surface:#fff; --surface2:#f5f5f7; --border:#e5e5e7; --border2:#d2d2d7;
+    --text:#111; --text2:#333; --grey:#86868b; --grey2:#6e6e73;
+    --blue:#1565ff; --blue-soft:#e8f0ff; --blue-glow:rgba(21,101,255,0.15); --blue-dim:rgba(21,101,255,0.1);
+    --yellow:#d97706; --yellow-dim:#fef3c7;
+    --green:#16a34a; --green-dim:#dcfce7;
+    --red:#dc2626; --red-dim:#fee2e2;
+    --sidebar-w: 300px;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html, body { height: 100%; overflow: hidden; background: var(--bg); color: var(--text); font-family: 'Inter', sans-serif; font-size: 13px; }
+  .layout{display:flex;height:100vh}
+  .sidebar { width: var(--sidebar-w); background: var(--surface); border-right: 1px solid var(--border); flex-shrink: 0; }
+  .main { flex: 1; padding: 50px 16px 16px 16px; overflow-y: auto; box-sizing: border-box; }
+
+  /* TOP NAV BAR */
+  .topnav { position: fixed; top: 0; left: var(--sidebar-w); right: 0; height: 38px; background: var(--surface); border-bottom: 1px solid var(--border); display: flex; align-items: center; gap: 4px; padding: 0 16px; z-index: 90; }
+  .topnav-link { display: inline-flex; align-items: center; gap: 6px; padding: 6px 14px; border-radius: 6px; font-size: 12px; font-weight: 600; color: var(--grey2); text-decoration: none; transition: all 0.12s; }
+  .topnav-link:hover { background: var(--surface2); color: var(--text); }
+  .topnav-link.active { background: var(--blue-soft); color: var(--blue); }
+
+  /* TRACKING TABLE */
+  .tracking-card { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; overflow: hidden; }
+  .tracking-header { padding: 14px 18px; border-bottom: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; }
+  .tracking-title { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em; color: var(--text); }
+  .tracking-stats { display: flex; gap: 14px; font-size: 11px; }
+  .stat { display: flex; align-items: center; gap: 5px; color: var(--grey); }
+  .stat-num { font-family: 'JetBrains Mono', monospace; font-weight: 700; font-size: 13px; }
+  .stat-num.green { color: var(--green); }
+  .stat-num.red { color: var(--red); }
+  .stat-num.grey { color: var(--grey); }
+
+  table { width: 100%; border-collapse: collapse; }
+  th, td { padding: 10px 14px; text-align: left; font-size: 12px; border-bottom: 1px solid var(--border); }
+  th { background: var(--surface2); font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em; color: var(--grey); position: sticky; top: 0; }
+  tr:last-child td { border-bottom: none; }
+  tr:hover td { background: var(--surface2); }
+
+  .col-q { max-width: 320px; font-weight: 500; color: var(--text); }
+  .col-q .qtxt { display: block; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .col-q .cat { display: inline-block; font-size: 9px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; color: var(--grey2); background: var(--surface2); border: 1px solid var(--border); padding: 1px 6px; border-radius: 3px; margin-top: 4px; }
+
+  .pill { display: inline-block; font-size: 10px; font-weight: 700; padding: 2px 7px; border-radius: 4px; font-family: 'JetBrains Mono', monospace; }
+  .pill.blue { background: var(--blue-soft); color: var(--blue); }
+  .pill.yellow { background: var(--yellow-dim); color: var(--yellow); }
+  .pill.grey { background: var(--surface2); color: var(--grey); border: 1px solid var(--border); }
+  .pill.green { background: var(--green-dim); color: var(--green); }
+  .pill.red { background: var(--red-dim); color: var(--red); }
+
+  .prediction-cell { font-size: 11px; color: var(--text2); max-width: 200px; }
+  .prediction-cell .verdict { font-weight: 700; }
+  .prediction-cell .conf { font-size: 9px; color: var(--grey); margin-top: 2px; }
+  .prediction-cell.empty { color: var(--grey); font-style: italic; }
+
+  .outcome-buttons { display: flex; gap: 4px; }
+  .outcome-btn { background: var(--surface2); border: 1px solid var(--border); color: var(--grey2); cursor: pointer; font-size: 10px; font-weight: 600; padding: 4px 9px; border-radius: 4px; font-family: Inter, sans-serif; transition: all 0.1s; }
+  .outcome-btn:hover { background: var(--surface); color: var(--text); }
+  .outcome-btn.active.correct { background: var(--green-dim); border-color: var(--green); color: var(--green); }
+  .outcome-btn.active.wrong { background: var(--red-dim); border-color: var(--red); color: var(--red); }
+  .outcome-btn.active.pending { background: var(--blue-soft); border-color: var(--blue); color: var(--blue); }
+
+  .empty-state { padding: 60px 20px; text-align: center; color: var(--grey); }
+  .empty-state .icon { font-size: 36px; margin-bottom: 10px; opacity: 0.3; }
+
+  /* SIDEBAR AI (placeholder for now - matches other pages) */
+  .ai-sidebar { display: flex; flex-direction: column; height: 100vh; padding: 14px; gap: 10px; box-sizing: border-box; }
+  .ai-sb-brand { display: flex; align-items: center; gap: 8px; padding-bottom: 10px; border-bottom: 1px solid var(--border); }
+  .ai-sb-logo { width: 28px; height: 28px; background: var(--blue); border-radius: 6px; display: flex; align-items: center; justify-content: center; color: #fff; font-weight: 800; font-size: 13px; font-family: 'JetBrains Mono', monospace; }
+  .ai-sb-name { font-size: 14px; font-weight: 700; color: var(--text); }
+  .ai-sb-sub { font-size: 9px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.1em; color: var(--grey); }
+  .ai-sb-empty { font-size: 11px; color: var(--grey); font-style: italic; text-align: center; padding: 30px 10px; }
+</style>
+</head>
+<body>
+<div class="topnav">
+  <a class="topnav-link" href="/markets">
+    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+    Markets
+  </a>
+  <a class="topnav-link" href="/search">
+    <svg width="13" height="13" viewBox="0 0 16 16" fill="currentColor"><path d="M11.742 10.344a6.5 6.5 0 1 0-1.397 1.398h-.001c.03.04.062.078.098.115l3.85 3.85a1 1 0 0 0 1.415-1.414l-3.85-3.85a1.007 1.007 0 0 0-.115-.1zM12 6.5a5.5 5.5 0 1 1-11 0 5.5 5.5 0 0 1 11 0z"/></svg>
+    Research
+  </a>
+  <a class="topnav-link active" href="/tracking">
+    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+    Tracking
+  </a>
+</div>
+
+<div class="layout">
+
+  <aside class="sidebar">
+    <div class="ai-sidebar">
+      <div class="ai-sb-brand">
+        <div class="ai-sb-logo">O</div>
+        <div style="flex:1;min-width:0">
+          <div class="ai-sb-name">Onyx AI</div>
+          <div class="ai-sb-sub">Tracking</div>
+        </div>
+      </div>
+      <div class="ai-sb-empty">Admin tracking page</div>
+    </div>
+  </aside>
+
+  <main class="main">
+    <div class="tracking-card">
+      <div class="tracking-header">
+        <div class="tracking-title">Bet Tracking</div>
+        <div class="tracking-stats" id="trackingStats"></div>
+      </div>
+      <div id="trackingTableWrap"></div>
+    </div>
+  </main>
+</div>
+
+<script>
+function loadBets() { return JSON.parse(localStorage.getItem('onyx_mkt_bets') || '[]'); }
+function loadAI() { return JSON.parse(localStorage.getItem('onyx_mkt_ai') || '{}'); }
+function loadOutcomes() { return JSON.parse(localStorage.getItem('onyx_outcomes') || '{}'); }
+function saveOutcomes(o) { localStorage.setItem('onyx_outcomes', JSON.stringify(o)); }
+
+function setOutcome(betId, value) {
+  var outcomes = loadOutcomes();
+  if (outcomes[betId] === value) {
+    delete outcomes[betId];
+  } else {
+    outcomes[betId] = value;
+  }
+  saveOutcomes(outcomes);
+  render();
+}
+
+function render() {
+  var bets = loadBets();
+  var ai = loadAI();
+  var outcomes = loadOutcomes();
+
+  // Stats
+  var statsEl = document.getElementById('trackingStats');
+  var total = bets.length;
+  var withAI = bets.filter(function(b){ return ai[b.id]; }).length;
+  var correct = Object.values(outcomes).filter(function(v){ return v === 'correct'; }).length;
+  var wrong = Object.values(outcomes).filter(function(v){ return v === 'wrong'; }).length;
+  var pending = Object.values(outcomes).filter(function(v){ return v === 'pending'; }).length;
+  var graded = correct + wrong;
+  var accuracy = graded > 0 ? Math.round((correct / graded) * 100) : null;
+
+  statsEl.innerHTML =
+    '<div class="stat"><span class="stat-num">' + total + '</span> total</div>' +
+    '<div class="stat"><span class="stat-num">' + withAI + '</span> analysed</div>' +
+    '<div class="stat"><span class="stat-num green">' + correct + '</span> correct</div>' +
+    '<div class="stat"><span class="stat-num red">' + wrong + '</span> wrong</div>' +
+    '<div class="stat"><span class="stat-num grey">' + pending + '</span> pending</div>' +
+    (accuracy !== null ? '<div class="stat"><span class="stat-num">' + accuracy + '%</span> accuracy</div>' : '');
+
+  // Table
+  var wrap = document.getElementById('trackingTableWrap');
+  if (!bets.length) {
+    wrap.innerHTML = '<div class="empty-state"><div class="icon">📊</div>No bets yet. Import some on the Markets page to start tracking.</div>';
+    return;
+  }
+
+  var rows = bets.map(function(b) {
+    var aiData = ai[b.id];
+    var outcome = outcomes[b.id] || null;
+    var placed = b.placed;
+
+    var aiCell = aiData
+      ? '<div class="prediction-cell"><span class="verdict" style="color:' + (aiData.verdict === 'YES' ? 'var(--blue)' : aiData.verdict === 'NO' ? 'var(--yellow)' : 'var(--grey)') + '">' + aiData.verdict + '</span><div class="conf">' + (aiData.confidence || '') + ' confidence</div></div>'
+      : '<div class="prediction-cell empty">Not analysed</div>';
+
+    var oddsCell = (b.yes != null || b.no != null)
+      ? '<span style="font-family:JetBrains Mono,monospace;font-size:11px"><span style="color:var(--blue);font-weight:700">' + (b.yes != null ? b.yes : '—') + '</span><span style="color:var(--grey)">/</span><span style="color:var(--yellow);font-weight:700">' + (b.no != null ? b.no : '—') + '</span></span>'
+      : '<span style="color:var(--grey);font-style:italic;font-size:10px">no price</span>';
+
+    var placedCell = placed
+      ? '<span class="pill ' + (b.placedSide === 'YES' ? 'blue' : 'yellow') + '">' + b.placedSide + ' $' + b.placedAmount + '</span>'
+      : '<span class="pill grey">—</span>';
+
+    var closesCell = b.close || '—';
+
+    return '<tr>' +
+      '<td class="col-q"><span class="qtxt">' + b.q + '</span><span class="cat">' + (b.cat || '') + '</span></td>' +
+      '<td>' + oddsCell + '</td>' +
+      '<td>' + placedCell + '</td>' +
+      '<td>' + closesCell + '</td>' +
+      '<td>' + aiCell + '</td>' +
+      '<td>' +
+        '<div class="outcome-buttons">' +
+          '<button class="outcome-btn ' + (outcome === 'correct' ? 'active correct' : '') + '" onclick="setOutcome(\'' + b.id + '\', \'correct\')">✓ Correct</button>' +
+          '<button class="outcome-btn ' + (outcome === 'wrong' ? 'active wrong' : '') + '" onclick="setOutcome(\'' + b.id + '\', \'wrong\')">✗ Wrong</button>' +
+          '<button class="outcome-btn ' + (outcome === 'pending' ? 'active pending' : '') + '" onclick="setOutcome(\'' + b.id + '\', \'pending\')">⋯ Pending</button>' +
+        '</div>' +
+      '</td>' +
+    '</tr>';
+  }).join('');
+
+  wrap.innerHTML =
+    '<table>' +
+      '<thead><tr>' +
+        '<th>Market Question</th>' +
+        '<th>Odds</th>' +
+        '<th>Placed Bet</th>' +
+        '<th>Closes</th>' +
+        '<th>AI Prediction</th>' +
+        '<th>Outcome</th>' +
+      '</tr></thead>' +
+      '<tbody>' + rows + '</tbody>' +
+    '</table>';
+}
+
+render();
+</script>
+</body>
+</html>

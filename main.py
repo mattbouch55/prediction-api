@@ -40,6 +40,10 @@ def research():
 def markets():
     return inject_ai_bar(open("markets.html").read())
 
+@app.get("/tracking", response_class=HTMLResponse)
+def tracking():
+    return inject_ai_bar(open("tracking.html").read())
+
 # ── Prices ─────────────────────────────────────────────────────
 @app.get("/prices")
 def get_prices(tickers: str):
