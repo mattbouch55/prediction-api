@@ -1441,19 +1441,77 @@ document.addEventListener('click', function(e) {
 
 
 function renderAIResult(d){
-  var vClass = d.verdict==='YES'?'yes':d.verdict==='NO'?'no':'skip';
-  var vColor = d.verdict==='YES'?'var(--blue)':d.verdict==='NO'?'var(--yellow)':'var(--grey2)';
-  var confColor = d.confidence==='High'?'var(--green)':d.confidence==='Medium'?'var(--yellow)':'var(--red)';
-  var signals = (d.signals||[]).map(function(s){
-    return '<div class="ai-signal"><div class="ai-signal-dot"></div><div>'+s+'</div></div>';
-  }).join('');
-  return '<div class="ai-result">' +
-    '<div class="ai-verdict">' +
-      '<span class="verdict-badge '+vClass+'" style="background:'+(d.verdict==='YES'?'var(--blue)':d.verdict==='NO'?'var(--yellow)':'var(--surface2)')+';color:'+(d.verdict==='NO'?'var(--text)':'#fff')+'">'+d.verdict+'</span>' +
-      '<span class="verdict-conf" style="color:'+confColor+'">'+d.confidence+' confidence</span>' +
+  if(!d) return '';
+  // Backward compat: old shape has only {verdict, confidence, reasoning, signals}
+  // New shape adds: onyx_probability, market_implied_probability, edge_pct, recommendation, key_factors, uncertainties, sources
+  var verdict = d.verdict || 'YES';
+  var rec = d.recommendation || verdict;  // fallback for old data
+  var conf = d.confidence || 'Medium';
+  var reasoning = d.reasoning || '';
+  var keyFactors = d.key_factors || d.signals || [];
+  var uncertainties = d.uncertainties || [];
+  var sources = d.sources || [];
+  var onyxP = (typeof d.onyx_probability === 'number') ? d.onyx_probability : null;
+  var marketP = (typeof d.market_implied_probability === 'number') ? d.market_implied_probability : null;
+  var edge = (typeof d.edge_pct === 'number') ? d.edge_pct : null;
+
+  // Recommendation badge styling
+  var recColor, recBg, recLabel;
+  if(rec === 'BET_YES'){ recColor = '#fff'; recBg = 'var(--blue)'; recLabel = 'BET YES'; }
+  else if(rec === 'BET_NO'){ recColor = 'var(--text)'; recBg = 'var(--yellow)'; recLabel = 'BET NO'; }
+  else if(rec === 'PASS'){ recColor = 'var(--grey2)'; recBg = 'var(--surface2)'; recLabel = 'PASS — NO EDGE'; }
+  else { recColor = '#fff'; recBg = (verdict==='YES'?'var(--blue)':'var(--yellow)'); recLabel = verdict; }
+
+  var confColor = conf==='High'?'var(--green)':conf==='Medium'?'var(--yellow)':'var(--red)';
+
+  var probsHtml = '';
+  if(onyxP !== null && marketP !== null){
+    var edgeStr = (edge >= 0 ? '+' : '') + edge + 'pts';
+    var edgeColor = Math.abs(edge) >= 4 ? (edge > 0 ? 'var(--blue)' : 'var(--yellow)') : 'var(--grey)';
+    probsHtml =
+      '<div style="display:flex;gap:14px;align-items:center;padding:10px 12px;background:var(--surface2);border-radius:6px;margin-top:10px;font-family:JetBrains Mono,monospace;font-size:11px">' +
+        '<div><span style="color:var(--grey);font-size:9px;text-transform:uppercase;letter-spacing:0.06em">Market</span><div style="font-weight:700;color:var(--text);margin-top:2px">'+marketP+'%</div></div>' +
+        '<div style="color:var(--grey);font-size:14px">→</div>' +
+        '<div><span style="color:var(--grey);font-size:9px;text-transform:uppercase;letter-spacing:0.06em">Onyx</span><div style="font-weight:700;color:var(--text);margin-top:2px">'+onyxP+'%</div></div>' +
+        '<div style="margin-left:auto"><span style="color:var(--grey);font-size:9px;text-transform:uppercase;letter-spacing:0.06em">Edge</span><div style="font-weight:700;color:'+edgeColor+';margin-top:2px">'+edgeStr+'</div></div>' +
+      '</div>';
+  }
+
+  var factorsHtml = '';
+  if(keyFactors.length){
+    factorsHtml = '<div style="margin-top:12px"><div style="font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:0.07em;color:var(--grey);margin-bottom:6px">Key Factors</div>' +
+      keyFactors.map(function(s){
+        return '<div class="ai-signal" style="display:flex;gap:8px;align-items:flex-start;padding:4px 0;font-size:11px;line-height:1.5;color:var(--text2)"><div class="ai-signal-dot" style="width:5px;height:5px;background:var(--blue);border-radius:50%;margin-top:7px;flex-shrink:0"></div><div>'+s+'</div></div>';
+      }).join('') + '</div>';
+  }
+
+  var uncertHtml = '';
+  if(uncertainties.length){
+    uncertHtml = '<div style="margin-top:10px"><div style="font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:0.07em;color:var(--grey);margin-bottom:6px">What Would Change Onyx\'s Mind</div>' +
+      uncertainties.map(function(s){
+        return '<div style="display:flex;gap:8px;align-items:flex-start;padding:3px 0;font-size:11px;line-height:1.5;color:var(--grey2)"><div style="color:var(--yellow);font-size:11px">?</div><div>'+s+'</div></div>';
+      }).join('') + '</div>';
+  }
+
+  var sourcesHtml = '';
+  if(sources.length){
+    sourcesHtml = '<div style="margin-top:10px;padding-top:10px;border-top:1px solid var(--border)"><div style="font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:0.07em;color:var(--grey);margin-bottom:6px">Sources</div>' +
+      sources.map(function(u){
+        var label = u.replace(/^https?:\/\//,'').replace(/^www\./,'').split('/')[0];
+        return '<a href="'+u+'" target="_blank" style="display:inline-block;font-size:10px;color:var(--blue);text-decoration:none;background:var(--blue-soft);padding:2px 7px;border-radius:3px;margin-right:4px;margin-bottom:3px">'+label+' \u2197</a>';
+      }).join('') + '</div>';
+  }
+
+  return '<div class="ai-result" style="background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:12px 14px">' +
+    '<div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">' +
+      '<span style="font-size:12px;font-weight:800;padding:4px 12px;border-radius:5px;text-transform:uppercase;letter-spacing:0.05em;background:'+recBg+';color:'+recColor+'">'+recLabel+'</span>' +
+      '<span style="font-size:10px;color:'+confColor+';font-weight:600">'+conf+' confidence</span>' +
     '</div>' +
-    '<div class="ai-reasoning">'+d.reasoning+'</div>' +
-    (signals?'<div class="ai-signals">'+signals+'</div>':'') +
+    probsHtml +
+    (reasoning ? '<div style="margin-top:12px;font-size:12px;line-height:1.55;color:var(--text2)">'+reasoning+'</div>' : '') +
+    factorsHtml +
+    uncertHtml +
+    sourcesHtml +
   '</div>';
 }
 
@@ -1487,21 +1545,66 @@ async function runAnalysis(){
 
   try {
     var b = activeBet;
+    // Save current desc/notes BEFORE analysing so the latest is sent
+    try{ rpSaveCurrentContext(); }catch(e){}
+
+    // Sync rwDesc into the right object before sending
     var descEl = document.getElementById('rwDesc');
-    var descText = descEl ? descEl.value.trim() : (b.desc||'');
-    // Check if a variation is selected
-    var v = (rpSelectedVariation >= 0 && b.variations && b.variations[rpSelectedVariation]) ? b.variations[rpSelectedVariation] : null;
-    var qText  = v ? v.q : b.q;
-    var yesPx  = v ? v.yes : b.yes;
-    var noPx   = v ? v.no  : b.no;
-    var contextLine = v
-      ? 'Parent market: '+b.q+'\nThis variation: '+qText+'\nVariation odds: YES '+(yesPx!=null?yesPx+'\u00a2':'unknown')+', NO '+(noPx!=null?noPx+'\u00a2':'unknown')
-      : 'Market: '+qText+'\nCurrent odds: YES '+(yesPx!=null?yesPx+'\u00a2 ('+yesPx+'% implied)':'unknown')+', NO '+(noPx!=null?noPx+'\u00a2 ('+noPx+'% implied)':'unknown');
-    var res = await fetch(API+'/analyse-market', {
+    if(descEl){
+      if(rpSelectedVariation >= 0 && b.variations && b.variations[rpSelectedVariation]){
+        b.variations[rpSelectedVariation].desc = descEl.value;
+      } else {
+        b.desc = descEl.value;
+      }
+    }
+    var notesEl = document.getElementById('rwNotes');
+    if(notesEl){
+      if(rpSelectedVariation >= 0 && b.variations && b.variations[rpSelectedVariation]){
+        b.variations[rpSelectedVariation].notes = notesEl.value;
+      } else {
+        b.notes = notesEl.value;
+      }
+    }
+
+    // Build past_outcomes context from tracking data — feedback loop
+    var outcomes = JSON.parse(localStorage.getItem('onyx_outcomes') || '{}');
+    var allBets = JSON.parse(localStorage.getItem('onyx_mkt_bets') || '[]');
+    var allAi = JSON.parse(localStorage.getItem('onyx_mkt_ai') || '{}');
+    var pastOutcomes = [];
+    Object.keys(outcomes).forEach(function(key){
+      var outcome = outcomes[key];
+      if(outcome === 'pending') return;
+      // Parse key: either betId or betId:vN
+      var parts = key.split(':v');
+      var betId = parts[0];
+      var varIdx = parts.length > 1 ? parseInt(parts[1], 10) : null;
+      var pb = allBets.find(function(x){ return x.id === betId; });
+      if(!pb) return;
+      var aiData;
+      var qText;
+      if(varIdx !== null && pb.variations && pb.variations[varIdx]){
+        aiData = pb.variations[varIdx].aiResult;
+        qText = pb.variations[varIdx].q;
+      } else {
+        aiData = allAi[betId];
+        qText = pb.q;
+      }
+      if(!aiData) return;
+      pastOutcomes.push({
+        q: qText,
+        verdict: aiData.verdict || aiData.recommendation,
+        confidence: aiData.confidence,
+        outcome: outcome
+      });
+    });
+
+    var res = await fetch(API+'/analyse-bet', {
       method:'POST',
       headers:{'Content-Type':'application/json'},
       body: JSON.stringify({
-        question: 'You are a prediction market analyst. Analyse this Kalshi market.\n\n'+contextLine+'\nCloses: '+(b.close||'unknown')+'\nCategory: '+b.cat+(descText?'\nResolution criteria: '+descText:'')+'\n\nSearch the web for the most current information. Return ONLY this exact JSON:\n{"verdict":"YES","confidence":"High","reasoning":"2-3 sentence analysis","signals":["signal 1","signal 2","signal 3"]}'
+        bet: b,
+        variation_idx: rpSelectedVariation >= 0 ? rpSelectedVariation : null,
+        past_outcomes: pastOutcomes
       })
     });
     var result = await res.json();

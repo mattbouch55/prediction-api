@@ -13,6 +13,7 @@ from models import PredictionRequest, InvestmentRequest
 from agent import PredictionAgent, InvestmentAgent
 from database import Database
 from ai_bar import inject as inject_ai_bar
+from bet_analyzer import analyse_bet as run_bet_analyser
 
 # ── App ────────────────────────────────────────────────────────
 app = FastAPI(title="Onyx AI")
@@ -373,6 +374,29 @@ async def analyse_market(request: dict):
         return {"error": "Could not parse response", "raw": text[:300]}
     except Exception as ex:
         return {"error": str(ex)}
+
+
+
+@app.post("/analyse-bet")
+async def analyse_bet_endpoint(request: dict):
+    """Structured bet analysis endpoint (Tier 1 brain).
+
+    Body:
+        {
+            "bet": {q, yes, no, close, cat, desc, variations, notes, ...},
+            "variation_idx": null | int,
+            "past_outcomes": [{q, verdict, confidence, outcome}, ...]  // optional
+        }
+    """
+    bet = request.get("bet") or {}
+    variation_idx = request.get("variation_idx")
+    past_outcomes = request.get("past_outcomes") or []
+    return run_bet_analyser(
+        bet=bet,
+        variation_idx=variation_idx,
+        past_outcomes=past_outcomes,
+        api_key=ANTHROPIC_KEY,
+    )
 
 @app.get("/health")
 def health():
