@@ -1506,7 +1506,9 @@ function renderAIResult(d){
 
   var metaHtml = '';
   if(d.meta && typeof d.meta.duration_s === 'number'){
-    metaHtml = '<div style="margin-top:8px;font-size:9px;color:var(--grey);font-family:JetBrains Mono,monospace">analysed in '+d.meta.duration_s+'s'+(d.meta.past_outcomes_used?' \u00b7 used '+d.meta.past_outcomes_used+' past outcomes':'')+(d.meta.retries?' \u00b7 '+d.meta.retries+' retry':'')+'</div>';
+    var fromCacheStr = d.meta.from_cache ? ' \u00b7 cached' : '';
+    var tokensStr = d.meta.tokens && d.meta.tokens.input_tokens ? ' \u00b7 ' + (d.meta.tokens.input_tokens + (d.meta.tokens.output_tokens || 0)) + ' tokens' : '';
+    metaHtml = '<div style="margin-top:8px;font-size:9px;color:var(--grey);font-family:JetBrains Mono,monospace">analysed in '+d.meta.duration_s+'s'+(d.meta.past_outcomes_used?' \u00b7 used '+d.meta.past_outcomes_used+' past outcomes':'')+(d.meta.retries?' \u00b7 '+d.meta.retries+' retry':'')+fromCacheStr+tokensStr+'</div>';
   }
 
   return '<div class="ai-result" style="background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:12px 14px">' +
@@ -1601,7 +1603,9 @@ async function runAnalysis(){
       pastOutcomes.push({
         q: qText,
         cat: pb.cat || '',
+        bet_id: betId,
         verdict: aiData.verdict || aiData.recommendation,
+        recommendation: aiData.recommendation,
         confidence: aiData.confidence,
         outcome: outcome
       });

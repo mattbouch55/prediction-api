@@ -379,23 +379,26 @@ async def analyse_market(request: dict):
 
 @app.post("/analyse-bet")
 async def analyse_bet_endpoint(request: dict):
-    """Structured bet analysis endpoint (Tier 1 brain).
+    """Structured bet analysis endpoint.
 
     Body:
         {
-            "bet": {q, yes, no, close, cat, desc, variations, notes, ...},
+            "bet": {q, yes, no, close, cat, desc, notes, variations, id, ...},
             "variation_idx": null | int,
-            "past_outcomes": [{q, verdict, confidence, outcome}, ...]  // optional
+            "past_outcomes": [{q, cat, bet_id, verdict, confidence, outcome}, ...],
+            "min_edge_pct": null | int   // override default 4-point edge threshold
         }
     """
     bet = request.get("bet") or {}
     variation_idx = request.get("variation_idx")
     past_outcomes = request.get("past_outcomes") or []
+    min_edge_pct = request.get("min_edge_pct")
     return run_bet_analyser(
         bet=bet,
         variation_idx=variation_idx,
         past_outcomes=past_outcomes,
         api_key=ANTHROPIC_KEY,
+        min_edge_pct=min_edge_pct,
     )
 
 @app.get("/health")
