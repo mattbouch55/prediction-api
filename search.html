@@ -930,13 +930,13 @@ function rpRenderVariations(){
         '</div>';
       }).join('');
   box.innerHTML =
-    rowsHtml +
-    '<div style="display:flex;gap:4px;align-items:center;margin-top:8px;padding-top:8px;border-top:1px solid var(--border)">'+
+    '<div style="display:flex;gap:4px;align-items:center;padding-bottom:8px;margin-bottom:8px;border-bottom:1px solid var(--border)">'+
       '<input id="rpVarQ" type="text" placeholder="Variation question" style="flex:1;background:var(--surface);border:1px solid var(--border2);border-radius:4px;padding:4px 8px;font-family:Inter,sans-serif;font-size:10.5px;outline:none;color:var(--text)"/>'+
       '<input id="rpVarYes" type="number" placeholder="YES" style="width:46px;background:var(--surface);border:1px solid var(--border2);border-radius:4px;padding:4px 6px;font-family:JetBrains Mono,monospace;font-size:10.5px;outline:none;color:var(--text);text-align:center"/>'+
       '<input id="rpVarNo" type="number" placeholder="NO" style="width:46px;background:var(--surface);border:1px solid var(--border2);border-radius:4px;padding:4px 6px;font-family:JetBrains Mono,monospace;font-size:10.5px;outline:none;color:var(--text);text-align:center"/>'+
       '<button onclick="rpAddVariation()" style="background:var(--text);color:#fff;border:none;font-family:Inter,sans-serif;font-size:10.5px;font-weight:600;padding:4px 10px;border-radius:4px;cursor:pointer;white-space:nowrap">+ Add</button>'+
-    '</div>';
+    '</div>'+
+    rowsHtml;
 }
 
 function rpAddVariation(){
