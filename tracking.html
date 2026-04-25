@@ -233,9 +233,24 @@ function render() {
     var hasVars = b.variations && b.variations.length > 0;
     var isExpanded = !!expanded[b.id];
 
-    var aiCell = aiData
-      ? '<div class="prediction-cell"><span class="verdict" style="color:' + (aiData.verdict === 'YES' ? 'var(--blue)' : aiData.verdict === 'NO' ? 'var(--yellow)' : 'var(--grey)') + '">' + aiData.verdict + '</span><div class="conf">' + (aiData.confidence || '') + ' confidence</div></div>'
-      : '<div class="prediction-cell empty">Not analysed</div>';
+    var aiCell;
+    if (aiData) {
+      var rec = aiData.recommendation;
+      var v = aiData.verdict || 'YES';
+      var label, labelColor;
+      if (rec === 'BET_YES') { label = 'BET YES'; labelColor = 'var(--blue)'; }
+      else if (rec === 'BET_NO') { label = 'BET NO'; labelColor = 'var(--yellow)'; }
+      else if (rec === 'PASS') { label = 'PASS'; labelColor = 'var(--grey2)'; }
+      else { label = v; labelColor = v === 'YES' ? 'var(--blue)' : v === 'NO' ? 'var(--yellow)' : 'var(--grey)'; }
+      var edgeStr = '';
+      if (typeof aiData.edge_pct === 'number') {
+        var e = aiData.edge_pct;
+        edgeStr = ' · ' + (e >= 0 ? '+' : '') + e + 'pts';
+      }
+      aiCell = '<div class="prediction-cell"><span class="verdict" style="color:' + labelColor + ';font-weight:700">' + label + '</span><div class="conf">' + (aiData.confidence || '') + ' confidence' + edgeStr + '</div></div>';
+    } else {
+      aiCell = '<div class="prediction-cell empty">Not analysed</div>';
+    }
 
     var oddsCell = (b.yes != null || b.no != null)
       ? '<span style="font-family:JetBrains Mono,monospace;font-size:11px;white-space:nowrap"><span style="color:var(--blue);font-weight:700">' + (b.yes != null ? b.yes : '—') + '</span><span style="color:var(--grey)"> / </span><span style="color:var(--yellow);font-weight:700">' + (b.no != null ? b.no : '—') + '</span></span>'
