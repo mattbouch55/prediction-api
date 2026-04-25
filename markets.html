@@ -798,7 +798,7 @@ function renderResearchWorkspace(){
           '<span class="no-pill" style="min-width:52px;text-align:center" id="rwNoPill">NO '+(b.no!=null?b.no+'¢':'—')+'</span>' +
         '</div>' +
       '</div>' +
-      '<div class="prob-bar" style="margin-top:8px"><div class="prob-fill" id="rwProbFill" style="width:'+(b.yes!=null?b.yes:0)+'%"></div></div>' +
+      '<div class="prob-bar" style="margin-top:8px;background:'+(b.yes!=null?'var(--yellow)':'var(--border)')+'"><div class="prob-fill" id="rwProbFill" style="width:'+(b.yes!=null?b.yes:0)+'%"></div></div>' +
       '<div class="prob-label"><span id="rwYesLbl">YES '+(b.yes!=null?b.yes+'%':'—')+'</span><span id="rwNoLbl">NO '+(b.no!=null?b.no+'%':'—')+'</span></div>' +
       '<div style="margin-top:8px">' +
         '<div style="font-size:9px;font-weight:600;text-transform:uppercase;letter-spacing:0.07em;color:var(--grey);margin-bottom:3px">Bet Description</div>' +
