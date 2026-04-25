@@ -327,6 +327,20 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:'Inter'
     [contenteditable=true]:focus { background: var(--blue-soft) !important; box-shadow: 0 0 0 2px var(--blue); border-radius: 3px; outline: none; }
     .var-edit-hint { display: inline-block; font-size: 9px; color: var(--grey); margin-left: 2px; opacity: 0.5; }
 
+  
+    /* ── DELETE CONFIRM MODAL ── */
+    .confirm-overlay { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.4); display: none; align-items: center; justify-content: center; z-index: 10000; }
+    .confirm-overlay.active { display: flex; }
+    .confirm-box { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 22px 24px; width: 360px; max-width: 90vw; box-shadow: 0 10px 40px rgba(0,0,0,0.15); }
+    .confirm-title { font-size: 14px; font-weight: 700; color: var(--text); margin-bottom: 6px; }
+    .confirm-msg { font-size: 12px; color: var(--grey2); line-height: 1.5; margin-bottom: 18px; }
+    .confirm-actions { display: flex; gap: 8px; justify-content: flex-end; }
+    .confirm-btn { font-family: Inter, sans-serif; font-size: 12px; font-weight: 600; padding: 7px 16px; border-radius: 6px; cursor: pointer; border: 1px solid var(--border); }
+    .confirm-btn.cancel { background: var(--surface); color: var(--grey2); }
+    .confirm-btn.cancel:hover { background: var(--surface2); color: var(--text); }
+    .confirm-btn.danger { background: var(--red); color: #fff; border-color: var(--red); }
+    .confirm-btn.danger:hover { background: #b91c1c; }
+
   </style>
 </head>
 <body>
@@ -721,7 +735,14 @@ function importBet(){
   selectBet(bet.id);
 }
 
+
 function deleteBet(id){
+  var b = bets.find(function(x){return x.id===id;});
+  var name = b ? b.q : 'this market';
+  showConfirm('Delete market?', 'Delete "' + name.substring(0,60) + (name.length>60?'...':'') + '"? This will remove all variations and analysis.', function(){ _doDeleteBet(id); });
+}
+
+function _doDeleteBet(id){
   bets = bets.filter(function(b){return b.id!==id;});
   localStorage.setItem('onyx_mkt_bets', JSON.stringify(bets));
   if(activeBet && activeBet.id===id){ activeBet=null; renderResearchEmpty(); }
@@ -1052,7 +1073,14 @@ function rpAddVariation(){
   rpRenderVariations();
 }
 
+
 function rpDeleteVariation(i){
+  var v = activeBet && activeBet.variations ? activeBet.variations[i] : null;
+  var name = v ? v.q : 'this variation';
+  showConfirm('Delete variation?', 'Delete "' + name.substring(0,60) + (name.length>60?'...':'') + '"?', function(){ _doRpDeleteVariation(i); });
+}
+
+function _doRpDeleteVariation(i){
   if(!activeBet || !activeBet.variations) return;
   activeBet.variations.splice(i, 1);
   var bets = JSON.parse(localStorage.getItem('onyx_mkt_bets')||'[]');
@@ -1612,7 +1640,12 @@ function spGoStock(ticker){
 }
 function spGoResearch(sid){if(window.location.pathname==='/search'&&typeof loadSession==='function'){loadSession(sid);}else{window.location.href='/search';}}
 
+
 function deleteSession(sid){
+  showConfirm('Delete session?', 'Delete this research session? This cannot be undone.', function(){ _doDeleteSession(sid); });
+}
+
+function _doDeleteSession(sid){
   var sess = JSON.parse(localStorage.getItem('onyx_sessions')||'[]');
   sess = sess.filter(function(s){ return s.id !== sid; });
   localStorage.setItem('onyx_sessions', JSON.stringify(sess));
@@ -1741,5 +1774,16 @@ function restoreActiveBet(){
 try{ restoreActiveBet(); }catch(e){}
 
 </script>
+    <div class="confirm-overlay" id="confirmOverlay" onclick="if(event.target===this)hideConfirm()">
+      <div class="confirm-box">
+        <div class="confirm-title" id="confirmTitle">Delete?</div>
+        <div class="confirm-msg" id="confirmMsg">Are you sure?</div>
+        <div class="confirm-actions">
+          <button class="confirm-btn cancel" onclick="hideConfirm()">Cancel</button>
+          <button class="confirm-btn danger" id="confirmOkBtn">Delete</button>
+        </div>
+      </div>
+    </div>
+
 </body>
 </html>
