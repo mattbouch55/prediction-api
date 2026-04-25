@@ -123,6 +123,12 @@
 </div>
 
 <script>
+
+function openBet(betId) {
+  localStorage.setItem('onyx_active_bet', betId);
+  window.location.href = '/markets';
+}
+
 function loadBets() { return JSON.parse(localStorage.getItem('onyx_mkt_bets') || '[]'); }
 function loadAI() { return JSON.parse(localStorage.getItem('onyx_mkt_ai') || '{}'); }
 function loadOutcomes() { return JSON.parse(localStorage.getItem('onyx_outcomes') || '{}'); }
@@ -188,7 +194,7 @@ function render() {
 
     var closesCell = b.close || '—';
 
-    return '<tr>' +
+    return '<tr onclick="openBet(\'' + b.id + '\')" style="cursor:pointer">' +
       '<td class="col-q"><span class="qtxt">' + b.q + '</span><span class="cat">' + (b.cat || '') + '</span></td>' +
       '<td>' + oddsCell + '</td>' +
       '<td>' + placedCell + '</td>' +
@@ -196,9 +202,9 @@ function render() {
       '<td>' + aiCell + '</td>' +
       '<td>' +
         '<div class="outcome-buttons">' +
-          '<button class="outcome-btn ' + (outcome === 'correct' ? 'active correct' : '') + '" onclick="setOutcome(\'' + b.id + '\', \'correct\')">✓ Correct</button>' +
-          '<button class="outcome-btn ' + (outcome === 'wrong' ? 'active wrong' : '') + '" onclick="setOutcome(\'' + b.id + '\', \'wrong\')">✗ Wrong</button>' +
-          '<button class="outcome-btn ' + (outcome === 'pending' ? 'active pending' : '') + '" onclick="setOutcome(\'' + b.id + '\', \'pending\')">⋯ Pending</button>' +
+          '<button class="outcome-btn ' + (outcome === 'correct' ? 'active correct' : '') + '" onclick="event.stopPropagation();setOutcome(\'' + b.id + '\', \'correct\')">✓ Correct</button>' +
+          '<button class="outcome-btn ' + (outcome === 'wrong' ? 'active wrong' : '') + '" onclick="event.stopPropagation();setOutcome(\'' + b.id + '\', \'wrong\')">✗ Wrong</button>' +
+          '<button class="outcome-btn ' + (outcome === 'pending' ? 'active pending' : '') + '" onclick="event.stopPropagation();setOutcome(\'' + b.id + '\', \'pending\')">⋯ Pending</button>' +
         '</div>' +
       '</td>' +
     '</tr>';
