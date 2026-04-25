@@ -145,6 +145,39 @@ function setOutcome(betId, value) {
   render();
 }
 
+
+function editTrackingPrice(betId, which, raw){
+  var bets = JSON.parse(localStorage.getItem('onyx_mkt_bets') || '[]');
+  var idx = bets.findIndex(function(b){ return b.id === betId; });
+  if (idx < 0) return;
+  var clean = (raw || '').replace(/[^0-9]/g, '');
+  if (clean === '') {
+    bets[idx][which] = null;
+  } else {
+    var n = parseInt(clean, 10);
+    if (isNaN(n) || n < 1 || n > 99) { alert('Price must be 1-99 or blank'); render(); return; }
+    bets[idx][which] = n;
+  }
+  localStorage.setItem('onyx_mkt_bets', JSON.stringify(bets));
+  render();
+}
+
+function editTrackingVarPrice(betId, varIdx, which, raw){
+  var bets = JSON.parse(localStorage.getItem('onyx_mkt_bets') || '[]');
+  var idx = bets.findIndex(function(b){ return b.id === betId; });
+  if (idx < 0 || !bets[idx].variations || !bets[idx].variations[varIdx]) return;
+  var clean = (raw || '').replace(/[^0-9]/g, '');
+  if (clean === '') {
+    bets[idx].variations[varIdx][which] = null;
+  } else {
+    var n = parseInt(clean, 10);
+    if (isNaN(n) || n < 1 || n > 99) { alert('Price must be 1-99 or blank'); render(); return; }
+    bets[idx].variations[varIdx][which] = n;
+  }
+  localStorage.setItem('onyx_mkt_bets', JSON.stringify(bets));
+  render();
+}
+
 function render() {
   var bets = loadBets();
   var ai = loadAI();
