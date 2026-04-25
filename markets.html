@@ -1596,5 +1596,37 @@ try{ restoreActiveBet(); }catch(e){}
       </div>
     </div>
 
+
+<script>
+// ── Confirm modal handlers ──
+var _confirmCallback = null;
+function showConfirm(title, msg, callback){
+  _confirmCallback = callback;
+  var overlay = document.getElementById('confirmOverlay');
+  if(!overlay){ if(callback) callback(); return; }
+  var t = document.getElementById('confirmTitle');
+  var m = document.getElementById('confirmMsg');
+  if(t) t.textContent = title;
+  if(m) m.textContent = msg;
+  var ok = document.getElementById('confirmOkBtn');
+  if(ok){
+    ok.onclick = function(){
+      var cb = _confirmCallback;
+      hideConfirm();
+      if(cb) cb();
+    };
+  }
+  overlay.style.display = 'flex';
+}
+function hideConfirm(){
+  var overlay = document.getElementById('confirmOverlay');
+  if(overlay) overlay.style.display = 'none';
+  _confirmCallback = null;
+}
+document.addEventListener('keydown', function(e){
+  if(e.key === 'Escape'){ hideConfirm(); }
+});
+</script>
+
 </body>
 </html>
