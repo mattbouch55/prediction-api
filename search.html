@@ -921,12 +921,27 @@ function rpRenderVariations(){
         var isSel = (i === sel);
         var bg = isSel ? 'var(--blue-soft)' : 'transparent';
         var bd = isSel ? '1px solid var(--blue)' : '1px solid transparent';
+        var sideColor = v.placedSide==='YES'?'var(--blue)':'var(--yellow)';
+        var placedHtml = v.placed
+          ? '<span style="display:inline-flex;align-items:center;gap:3px;margin-left:4px"><span style="color:'+sideColor+';font-weight:700;font-size:9.5px">'+v.placedSide+'</span><span style="color:var(--green);font-weight:700;font-size:9.5px">$'+v.placedAmount+'</span></span>'
+          : '';
         return '<div onclick="rpSelectVariation('+i+')" style="display:flex;align-items:center;gap:6px;padding:5px 7px;border-bottom:1px solid var(--border);background:'+bg+';border-left:'+bd+';border-right:'+bd+';cursor:pointer;border-radius:3px">'+
           '<span style="flex:1;font-size:11px;color:var(--text);min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+v.q+'</span>'+
           (v.yes!=null?'<span style="font-family:JetBrains Mono,monospace;font-size:10px;color:var(--blue);font-weight:700">'+v.yes+'\u00a2</span>':'<span style="font-size:10px;color:var(--grey)">—</span>')+
           '<span style="color:var(--grey);font-size:10px">/</span>'+
           (v.no!=null?'<span style="font-family:JetBrains Mono,monospace;font-size:10px;color:var(--yellow);font-weight:700">'+v.no+'\u00a2</span>':'<span style="font-size:10px;color:var(--grey)">—</span>')+
+          placedHtml +
+          '<button onclick="event.stopPropagation();rpToggleVarPlace('+i+')" title="Place bet" style="background:none;border:1px solid var(--border);color:var(--grey2);cursor:pointer;font-size:9.5px;padding:1px 5px;border-radius:3px">'+(v.placed?'Edit':'Place')+'</button>'+
           '<button onclick="event.stopPropagation();rpDeleteVariation('+i+')" style="background:none;border:none;color:var(--grey);cursor:pointer;font-size:13px;padding:0 3px;opacity:0.5">\u00d7</button>'+
+        '</div>'+
+        '<div id="rpVarPlaceForm'+i+'" style="display:none;padding:6px 7px;border-bottom:1px solid var(--border);background:var(--bg)">'+
+          '<div style="display:flex;align-items:center;gap:5px">'+
+            '<button onclick="event.stopPropagation();rpSetVarSide('+i+',\'YES\')" id="rpVarSideYes'+i+'" style="background:'+(v.placedSide==='YES'?'var(--blue)':'var(--surface)')+';color:'+(v.placedSide==='YES'?'#fff':'var(--grey2)')+';border:1px solid var(--border);font-size:10px;font-weight:600;padding:3px 10px;border-radius:4px;cursor:pointer">YES</button>'+
+            '<button onclick="event.stopPropagation();rpSetVarSide('+i+',\'NO\')" id="rpVarSideNo'+i+'" style="background:'+(v.placedSide==='NO'?'var(--yellow)':'var(--surface)')+';color:'+(v.placedSide==='NO'?'#fff':'var(--grey2)')+';border:1px solid var(--border);font-size:10px;font-weight:600;padding:3px 10px;border-radius:4px;cursor:pointer">NO</button>'+
+            '<input id="rpVarAmt'+i+'" type="number" placeholder="$ amount" value="'+(v.placedAmount||'')+'" onclick="event.stopPropagation()" style="flex:1;background:var(--surface);border:1px solid var(--border2);border-radius:4px;padding:3px 8px;font-family:JetBrains Mono,monospace;font-size:10px;outline:none;color:var(--text)"/>'+
+            '<button onclick="event.stopPropagation();rpSaveVarPlace('+i+')" style="background:var(--text);color:#fff;border:none;font-size:10px;font-weight:600;padding:3px 10px;border-radius:4px;cursor:pointer">Save</button>'+
+            (v.placed ? '<button onclick="event.stopPropagation();rpClearVarPlace('+i+')" style="background:none;border:1px solid var(--border);color:var(--grey2);font-size:10px;padding:3px 8px;border-radius:4px;cursor:pointer">Clear</button>' : '')+
+          '</div>'+
         '</div>';
       }).join('');
   box.innerHTML =
@@ -961,6 +976,48 @@ function rpAddVariation(){
 function rpDeleteVariation(i){
   if(!activeBet || !activeBet.variations) return;
   activeBet.variations.splice(i, 1);
+  var bets = JSON.parse(localStorage.getItem('onyx_mkt_bets')||'[]');
+  var idx = bets.findIndex(function(x){return x.id===activeBet.id;});
+  if(idx>=0){ bets[idx] = activeBet; localStorage.setItem('onyx_mkt_bets', JSON.stringify(bets)); }
+  rpRenderVariations();
+}
+
+function rpToggleVarPlace(i){
+  var f = document.getElementById('rpVarPlaceForm'+i);
+  if(!f) return;
+  f.style.display = f.style.display === 'none' ? 'block' : 'none';
+}
+function rpSetVarSide(i, side){
+  if(!activeBet || !activeBet.variations || !activeBet.variations[i]) return;
+  activeBet.variations[i]._tmpSide = side;
+  var y = document.getElementById('rpVarSideYes'+i);
+  var n = document.getElementById('rpVarSideNo'+i);
+  if(y){ y.style.background = side==='YES' ? 'var(--blue)' : 'var(--surface)'; y.style.color = side==='YES' ? '#fff' : 'var(--grey2)'; }
+  if(n){ n.style.background = side==='NO'  ? 'var(--yellow)' : 'var(--surface)'; n.style.color = side==='NO'  ? '#fff' : 'var(--grey2)'; }
+}
+function rpSaveVarPlace(i){
+  if(!activeBet || !activeBet.variations || !activeBet.variations[i]) return;
+  var v = activeBet.variations[i];
+  var amtEl = document.getElementById('rpVarAmt'+i);
+  var amt = parseFloat(amtEl ? amtEl.value : '');
+  var side = v._tmpSide || v.placedSide;
+  if(!side){ alert('Pick YES or NO'); return; }
+  if(isNaN(amt) || amt <= 0){ alert('Enter a valid amount'); return; }
+  v.placed = true;
+  v.placedSide = side;
+  v.placedAmount = amt.toFixed(2);
+  delete v._tmpSide;
+  var bets = JSON.parse(localStorage.getItem('onyx_mkt_bets')||'[]');
+  var idx = bets.findIndex(function(x){return x.id===activeBet.id;});
+  if(idx>=0){ bets[idx] = activeBet; localStorage.setItem('onyx_mkt_bets', JSON.stringify(bets)); }
+  rpRenderVariations();
+}
+function rpClearVarPlace(i){
+  if(!activeBet || !activeBet.variations || !activeBet.variations[i]) return;
+  var v = activeBet.variations[i];
+  v.placed = false;
+  v.placedSide = null;
+  v.placedAmount = null;
   var bets = JSON.parse(localStorage.getItem('onyx_mkt_bets')||'[]');
   var idx = bets.findIndex(function(x){return x.id===activeBet.id;});
   if(idx>=0){ bets[idx] = activeBet; localStorage.setItem('onyx_mkt_bets', JSON.stringify(bets)); }

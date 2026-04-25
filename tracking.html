@@ -235,7 +235,7 @@ function render() {
           '<tr onclick="openBet(\'' + b.id + '\')" style="cursor:pointer;background:var(--surface2)">' +
             '<td class="col-q" style="padding-left:38px"><span style="color:var(--grey);font-size:11px;margin-right:6px">└</span><span style="font-size:12px;color:var(--text2)">' + v.q + '</span></td>' +
             '<td>' + vOddsCell + '</td>' +
-            '<td><span style="color:var(--grey);font-size:10px">—</span></td>' +
+            '<td>' + (v.placed ? '<span class="pill ' + (v.placedSide === 'YES' ? 'blue' : 'yellow') + '">' + v.placedSide + ' $' + v.placedAmount + '</span>' : '<span class="pill grey">—</span>') + '</td>' +
             '<td><span style="color:var(--grey);font-size:10px">—</span></td>' +
             '<td><span style="color:var(--grey);font-size:10px;font-style:italic">variation</span></td>' +
             '<td>' + outcomeButtons(vKey, vOutcome) + '</td>' +

@@ -1280,12 +1280,27 @@ function renderVariations(){
   var rowsHtml = vars.length === 0
     ? '<div style="font-size:11px;color:var(--grey);font-style:italic;padding:6px 0">No variations yet. Add one below.</div>'
     : vars.map(function(v, i){
+        var sideColor = v.placedSide==='YES'?'var(--blue)':'var(--yellow)';
+        var placedHtml = v.placed
+          ? '<span style="color:'+sideColor+';font-weight:700;font-size:10px">'+v.placedSide+'</span><span style="color:var(--green);font-weight:700;font-size:10px">$'+v.placedAmount+'</span>'
+          : '';
         return '<div class="rv-row" style="display:flex;align-items:center;gap:6px;padding:5px 0;border-bottom:1px solid var(--border)">'+
           '<span style="flex:1;font-size:11px;color:var(--text);min-width:0;overflow:hidden;text-overflow:ellipsis">'+v.q+'</span>'+
-          '<span style="font-family:JetBrains Mono,monospace;font-size:10px;color:var(--blue);font-weight:700">'+v.yes+'\u00a2</span>'+
+          (v.yes!=null?'<span style="font-family:JetBrains Mono,monospace;font-size:10px;color:var(--blue);font-weight:700">'+v.yes+'\u00a2</span>':'<span style="font-size:10px;color:var(--grey)">—</span>')+
           '<span style="color:var(--grey);font-size:10px">/</span>'+
-          '<span style="font-family:JetBrains Mono,monospace;font-size:10px;color:var(--yellow);font-weight:700">'+v.no+'\u00a2</span>'+
+          (v.no!=null?'<span style="font-family:JetBrains Mono,monospace;font-size:10px;color:var(--yellow);font-weight:700">'+v.no+'\u00a2</span>':'<span style="font-size:10px;color:var(--grey)">—</span>')+
+          (placedHtml ? '<span style="display:flex;align-items:center;gap:3px;margin-left:6px">'+placedHtml+'</span>' : '')+
+          '<button onclick="toggleVarPlaceForm('+i+')" title="Place bet" style="background:none;border:1px solid var(--border);color:var(--grey2);cursor:pointer;font-size:10px;padding:1px 6px;border-radius:3px;margin-left:4px">'+(v.placed?'Edit':'Place')+'</button>'+
           '<button onclick="deleteVariation('+i+')" style="background:none;border:none;color:var(--grey);cursor:pointer;font-size:14px;padding:0 4px;opacity:0.5">\u00d7</button>'+
+        '</div>'+
+        '<div id="varPlaceForm'+i+'" style="display:none;padding:6px 0 8px;border-bottom:1px solid var(--border);background:var(--bg)">'+
+          '<div style="display:flex;align-items:center;gap:6px;padding:0 4px">'+
+            '<button onclick="setVarPlaceSide('+i+',\'YES\')" id="varSideYes'+i+'" style="background:'+(v.placedSide==='YES'?'var(--blue)':'var(--surface)')+';color:'+(v.placedSide==='YES'?'#fff':'var(--grey2)')+';border:1px solid var(--border);font-size:10px;font-weight:600;padding:3px 10px;border-radius:4px;cursor:pointer">YES</button>'+
+            '<button onclick="setVarPlaceSide('+i+',\'NO\')" id="varSideNo'+i+'" style="background:'+(v.placedSide==='NO'?'var(--yellow)':'var(--surface)')+';color:'+(v.placedSide==='NO'?'#fff':'var(--grey2)')+';border:1px solid var(--border);font-size:10px;font-weight:600;padding:3px 10px;border-radius:4px;cursor:pointer">NO</button>'+
+            '<input id="varAmt'+i+'" type="number" placeholder="$ amount" value="'+(v.placedAmount||'')+'" style="flex:1;background:var(--surface);border:1px solid var(--border2);border-radius:4px;padding:3px 8px;font-family:JetBrains Mono,monospace;font-size:10px;outline:none;color:var(--text)"/>'+
+            '<button onclick="saveVarPlace('+i+')" style="background:var(--text);color:#fff;border:none;font-size:10px;font-weight:600;padding:3px 10px;border-radius:4px;cursor:pointer">Save</button>'+
+            (v.placed ? '<button onclick="clearVarPlace('+i+')" style="background:none;border:1px solid var(--border);color:var(--grey2);font-size:10px;padding:3px 8px;border-radius:4px;cursor:pointer">Clear</button>' : '')+
+          '</div>'+
         '</div>';
       }).join('');
 
@@ -1294,14 +1309,55 @@ function renderVariations(){
       '<div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:0.08em;color:var(--grey)">Variations</div>'+
       '<span style="font-size:10px;color:var(--grey)">'+vars.length+' total</span>'+
     '</div>'+
-    '<div style="background:var(--surface);border:1px solid var(--border);border-radius:6px;padding:6px 10px;margin-bottom:8px">'+rowsHtml+'</div>'+
-    // Add new variation form
-    '<div style="display:flex;gap:4px;align-items:center">'+
-      '<input id="varQ" type="text" placeholder="Variation question" style="flex:1;background:var(--surface);border:1px solid var(--border2);border-radius:5px;padding:5px 9px;font-family:Inter,sans-serif;font-size:11px;outline:none;color:var(--text)"/>'+
-      '<input id="varYes" type="number" min="1" max="99" placeholder="YES" style="width:52px;background:var(--surface);border:1px solid var(--border2);border-radius:5px;padding:5px 7px;font-family:JetBrains Mono,monospace;font-size:11px;outline:none;color:var(--text);text-align:center"/>'+
-      '<input id="varNo" type="number" min="1" max="99" placeholder="NO" style="width:52px;background:var(--surface);border:1px solid var(--border2);border-radius:5px;padding:5px 7px;font-family:JetBrains Mono,monospace;font-size:11px;outline:none;color:var(--text);text-align:center"/>'+
-      '<button onclick="addVariation()" style="background:var(--text);color:#fff;border:none;font-family:Inter,sans-serif;font-size:11px;font-weight:600;padding:5px 12px;border-radius:5px;cursor:pointer;white-space:nowrap">+ Add</button>'+
+    '<div style="background:var(--surface);border:1px solid var(--border);border-radius:6px;padding:6px 10px;margin-bottom:8px">'+
+      '<div style="display:flex;gap:4px;align-items:center;padding-bottom:8px;margin-bottom:6px;border-bottom:1px solid var(--border)">'+
+        '<input id="varQ" type="text" placeholder="Variation question" style="flex:1;background:var(--surface);border:1px solid var(--border2);border-radius:5px;padding:5px 9px;font-family:Inter,sans-serif;font-size:11px;outline:none;color:var(--text)"/>'+
+        '<input id="varYes" type="number" placeholder="YES" style="width:52px;background:var(--surface);border:1px solid var(--border2);border-radius:5px;padding:5px 7px;font-family:JetBrains Mono,monospace;font-size:11px;outline:none;color:var(--text);text-align:center"/>'+
+        '<input id="varNo" type="number" placeholder="NO" style="width:52px;background:var(--surface);border:1px solid var(--border2);border-radius:5px;padding:5px 7px;font-family:JetBrains Mono,monospace;font-size:11px;outline:none;color:var(--text);text-align:center"/>'+
+        '<button onclick="addVariation()" style="background:var(--text);color:#fff;border:none;font-family:Inter,sans-serif;font-size:11px;font-weight:600;padding:5px 12px;border-radius:5px;cursor:pointer;white-space:nowrap">+ Add</button>'+
+      '</div>'+
+      rowsHtml +
     '</div>';
+}
+
+// Variation place-bet helpers
+function toggleVarPlaceForm(i){
+  var f = document.getElementById('varPlaceForm'+i);
+  if(!f) return;
+  f.style.display = f.style.display === 'none' ? 'block' : 'none';
+}
+function setVarPlaceSide(i, side){
+  if(!activeBet || !activeBet.variations || !activeBet.variations[i]) return;
+  activeBet.variations[i]._tmpSide = side;
+  // Visually update buttons
+  var y = document.getElementById('varSideYes'+i);
+  var n = document.getElementById('varSideNo'+i);
+  if(y){ y.style.background = side==='YES' ? 'var(--blue)' : 'var(--surface)'; y.style.color = side==='YES' ? '#fff' : 'var(--grey2)'; }
+  if(n){ n.style.background = side==='NO'  ? 'var(--yellow)' : 'var(--surface)'; n.style.color = side==='NO'  ? '#fff' : 'var(--grey2)'; }
+}
+function saveVarPlace(i){
+  if(!activeBet || !activeBet.variations || !activeBet.variations[i]) return;
+  var v = activeBet.variations[i];
+  var amtEl = document.getElementById('varAmt'+i);
+  var amt = parseFloat(amtEl ? amtEl.value : '');
+  var side = v._tmpSide || v.placedSide;
+  if(!side){ alert('Pick YES or NO'); return; }
+  if(isNaN(amt) || amt <= 0){ alert('Enter a valid amount'); return; }
+  v.placed = true;
+  v.placedSide = side;
+  v.placedAmount = amt.toFixed(2);
+  delete v._tmpSide;
+  persistBets();
+  renderVariations();
+}
+function clearVarPlace(i){
+  if(!activeBet || !activeBet.variations || !activeBet.variations[i]) return;
+  var v = activeBet.variations[i];
+  v.placed = false;
+  v.placedSide = null;
+  v.placedAmount = null;
+  persistBets();
+  renderVariations();
 }
 
 function addVariation(){
