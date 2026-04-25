@@ -1361,6 +1361,26 @@ function clearVarPlace(i){
 }
 
 
+
+function editVarPrice(i, which, raw){
+  if(!activeBet || !activeBet.variations || !activeBet.variations[i]) return;
+  var v = activeBet.variations[i];
+  var clean = (raw||'').replace(/[^0-9]/g, '');
+  if(clean === ''){
+    v[which] = null;
+  } else {
+    var n = parseInt(clean, 10);
+    if(isNaN(n) || n < 1 || n > 99){
+      alert('Price must be 1-99 or blank');
+      renderVariations();
+      return;
+    }
+    v[which] = n;
+  }
+  persistBets();
+  renderVariations();
+}
+
 function editVarQ(i, newText){
   if(!activeBet || !activeBet.variations || !activeBet.variations[i]) return;
   var trimmed = (newText || '').trim();

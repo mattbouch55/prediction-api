@@ -989,6 +989,29 @@ function rpRenderVariations(){
 }
 
 
+
+function rpEditVarPrice(i, which, raw){
+  if(!activeBet || !activeBet.variations || !activeBet.variations[i]) return;
+  var v = activeBet.variations[i];
+  // Strip non-digits
+  var clean = (raw||'').replace(/[^0-9]/g, '');
+  if(clean === ''){
+    v[which] = null;
+  } else {
+    var n = parseInt(clean, 10);
+    if(isNaN(n) || n < 1 || n > 99){
+      alert('Price must be 1-99 or blank');
+      rpRenderVariations();
+      return;
+    }
+    v[which] = n;
+  }
+  var bets = JSON.parse(localStorage.getItem('onyx_mkt_bets')||'[]');
+  var idx = bets.findIndex(function(x){return x.id===activeBet.id;});
+  if(idx>=0){ bets[idx] = activeBet; localStorage.setItem('onyx_mkt_bets', JSON.stringify(bets)); }
+  rpRenderVariations();
+}
+
 function rpEditVarQ(i, newText){
   if(!activeBet || !activeBet.variations || !activeBet.variations[i]) return;
   var trimmed = (newText || '').trim();
