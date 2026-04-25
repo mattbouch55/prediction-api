@@ -789,7 +789,11 @@ function renderResearchEmpty(){
 function renderResearchWorkspace(){
   var b = activeBet;
   if(!b) return;
-  rpSelectedVariation = -1;
+  // Only reset variation selection when switching to a different bet
+  if(window._lastActiveBetId !== b.id){
+    rpSelectedVariation = -1;
+    window._lastActiveBetId = b.id;
+  }
 
   var yes = (b.yes!=null) ? b.yes : '';
   var no  = (b.no !=null) ? b.no  : '';
@@ -822,9 +826,12 @@ function renderResearchWorkspace(){
       (b.url?'<a href="'+b.url+'" target="_blank" style="font-size:10px;color:var(--blue);font-weight:600;text-decoration:none;border:1px solid rgba(21,101,255,0.3);padding:2px 9px;border-radius:4px;background:var(--blue-soft);white-space:nowrap;margin-left:8px" title="Open on Kalshi">Bet on Kalshi \u2197</a>':'');
   }
 
-  var saved = aiResults[b.id];
-  var notes = betNotes[b.id] || '';
-  var desc  = b.desc || '';
+  // Pick context: variation or parent
+  var ctx = (rpSelectedVariation >= 0 && b.variations && b.variations[rpSelectedVariation]) ? b.variations[rpSelectedVariation] : b;
+  var ctxIsVariation = (ctx !== b);
+  var saved = ctxIsVariation ? (ctx.aiResult || null) : aiResults[b.id];
+  var notes = ctxIsVariation ? (ctx.notes || '') : (betNotes[b.id] || '');
+  var desc  = ctx.desc || '';
   var sources = b.sources || '';
 
   document.getElementById('researchBody').innerHTML =
@@ -848,7 +855,7 @@ function renderResearchWorkspace(){
     // BOTTOM: Active research
     '<div style="padding:12px 14px;border-top:1px solid var(--border)">' +
       '<div style="display:flex;align-items:center;gap:10px">' +
-        '<button id="runAnalysisBtn" onclick="runAnalysis()" class="rp-analyse-btn">\u2726 Analyse</button>' +
+        '<button id="runAnalysisBtn" onclick="runAnalysis()" class="rp-analyse-btn">'+(ctxIsVariation?'\u2726 Analyse Variation':'\u2726 Analyse')+'</button>' +
         '<div class="rp-progress-wrap" id="rpProgressWrap" style="flex:1">' +
           '<div class="rp-progress-bar"><div class="rp-progress-fill" id="rpProgressFill"></div></div>' +
           '<div class="rp-progress-pct" id="rpProgressPct">0%</div>' +
@@ -866,10 +873,15 @@ function renderResearchWorkspace(){
 
   var descEl = document.getElementById('rwDesc');
   if(descEl) descEl.addEventListener('change', function(){
-    b.desc = descEl.value;
+    // Save to variation if selected, else to parent
+    if(rpSelectedVariation >= 0 && b.variations && b.variations[rpSelectedVariation]){
+      b.variations[rpSelectedVariation].desc = descEl.value;
+    } else {
+      b.desc = descEl.value;
+    }
     var bets = JSON.parse(localStorage.getItem('onyx_mkt_bets')||'[]');
     var idx = bets.findIndex(function(x){return x.id===b.id;});
-    if(idx>=0){ bets[idx].desc = descEl.value; localStorage.setItem('onyx_mkt_bets', JSON.stringify(bets)); }
+    if(idx>=0){ bets[idx] = b; localStorage.setItem('onyx_mkt_bets', JSON.stringify(bets)); }
   });
 }
 
@@ -896,16 +908,38 @@ function rpAdjustOdds(which, delta){
 // Track which variation is selected for analysis
 var rpSelectedVariation = -1;
 function rpSelectVariation(i){
+  // Save current desc/notes BEFORE switching
+  rpSaveCurrentContext();
   rpSelectedVariation = (rpSelectedVariation === i) ? -1 : i;
-  rpRenderVariations();
-  var btn = document.getElementById('runAnalysisBtn');
-  if(btn){
-    if(rpSelectedVariation >= 0 && activeBet && activeBet.variations && activeBet.variations[rpSelectedVariation]){
-      btn.textContent = '\u2726 Analyse Variation';
+  // Re-render entire workspace so desc/notes/AI swap to selection's data
+  renderResearchWorkspace();
+}
+
+function rpSaveCurrentContext(){
+  if(!activeBet) return;
+  var descEl = document.getElementById('rwDesc');
+  var notesEl = document.getElementById('rwNotes');
+  // Determine target: variation or parent
+  var target;
+  if(rpSelectedVariation >= 0 && activeBet.variations && activeBet.variations[rpSelectedVariation]){
+    target = activeBet.variations[rpSelectedVariation];
+  } else {
+    target = activeBet;
+  }
+  if(descEl) target.desc = descEl.value;
+  if(notesEl){
+    if(target === activeBet){
+      // Save parent notes to betNotes map (existing behavior)
+      betNotes[activeBet.id] = notesEl.value;
+      try{ localStorage.setItem('onyx_mkt_notes', JSON.stringify(betNotes)); }catch(e){}
     } else {
-      btn.textContent = '\u2726 Analyse';
+      target.notes = notesEl.value;
     }
   }
+  // Persist
+  var bets = JSON.parse(localStorage.getItem('onyx_mkt_bets')||'[]');
+  var idx = bets.findIndex(function(x){return x.id===activeBet.id;});
+  if(idx>=0){ bets[idx] = activeBet; localStorage.setItem('onyx_mkt_bets', JSON.stringify(bets)); }
 }
 
 function rpRenderVariations(){
@@ -1037,12 +1071,17 @@ function rpSaveSources(){
 
 function saveNotes(){
   if(!activeBet) return;
-  var val = document.getElementById('betNotes').value;
-  betNotes[activeBet.id] = val;
-  localStorage.setItem('onyx_mkt_notes', JSON.stringify(betNotes));
-  var btn = document.querySelector('.section-btn');
-  if(btn){ btn.textContent='Saved ✓'; btn.style.color='var(--green)';
-    setTimeout(function(){ btn.textContent='Save'; btn.style.color=''; },1500); }
+  var ne = document.getElementById('rwNotes');
+  if(!ne) return;
+  if(rpSelectedVariation >= 0 && activeBet.variations && activeBet.variations[rpSelectedVariation]){
+    activeBet.variations[rpSelectedVariation].notes = ne.value;
+    var bets = JSON.parse(localStorage.getItem('onyx_mkt_bets')||'[]');
+    var idx = bets.findIndex(function(x){return x.id===activeBet.id;});
+    if(idx>=0){ bets[idx] = activeBet; localStorage.setItem('onyx_mkt_bets', JSON.stringify(bets)); }
+  } else {
+    betNotes[activeBet.id] = ne.value;
+    try{ localStorage.setItem('onyx_mkt_notes', JSON.stringify(betNotes)); }catch(e){}
+  }
 }
 
 // ── POSITIONS ─────────────────────────────────────────────────
@@ -1396,8 +1435,16 @@ async function runAnalysis(){
     clearInterval(iv);
     if(result.error) throw new Error(result.error);
     if(result.verdict){
-      aiResults[b.id] = result;
-      localStorage.setItem('onyx_mkt_ai', JSON.stringify(aiResults));
+      // Save to variation if selected, else parent
+      if(rpSelectedVariation >= 0 && activeBet.variations && activeBet.variations[rpSelectedVariation]){
+        activeBet.variations[rpSelectedVariation].aiResult = result;
+        var bets = JSON.parse(localStorage.getItem('onyx_mkt_bets')||'[]');
+        var idx = bets.findIndex(function(x){return x.id===activeBet.id;});
+        if(idx>=0){ bets[idx] = activeBet; localStorage.setItem('onyx_mkt_bets', JSON.stringify(bets)); }
+      } else {
+        aiResults[b.id] = result;
+        localStorage.setItem('onyx_mkt_ai', JSON.stringify(aiResults));
+      }
       var area = document.getElementById('aiResultArea');
       if(area) area.innerHTML = renderAIResult(result);
       renderBetList();
