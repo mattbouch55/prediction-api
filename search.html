@@ -870,6 +870,22 @@ function rpAdjustOdds(which, delta){
 
 
 // ── VARIATIONS on research page ──
+
+// Track which variation is selected for analysis
+var rpSelectedVariation = -1;
+function rpSelectVariation(i){
+  rpSelectedVariation = (rpSelectedVariation === i) ? -1 : i;
+  rpRenderVariations();
+  var btn = document.getElementById('runAnalysisBtn');
+  if(btn){
+    if(rpSelectedVariation >= 0 && activeBet && activeBet.variations && activeBet.variations[rpSelectedVariation]){
+      btn.textContent = '\u2726 Analyse Variation';
+    } else {
+      btn.textContent = '\u2726 Analyse with Onyx';
+    }
+  }
+}
+
 function rpRenderVariations(){
   var b = activeBet;
   if(!b) return;
