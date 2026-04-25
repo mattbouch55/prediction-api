@@ -831,7 +831,7 @@ function renderResearchWorkspace(){
 
     // BOTTOM: Active research
     '<div style="padding:12px 14px;border-top:1px solid var(--border)">' +
-      '<button id="runAnalysisBtn" onclick="runAnalysis()" class="rp-analyse-btn">\u2726 Analyse with Onyx</button>' +
+      '<button id="runAnalysisBtn" onclick="runAnalysis()" class="rp-analyse-btn">\u2726 Analyse</button>' +
       '<div id="aiStatusBar" class="status-bar" style="margin-top:8px"></div>' +
       '<div id="aiResultArea" style="margin-top:10px">' + (saved ? renderAIResult(saved) : '') + '</div>' +
     '</div>' +
@@ -881,7 +881,7 @@ function rpSelectVariation(i){
     if(rpSelectedVariation >= 0 && activeBet && activeBet.variations && activeBet.variations[rpSelectedVariation]){
       btn.textContent = '\u2726 Analyse Variation';
     } else {
-      btn.textContent = '\u2726 Analyse with Onyx';
+      btn.textContent = '\u2726 Analyse';
     }
   }
 }
