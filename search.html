@@ -773,6 +773,7 @@ function renderResearchEmpty(){
 function renderResearchWorkspace(){
   var b = activeBet;
   if(!b) return;
+  rpSelectedVariation = -1;
 
   var yes = (b.yes!=null) ? b.yes : '';
   var no  = (b.no !=null) ? b.no  : '';
@@ -875,15 +876,19 @@ function rpRenderVariations(){
   var box = document.getElementById('rpVariations');
   if(!box) return;
   var vars = b.variations || [];
+  var sel = (typeof rpSelectedVariation === 'number') ? rpSelectedVariation : -1;
   var rowsHtml = vars.length === 0
     ? '<div style="font-size:10.5px;color:var(--grey);font-style:italic;padding:4px 0">No variations yet. Add one below.</div>'
     : vars.map(function(v, i){
-        return '<div style="display:flex;align-items:center;gap:6px;padding:4px 0;border-bottom:1px solid var(--border)">'+
+        var isSel = (i === sel);
+        var bg = isSel ? 'var(--blue-soft)' : 'transparent';
+        var bd = isSel ? '1px solid var(--blue)' : '1px solid transparent';
+        return '<div onclick="rpSelectVariation('+i+')" style="display:flex;align-items:center;gap:6px;padding:5px 7px;border-bottom:1px solid var(--border);background:'+bg+';border-left:'+bd+';border-right:'+bd+';cursor:pointer;border-radius:3px">'+
           '<span style="flex:1;font-size:11px;color:var(--text);min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+v.q+'</span>'+
           (v.yes!=null?'<span style="font-family:JetBrains Mono,monospace;font-size:10px;color:var(--blue);font-weight:700">'+v.yes+'\u00a2</span>':'<span style="font-size:10px;color:var(--grey)">—</span>')+
           '<span style="color:var(--grey);font-size:10px">/</span>'+
           (v.no!=null?'<span style="font-family:JetBrains Mono,monospace;font-size:10px;color:var(--yellow);font-weight:700">'+v.no+'\u00a2</span>':'<span style="font-size:10px;color:var(--grey)">—</span>')+
-          '<button onclick="rpDeleteVariation('+i+')" style="background:none;border:none;color:var(--grey);cursor:pointer;font-size:13px;padding:0 3px;opacity:0.5">\u00d7</button>'+
+          '<button onclick="event.stopPropagation();rpDeleteVariation('+i+')" style="background:none;border:none;color:var(--grey);cursor:pointer;font-size:13px;padding:0 3px;opacity:0.5">\u00d7</button>'+
         '</div>';
       }).join('');
   box.innerHTML =
@@ -1261,11 +1266,19 @@ async function runAnalysis(){
     var b = activeBet;
     var descEl = document.getElementById('rwDesc');
     var descText = descEl ? descEl.value.trim() : (b.desc||'');
+    // Check if a variation is selected
+    var v = (rpSelectedVariation >= 0 && b.variations && b.variations[rpSelectedVariation]) ? b.variations[rpSelectedVariation] : null;
+    var qText  = v ? v.q : b.q;
+    var yesPx  = v ? v.yes : b.yes;
+    var noPx   = v ? v.no  : b.no;
+    var contextLine = v
+      ? 'Parent market: '+b.q+'\nThis variation: '+qText+'\nVariation odds: YES '+(yesPx!=null?yesPx+'\u00a2':'unknown')+', NO '+(noPx!=null?noPx+'\u00a2':'unknown')
+      : 'Market: '+qText+'\nCurrent odds: YES '+(yesPx!=null?yesPx+'\u00a2 ('+yesPx+'% implied)':'unknown')+', NO '+(noPx!=null?noPx+'\u00a2 ('+noPx+'% implied)':'unknown');
     var res = await fetch(API+'/analyse-market', {
       method:'POST',
       headers:{'Content-Type':'application/json'},
       body: JSON.stringify({
-        question: 'You are a prediction market analyst. Analyse this Kalshi market.\n\nMarket: '+b.q+'\nCurrent odds: YES '+b.yes+'¢ ('+b.yes+'% implied), NO '+b.no+'¢ ('+b.no+'% implied)\nCloses: '+(b.close||'unknown')+'\nCategory: '+b.cat+(descText?'\nResolution criteria: '+descText:'')+'\n\nSearch the web for the most current information. Return ONLY this exact JSON:\n{"verdict":"YES","confidence":"High","reasoning":"2-3 sentence analysis","signals":["signal 1","signal 2","signal 3"]}'
+        question: 'You are a prediction market analyst. Analyse this Kalshi market.\n\n'+contextLine+'\nCloses: '+(b.close||'unknown')+'\nCategory: '+b.cat+(descText?'\nResolution criteria: '+descText:'')+'\n\nSearch the web for the most current information. Return ONLY this exact JSON:\n{"verdict":"YES","confidence":"High","reasoning":"2-3 sentence analysis","signals":["signal 1","signal 2","signal 3"]}'
       })
     });
     var result = await res.json();
