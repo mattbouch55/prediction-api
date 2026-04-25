@@ -712,9 +712,6 @@ function renderBetList(){
   }
   list.innerHTML = bets.map(function(b){
     var isActive = activeBet && activeBet.id===b.id;
-    var ai = aiResults[b.id];
-    var verdict = ai ? ai.verdict : null;
-    var vColor = verdict==='YES'?'var(--blue)':verdict==='NO'?'var(--yellow)':'var(--grey)';
     var placed = b.placed;
     var daysLeft = '';
     if(b.close){
@@ -724,7 +721,7 @@ function renderBetList(){
     var html = '<div class="inv-item'+(isActive?' active':'')+'" onclick="selectBet(\''+b.id+'\')">'+
       '<div class="inv-top">'+
         '<span class="inv-status open" style="background:var(--surface2);color:var(--grey2);border:1px solid var(--border)">'+b.cat+'</span>'+
-        (verdict?'<span class="inv-status" style="background:'+(verdict==='YES'?'var(--blue-soft)':verdict==='NO'?'var(--yellow-dim)':'var(--surface2)')+';color:'+vColor+'">AI: '+verdict+'</span>':'')+
+        
         '<button class="inv-del" onclick="event.stopPropagation();deleteBet(\''+b.id+'\')">×</button>'+
       '</div>'+
       '<div class="inv-q">'+b.q+'</div>'+
