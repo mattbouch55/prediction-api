@@ -305,6 +305,22 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:'Inter'
     body.sb-resizing { cursor: col-resize !important; user-select: none !important; }
     body.sb-resizing * { cursor: col-resize !important; user-select: none !important; }
 
+  
+    /* Analyse progress slider */
+    .rp-progress-wrap { display: none; align-items: center; gap: 8px; margin-top: 6px; }
+    .rp-progress-wrap.active { display: flex; }
+    .rp-progress-bar { flex: 1; height: 4px; background: var(--surface2); border-radius: 2px; overflow: hidden; position: relative; }
+    .rp-progress-fill { height: 100%; background: var(--blue); border-radius: 2px; width: 0%; transition: width 0.4s ease-out; position: relative; }
+    .rp-progress-fill::after {
+      content: '';
+      position: absolute;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background: linear-gradient(90deg, transparent 0%, rgba(255,255,255,0.5) 50%, transparent 100%);
+      animation: rpShimmer 1.5s linear infinite;
+    }
+    @keyframes rpShimmer { 0%{transform:translateX(-100%)} 100%{transform:translateX(100%)} }
+    .rp-progress-pct { font-family: 'JetBrains Mono', monospace; font-size: 10px; color: var(--grey); min-width: 28px; text-align: right; }
+
   </style>
 </head>
 <body>
@@ -831,7 +847,13 @@ function renderResearchWorkspace(){
 
     // BOTTOM: Active research
     '<div style="padding:12px 14px;border-top:1px solid var(--border)">' +
-      '<button id="runAnalysisBtn" onclick="runAnalysis()" class="rp-analyse-btn">\u2726 Analyse</button>' +
+      '<div style="display:flex;align-items:center;gap:10px">' +
+        '<button id="runAnalysisBtn" onclick="runAnalysis()" class="rp-analyse-btn">\u2726 Analyse</button>' +
+        '<div class="rp-progress-wrap" id="rpProgressWrap" style="flex:1">' +
+          '<div class="rp-progress-bar"><div class="rp-progress-fill" id="rpProgressFill"></div></div>' +
+          '<div class="rp-progress-pct" id="rpProgressPct">0%</div>' +
+        '</div>' +
+      '</div>' +
       '<div id="aiStatusBar" class="status-bar" style="margin-top:8px"></div>' +
       '<div id="aiResultArea" style="margin-top:10px">' + (saved ? renderAIResult(saved) : '') + '</div>' +
     '</div>' +
@@ -1269,11 +1291,27 @@ function renderAIResult(d){
 // ── AI ANALYSIS ───────────────────────────────────────────────
 async function runAnalysis(){
   if(!activeBet) return;
-  var btn = document.getElementById('aiAnalyseBtn');
-  var statusBar = document.getElementById('aiStatus');
+  var btn = document.getElementById('runAnalysisBtn');
+  var statusBar = document.getElementById('aiStatusBar');
   var statusText = document.getElementById('aiStatusText');
   if(btn) btn.disabled = true;
   if(statusBar) statusBar.classList.add('active');
+  
+  // Show + animate progress slider
+  var wrap = document.getElementById('rpProgressWrap');
+  var fill = document.getElementById('rpProgressFill');
+  var pct  = document.getElementById('rpProgressPct');
+  var progressVal = 0;
+  if(wrap) wrap.classList.add('active');
+  if(fill) fill.style.width = '0%';
+  if(pct) pct.textContent = '0%';
+  // Asymptotic fill: starts fast, slows down approaching 90%
+  var progressIv = setInterval(function(){
+    progressVal += (90 - progressVal) * 0.06;
+    if(fill) fill.style.width = progressVal.toFixed(1) + '%';
+    if(pct) pct.textContent = Math.round(progressVal) + '%';
+  }, 300);
+  
   var msgs = ['Searching for news...','Analysing probabilities...','Forming recommendation...'];
   var mi=0;
   var iv=setInterval(function(){ if(mi<msgs.length && statusText) statusText.textContent=msgs[mi++]; },4000);
@@ -1306,16 +1344,24 @@ async function runAnalysis(){
       var area = document.getElementById('aiResultArea');
       if(area) area.innerHTML = renderAIResult(result);
       renderBetList();
+      // Complete progress
+      clearInterval(progressIv);
+      if(fill) fill.style.width = '100%';
+      if(pct) pct.textContent = '100%';
+      setTimeout(function(){ if(wrap) wrap.classList.remove('active'); }, 600);
     } else {
       throw new Error('No verdict returned');
     }
   } catch(err) {
     clearInterval(iv);
+    clearInterval(progressIv);
+    if(wrap) wrap.classList.remove('active');
     var area = document.getElementById('aiResultArea');
     if(area) area.innerHTML = '<div style="font-size:11px;color:var(--red);padding:8px;background:var(--red-dim);border-radius:5px;">Could not load analysis: '+err.message+'. Try again.</div>';
   } finally {
     if(statusBar) statusBar.classList.remove('active');
     if(btn) btn.disabled = false;
+    clearInterval(progressIv);
   }
 }
 
