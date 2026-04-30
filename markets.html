@@ -193,9 +193,9 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:'Inter'
     .inv-del:hover { color: var(--red); }
     .inv-q { font-size: 11px; font-weight: 600; color: var(--text); line-height: 1.35; margin-bottom: 5px; }
     .inv-meta { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 3px; }
-    .inv-meta-item { background: var(--surface); border: 1px solid var(--border); border-radius: 4px; padding: 3px 6px; }
+    .inv-meta-item { background: var(--surface); border: 1px solid var(--border); border-radius: 4px; padding: 3px 6px; min-width: 0; overflow: hidden; }
     .inv-meta-label { font-size: 8px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.04em; color: var(--grey); margin-bottom: 1px; }
-    .inv-meta-val { font-size: 10px; font-weight: 700; font-family: 'JetBrains Mono', monospace; color: var(--text); white-space: nowrap; overflow: hidden; }
+    .inv-meta-val { font-size: 10px; font-weight: 700; font-family: 'JetBrains Mono', monospace; color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
     .inv-meta-val.green { color: var(--green); font-size: 10px; }
     .inv-meta-val.red { color: var(--red); }
     .inv-price { font-size: 11px; font-family: 'JetBrains Mono', monospace; color: var(--grey2); }
