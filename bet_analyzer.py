@@ -355,6 +355,8 @@ OUTPUT — RETURN ONLY VALID JSON, NO PROSE BEFORE OR AFTER
 ═══════════════════════════════════════════════════════════════
 {{
   "verdict": "YES" | "NO",
+  "yes_label": "short name for what YES represents (e.g. 'Maple Leafs', 'S&P 500 above 5800', 'Trump wins Ohio'). Keep under 24 chars.",
+  "no_label":  "short name for what NO represents (the opposite outcome, e.g. 'Bruins', 'S&P 500 below 5800', 'Trump loses Ohio'). Keep under 24 chars.",
   "onyx_probability": integer 0-100,
   "market_implied_probability": integer 0-100,
   "edge_pct": signed integer (onyx_probability - market_implied_probability),
@@ -604,13 +606,26 @@ def _post_process(result: Dict[str, Any], market_implied: Optional[int],
         if not result["sources"] else None
     )
 
+    # Sanitize yes_label / no_label — short clean strings
+    for k, default in (("yes_label", "YES"), ("no_label", "NO")):
+        v = result.get(k)
+        if not isinstance(v, str):
+            result[k] = default
+        else:
+            v = v.strip().strip('"\'')
+            # Cap length so it fits in the badge
+            if len(v) > 28:
+                v = v[:28].rstrip() + "…"
+            result[k] = v or default
+
     # Defaults for required fields
     result.setdefault("verdict", "YES")
     result.setdefault("reasoning", "Analysis incomplete.")
 
     # Don't pass through unrecognized fields the model may have invented
     allowed = {
-        "verdict", "onyx_probability", "market_implied_probability", "edge_pct",
+        "verdict", "yes_label", "no_label",
+        "onyx_probability", "market_implied_probability", "edge_pct",
         "recommendation", "confidence", "reasoning", "key_factors", "uncertainties",
         "sources", "sources_warning",
     }

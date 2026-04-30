@@ -1457,10 +1457,12 @@ function renderAIResult(d){
 
   // Recommendation badge styling
   var recColor, recBg, recLabel;
-  if(rec === 'BET_YES'){ recColor = '#fff'; recBg = 'var(--blue)'; recLabel = 'BET YES'; }
-  else if(rec === 'BET_NO'){ recColor = 'var(--text)'; recBg = 'var(--yellow)'; recLabel = 'BET NO'; }
+  var yesLabel = (d.yes_label && typeof d.yes_label === 'string') ? d.yes_label : 'YES';
+  var noLabel  = (d.no_label  && typeof d.no_label  === 'string') ? d.no_label  : 'NO';
+  if(rec === 'BET_YES'){ recColor = '#fff'; recBg = 'var(--blue)'; recLabel = 'BET ' + yesLabel.toUpperCase(); }
+  else if(rec === 'BET_NO'){ recColor = 'var(--text)'; recBg = 'var(--yellow)'; recLabel = 'BET ' + noLabel.toUpperCase(); }
   else if(rec === 'PASS'){ recColor = 'var(--grey2)'; recBg = 'var(--surface2)'; recLabel = 'PASS — NO EDGE'; }
-  else { recColor = '#fff'; recBg = (verdict==='YES'?'var(--blue)':'var(--yellow)'); recLabel = verdict; }
+  else { recColor = '#fff'; recBg = (verdict==='YES'?'var(--blue)':'var(--yellow)'); recLabel = verdict==='YES' ? yesLabel.toUpperCase() : noLabel.toUpperCase(); }
 
   var confColor = conf==='High'?'var(--green)':conf==='Medium'?'var(--yellow)':'var(--red)';
 

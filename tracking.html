@@ -246,11 +246,13 @@ function render() {
     if (aiData) {
       var rec = aiData.recommendation;
       var v = aiData.verdict || 'YES';
+      var yesL = aiData.yes_label || 'YES';
+      var noL  = aiData.no_label  || 'NO';
       var label, labelColor;
-      if (rec === 'BET_YES') { label = 'BET YES'; labelColor = 'var(--blue)'; }
-      else if (rec === 'BET_NO') { label = 'BET NO'; labelColor = 'var(--yellow)'; }
+      if (rec === 'BET_YES') { label = 'BET ' + yesL.toUpperCase(); labelColor = 'var(--blue)'; }
+      else if (rec === 'BET_NO') { label = 'BET ' + noL.toUpperCase(); labelColor = 'var(--yellow)'; }
       else if (rec === 'PASS') { label = 'PASS'; labelColor = 'var(--grey2)'; }
-      else { label = v; labelColor = v === 'YES' ? 'var(--blue)' : v === 'NO' ? 'var(--yellow)' : 'var(--grey)'; }
+      else { label = v === 'YES' ? yesL.toUpperCase() : v === 'NO' ? noL.toUpperCase() : v; labelColor = v === 'YES' ? 'var(--blue)' : v === 'NO' ? 'var(--yellow)' : 'var(--grey)'; }
       var edgeStr = '';
       if (typeof aiData.edge_pct === 'number') {
         var e = aiData.edge_pct;
